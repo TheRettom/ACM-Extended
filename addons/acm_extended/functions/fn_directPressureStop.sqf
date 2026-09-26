@@ -24,7 +24,7 @@ private _otherManeuver = (missionNamespace getVariable ["ACM_core_ContinuousActi
     || {!isNull _patient && {[_patient] call ACM_core_fnc_cprActive}}
     || {!isNull _patient && {[_patient] call ACM_core_fnc_bvmActive}};
 // An already dispatched DP cancel can arrive after CPR/BVM has taken over. It no longer owns hints, stance or pose.
-if (!_wasActive && {_otherManeuver}) exitWith {};
+if (!_wasActive && {_pending isEqualTo []} && {_otherManeuver}) exitWith {};
 
 // Retire every delayed Direct Pressure pose request first. ACME_DP_PoseToken belongs to the DP layer itself;
 // ACME_dah_gen owns ACME_fnc_doAnimHeld's short reassert worker.
