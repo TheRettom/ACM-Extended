@@ -43,11 +43,17 @@ def test_medic3_is_reserved_for_actual_seal_placement():
     thora = read("addons/acm_extended/functions/fn_thoraAftercareLocal.sqf")
     dispatch = read("addons/acm_extended/functions/fn_ownerDispatch.sqf")
     assert 'case "chestSeal": {"AinvPknlMstpSnonWrflDnon_medic3"};' in pose
-    assert '[_medic,"chestSeal",2.0,_patient] call ACME_fnc_treatmentPoseStart' in apply
+    assert 'ACME_CS_applyAnimSeconds = 2.65;' in init
+    assert '[_medic, "chestSeal", _duration, _patient, true] call ACME_fnc_treatmentPoseStart' in apply
+    assert '"AinvPknlMstpSnonWrflDnon_medic3", 2] call ACME_fnc_doAnim' in apply
     assert "ACME_fnc_chestSealProviderHoldStart" in apply
     assert "chestSealBurpGesture" not in burp
     assert "chestSealBurpGesture" not in thora
     assert 'case "chestSealBurpGesture"' not in dispatch
+    ncd = read("addons/acm_extended/functions/fn_chestSealApplyNCD.sqf")
+    assert '[_medic,"ncdSeat",2.0] call ACME_fnc_treatmentGesture' in ncd
+    assert "ncdSeat" not in apply
+    assert "medic1" not in apply.lower()
 
 def test_flip_never_turns_provider_failure_into_patient_noop():
     # Provider acquisition failure now aborts the physical Flip instead of bypassing medic4.
@@ -63,6 +69,9 @@ def test_flip_never_turns_provider_failure_into_patient_noop():
     assert 'ACME_DP_PauseTreatmentClass' in fallback
     assert 'ACME_DP_Paused",false' in fallback
     assert "ACME_CS_ApplyGestureUntil" in flip
+    assert 'if ((uiNamespace getVariable ["ACME_CS_ApplyGestureUntil",0]) > _now) exitWith {};' not in flip
+    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in flip
+    assert '[_patient, _newSide, false, _provider, false, true] call ACME_fnc_chestSealRoll' in flip
 
 def test_workspace_handoff_is_valid_empty_hands_source():
     prep = read("addons/acm_extended/functions/fn_medicAnimationPrep.sqf")
