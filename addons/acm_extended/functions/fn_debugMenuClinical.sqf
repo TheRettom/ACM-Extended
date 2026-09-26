@@ -575,6 +575,7 @@ private _sepsis = _patient getVariable ["ACM_infection_Sepsis_Severity",0];
 private _sepsisPerm = _patient getVariable ["ACM_infection_Sepsis_Permanent",false];
 private _feverOffset = _patient getVariable ["ACM_infection_Fever_Offset",0];
 private _metDemand = _patient getVariable ["ACM_infection_Metabolic_Demand",1];
+private _sepsisDeficit = _patient getVariable ["ACM_infection_EffectiveVolumeDeficitL",0];
 private _eyes = _patient getVariable ["ACM_ophthalmology_eyeInjuries",[1,1]];
 private _eyePerm = _patient getVariable ["ACM_ophthalmology_ocularPermanent",false];
 private _vagalOn = CBA_missionTime < (_patient getVariable ["ACME_laryngo_vagalUntil",-1]);
@@ -588,6 +589,8 @@ _right pushBack (["Burn", format ["%1/%2",_burnBurden toFixed 2,_burnSystemic to
                  "Leak/Air", format ["%1L/%2",_burnDeficit toFixed 1,_burnAir toFixed 0], if (_burnDeficit > 0.5 || {_burnAir > 30}) then {_cWarn} else {_cMute}] call _pair);
 _right pushBack (["Infect", format ["S%1 %2",_infStage,_sepsis toFixed 2], if (_sepsisPerm) then {_cBad} else {if (_infStage >= 2) then {_cWarn} else {_cMute}},
                  "Fvr/Dmd", format ["+%1/%2x",_feverOffset toFixed 1,_metDemand toFixed 2], if (_infStage > 0) then {_cWarn} else {_cMute}] call _pair);
+_right pushBack (["SepLeak", format ["%1 L",_sepsisDeficit toFixed 1], if (_sepsisDeficit > 0.5) then {_cWarn} else {_cMute},
+                 "Perm", format ["%1/%2/%3",if (_burnPerm) then {"B"} else {"-"},if (_sepsisPerm) then {"I"} else {"-"},if (_eyePerm) then {"O"} else {"-"}], if (_burnPerm || {_sepsisPerm} || {_eyePerm}) then {_cBad} else {_cMute}] call _pair);
 _right pushBack (["Eyes", str _eyes, if (_eyePerm) then {_cBad} else {if (({_x < 0.999} count _eyes) > 0) then {_cWarn} else {_cMute}},
                  "Vagal", if (_vagalOn) then {_vagalSev toFixed 2} else {"off"}, if (_vagalOn) then {_cBad} else {_cMute}] call _pair);
 _right pushBack (["HC B/I/O", format ["%1/%2/%3",if (missionNamespace getVariable ["ACME_hcEff_burns",false]) then {"Y"} else {"-"},if (missionNamespace getVariable ["ACME_hcEff_infection",false]) then {"Y"} else {"-"},if (missionNamespace getVariable ["ACME_hcEff_ophthalmology",false]) then {"Y"} else {"-"}], _cLabel,
