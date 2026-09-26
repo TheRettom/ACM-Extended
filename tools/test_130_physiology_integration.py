@@ -79,6 +79,7 @@ def test_burns_do_not_fake_hemorrhage_or_own_cbrn_state():
     assert "Blood_Volume" not in xeh
     assert "EffectiveVolumeDeficitL" not in xeh  # derived by tick, not direct wound mutation
     assert "BurnSurface" in xeh and "BurnBurden" in xeh
+    assert "BurnProtected" in xeh
     assert "bandageLocal" in xeh and "BURN_WRONG_DRESSING_PAIN" in xeh
 
     reset = read("addons/burns/functions/fnc_resetVariables.sqf")
