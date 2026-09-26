@@ -1898,6 +1898,7 @@ class CfgFunctions {
             class suctionPublish {};
             class suctionObservers {};
             class ownerDispatch {};
+            class controlledProvider {};
             class patientInteractionDistance {};
             class headElevEffective {};
             class canCheckPatientDogtags {};
