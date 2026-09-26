@@ -25,7 +25,11 @@ def test_chestseal_opens_on_frozen_medic4_to_workspace_handoff():
     open_fn = read("addons/acm_extended/functions/fn_chestSealOpen.sqf")
     hold = read("addons/acm_extended/functions/fn_chestSealProviderHoldStart.sqf")
     assert 'if (_ctx != "chestseal") then' in acquire
-    assert '_mode == "chestAccess" && {_stage >= 3}' in open_fn
+    # After casualty preparation is owner-confirmed, normal entry waits for the exact frozen chestAccess hold.
+    # Presentation has a bounded fail-open so a missed animation sample can never strand the clinical panel.
+    assert 'private _stage = _pose param [3,-2];' in open_fn
+    assert 'if (_mode == "chestAccess" && {_stage < 3} && {CBA_missionTime < _presentationUntil}) exitWith {};' in open_fn
+    assert 'private _presentationUntil = CBA_missionTime + 4.5;' in open_fn
     assert open_fn.index("ACME_fnc_chestSealProviderHoldStart") < open_fn.index('"ACME_ChestSeal_Dialog"')
     assert '[_medic, "chestAccess", _accessEpoch, true] call ACME_fnc_treatmentPoseStop' in hold
 
