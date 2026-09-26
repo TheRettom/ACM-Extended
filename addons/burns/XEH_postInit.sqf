@@ -16,6 +16,9 @@
 
     private _surface = _patient getVariable [QGVAR(BurnSurface), [0,0,0,0,0,0]];
     if !(_surface isEqualType [] && {count _surface == 6}) then {_surface = [0,0,0,0,0,0];};
+    private _protected = _patient getVariable [QGVAR(BurnProtected), [false,false,false,false,false,false]];
+    if !(_protected isEqualType [] && {count _protected == 6}) then {_protected = [false,false,false,false,false,false];};
+    _protected set [_idx,false];
 
     private _depth = if (_woundType isEqualTo "Burn3") then {1.0} else {0.65};
     private _mag = linearConversion [0.05,1.0,_magnitude,0.45,1,true];
@@ -30,6 +33,7 @@
     _burden = _burden max 0 min 1;
 
     _patient setVariable [QGVAR(BurnSurface),_surface,true];
+    _patient setVariable [QGVAR(BurnProtected),_protected,true];
     _patient setVariable [QGVAR(BurnBurden),_burden,true];
     _patient setVariable [QGVAR(SystemicBurden),(_patient getVariable [QGVAR(SystemicBurden),0]) max _burden,true];
     _patient setVariable [QGVAR(LastBurnAt),CBA_missionTime,true];
@@ -57,7 +61,17 @@
 [QACEGVAR(medical_treatment,bandageLocal), {
     params ["_patient", "_bodyPart", "_bandageClass"];
     if (!GVAR(burnsEnabled)) exitWith {};
-    if (_bandageClass in ["ACM_SilverNylonDressing", "ACM_BurnCream"]) exitWith {};
+    if (_bandageClass in ["ACM_SilverNylonDressing", "ACM_BurnCream"]) exitWith {
+        private _parts = ["head","body","leftarm","rightarm","leftleg","rightleg"];
+        private _idx = _parts find (toLowerANSI _bodyPart);
+        if (_idx >= 0) then {
+            private _protected = _patient getVariable [QGVAR(BurnProtected), [false,false,false,false,false,false]];
+            if !(_protected isEqualType [] && {count _protected == 6}) then {_protected = [false,false,false,false,false,false];};
+            _protected set [_idx,true];
+            _patient setVariable [QGVAR(BurnProtected),_protected,true];
+            if (!isNil QGVAR(activePatients)) then {GVAR(activePatients) pushBackUnique _patient;};
+        };
+    };
 
     private _woundNames = ACEGVAR(medical_damage,woundClassNames);
     private _partKey = toLower _bodyPart;
