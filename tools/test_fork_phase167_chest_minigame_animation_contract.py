@@ -42,10 +42,10 @@ def test_medic3_is_reserved_for_actual_seal_placement():
     burp = read("addons/acm_extended/functions/fn_chestSealBurp.sqf")
     thora = read("addons/acm_extended/functions/fn_thoraAftercareLocal.sqf")
     dispatch = read("addons/acm_extended/functions/fn_ownerDispatch.sqf")
-    assert 'case "chestSeal": {"AinvPknlMstpSnonWrflDnon_medic3"};' in pose
+    assert 'case "chestSeal": {"AinvPknlMstpSnonWnonDnon_medic3"};' in pose
     assert 'ACME_CS_applyAnimSeconds = 2.65;' in init
     assert '[_medic, "chestSeal", _duration, _patient, true] call ACME_fnc_treatmentPoseStart' in apply
-    assert '"AinvPknlMstpSnonWrflDnon_medic3", 2] call ACME_fnc_doAnim' in apply
+    assert '"AinvPknlMstpSnonWnonDnon_medic3", 2] call ACME_fnc_doAnim' in apply
     assert "ACME_fnc_chestSealProviderHoldStart" in apply
     assert "chestSealBurpGesture" not in burp
     assert "chestSealBurpGesture" not in thora
