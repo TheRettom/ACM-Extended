@@ -32,11 +32,17 @@ private _dt = ((_now - _last) max 0) min 5;
 _patient setVariable [QGVAR(structuralLastTick),_now,false];
 
 private _hardcore = missionNamespace getVariable ["ACME_hcEff_ophthalmology",false];
-if (_hardcore) then {
-    // Structural ocular trauma is stabilized, not field-cured. This setting is explicitly the
-    // evacuation variant, so latch only TRUE here and let full-heal/definitive-care reset it.
-    if !(_patient getVariable [QGVAR(ocularPermanent),false]) then {
-        _patient setVariable [QGVAR(ocularPermanent),true,true];
+private _permanent = _patient getVariable [QGVAR(ocularPermanent),false];
+
+if (_hardcore && {!_permanent}) then {
+    // Hardcore causes the permanent field limitation. Once latched, changing a mission setting
+    // does not retroactively heal an eye; definitive reset/evacuation is the release boundary.
+    _permanent = true;
+    _patient setVariable [QGVAR(ocularPermanent),true,true];
+};
+
+if (_permanent) then {
+    if !(_patient getVariable ["ACME_requiresEvac",false]) then {
         if (!isNil "ACME_fnc_evacuationRequirementCommit") then {
             [_patient,true,true,true,false] call ACME_fnc_evacuationRequirementCommit;
         } else {
@@ -61,7 +67,6 @@ if (_hardcore) then {
         };
     };
     _patient setVariable [QGVAR(eyeInjuries),_eyes,true];
-    _patient setVariable [QGVAR(ocularPermanent),false,true];
 };
 
 private _severe = ({_x < 0.25} count _eyes) >= 2;
