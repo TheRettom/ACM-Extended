@@ -20,7 +20,7 @@ if (_classname == "ACME_DebugInduceSeizure") exitWith {
 // preflight before callbackSuccess. Apply/Stop therefore execute here and repaint the existing menu in place.
 private _fnc_refreshDirectPressureMenu = {
     params ["_m", "_p"];
-    if (!hasInterface || {isNil "ACE_player"} || {_m isNotEqualTo ACE_player}) exitWith {};
+    if (!hasInterface || {_m isNotEqualTo (call ACME_fnc_controlledProvider)}) exitWith {};
     ace_medical_gui_pendingReopen = false;
     [{
         params ["_patient"];
@@ -353,7 +353,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
                 _callArgs call ace_medical_treatment_fnc_treatment;
                 // This recursive call starts the progress dialog after the original ButtonClick event has already
                 // finished. Mirror ACE's native event order by arming reopen AFTER progressBar closes the medical menu.
-                if (hasInterface && {!isNil "ACE_player"} && {_u isEqualTo ACE_player}) then {
+                if (hasInterface && {_u isEqualTo (call ACME_fnc_controlledProvider)}) then {
                     ace_medical_gui_pendingReopen = true;
                 };
                 _u setVariable ["ACME_treatmentPreflightBypass", [], false];
