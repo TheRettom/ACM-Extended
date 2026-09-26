@@ -17,14 +17,14 @@ private _cardiacOutput = [_unit] call ace_medical_status_fnc_getCardiacOutput;
 // (_includeExtended=false) deliberately remain free of these ACME additions.
 if (_includeExtended) then {
     private _burnDeficit = (_unit getVariable ["ACM_burns_EffectiveVolumeDeficitL",0]) max 0;
+    private _sepsisDeficit = (_unit getVariable ["ACM_infection_EffectiveVolumeDeficitL",0]) max 0;
     private _bloodNow = (_unit getVariable ["ACM_circulation_Blood_Volume",6]) max 0;
     private _salineNow = (_unit getVariable ["ACM_circulation_Saline_Volume",0]) max 0;
     private _plasmaNow = (_unit getVariable ["ACM_circulation_Plasma_Volume",0]) max 0;
     private _totalNow = (_bloodNow + _salineNow + _plasmaNow) max 0.1;
-    private _burnPreloadFrac = (((_totalNow - _burnDeficit) max 0.1) / _totalNow) max 0.25 min 1;
-    private _burnCO = _burnPreloadFrac ^ 1.35;
-    private _sepsisCO = (_unit getVariable ["ACM_infection_Preload_Mult",1]) max 0.55 min 1;
-    _cardiacOutput = _cardiacOutput * _burnCO * _sepsisCO;
+    private _diseaseDeficit = _burnDeficit + _sepsisDeficit;
+    private _diseasePreloadFrac = (((_totalNow - _diseaseDeficit) max 0.1) / _totalNow) max 0.25 min 1;
+    _cardiacOutput = _cardiacOutput * (_diseasePreloadFrac ^ 1.35);
 };
 
 private _resistance = _unit getVariable ["ace_medical_peripheralResistance", 100];
