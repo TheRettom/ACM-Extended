@@ -558,6 +558,40 @@ private _shock = _circState getOrDefault ["shockSeverity", 0];
 _right pushBack (["METABOLIC"] call _sect);
 _right pushBack (["Acid", _acid toFixed 2, if (_acid >= 0.65) then {_cBad} else {if (_acid >= 0.30) then {_cWarn} else {_cGood}}, "PaCO2", _paCO2 toFixed 0, if (_paCO2 > 70) then {_cBad} else {if (_paCO2 > 50) then {_cWarn} else {_cGood}}] call _pair);
 _right pushBack (["Coag", _coag toFixed 2, if (_coag > 1.5) then {_cBad} else {if (_coag > 1.1) then {_cWarn} else {_cGood}}, "Shock", _shock toFixed 2, if (_shock > 0.6) then {_cBad} else {if (_shock > 0.2) then {_cWarn} else {_cGood}}] call _pair);
+
+// 1.3.0 integrated physiology. These are source states and derived drivers, not additional vital writers.
+// Keep them compact so a dedicated-server screenshot can prove the disease state, hardcore latch and output.
+private _do2Supply = _circState getOrDefault ["do2", 1];
+private _do2Adeq = _circState getOrDefault ["do2Adequacy", _do2Supply];
+private _shockType130 = _patient getVariable ["ACME_shock_phenotype","none"];
+private _shockSev130 = _patient getVariable ["ACME_shock_severity",0];
+private _burnBurden = _patient getVariable ["ACM_burns_BurnBurden",0];
+private _burnSystemic = _patient getVariable ["ACM_burns_SystemicBurden",0];
+private _burnDeficit = _patient getVariable ["ACM_burns_EffectiveVolumeDeficitL",0];
+private _burnAir = _patient getVariable ["ACM_burns_AirwayInflammation",0];
+private _burnPerm = _patient getVariable ["ACM_burns_PermanentInjury",false];
+private _infStage = _patient getVariable ["ACM_infection_Infection_Stage",0];
+private _sepsis = _patient getVariable ["ACM_infection_Sepsis_Severity",0];
+private _sepsisPerm = _patient getVariable ["ACM_infection_Sepsis_Permanent",false];
+private _feverOffset = _patient getVariable ["ACM_infection_Fever_Offset",0];
+private _metDemand = _patient getVariable ["ACM_infection_Metabolic_Demand",1];
+private _eyes = _patient getVariable ["ACM_ophthalmology_eyeInjuries",[1,1]];
+private _eyePerm = _patient getVariable ["ACM_ophthalmology_ocularPermanent",false];
+private _vagalOn = CBA_missionTime < (_patient getVariable ["ACME_laryngo_vagalUntil",-1]);
+private _vagalSev = _patient getVariable ["ACME_laryngo_vagalSeverity",0];
+private _evac130 = _patient getVariable ["ACME_requiresEvac",false];
+
+_right pushBack (["1.3 PHYSIOLOGY"] call _sect);
+_right pushBack (["DO2", format ["%1/%2",_do2Supply toFixed 2,_do2Adeq toFixed 2], if (_do2Adeq < 0.5) then {_cBad} else {if (_do2Adeq < 0.7) then {_cWarn} else {_cGood}},
+                 "Shock", format ["%1 %2",_shockType130,_shockSev130 toFixed 2], if (_shockSev130 > 0.6) then {_cBad} else {if (_shockSev130 > 0.2) then {_cWarn} else {_cMute}}] call _pair);
+_right pushBack (["Burn", format ["%1/%2",_burnBurden toFixed 2,_burnSystemic toFixed 2], if (_burnPerm) then {_cBad} else {if (_burnSystemic > 0.2) then {_cWarn} else {_cMute}},
+                 "Leak/Air", format ["%1L/%2",_burnDeficit toFixed 1,_burnAir toFixed 0], if (_burnDeficit > 0.5 || {_burnAir > 30}) then {_cWarn} else {_cMute}] call _pair);
+_right pushBack (["Infect", format ["S%1 %2",_infStage,_sepsis toFixed 2], if (_sepsisPerm) then {_cBad} else {if (_infStage >= 2) then {_cWarn} else {_cMute}},
+                 "Fvr/Dmd", format ["+%1/%2x",_feverOffset toFixed 1,_metDemand toFixed 2], if (_infStage > 0) then {_cWarn} else {_cMute}] call _pair);
+_right pushBack (["Eyes", str _eyes, if (_eyePerm) then {_cBad} else {if (({_x < 0.999} count _eyes) > 0) then {_cWarn} else {_cMute}},
+                 "Vagal", if (_vagalOn) then {_vagalSev toFixed 2} else {"off"}, if (_vagalOn) then {_cBad} else {_cMute}] call _pair);
+_right pushBack (["HC B/I/O", format ["%1/%2/%3",if (missionNamespace getVariable ["ACME_hcEff_burns",false]) then {"Y"} else {"-"},if (missionNamespace getVariable ["ACME_hcEff_infection",false]) then {"Y"} else {"-"},if (missionNamespace getVariable ["ACME_hcEff_ophthalmology",false]) then {"Y"} else {"-"}], _cLabel,
+                 "Evac", if (_evac130) then {"YES"} else {"no"}, if (_evac130) then {_cBad} else {_cGood}] call _pair);
 private _cbrnExp = _patient getVariable ["ACM_cbrn_Exposed_State", false];
 private _cbrnCont = _patient getVariable ["ACM_cbrn_Contaminated_State", false];
 private _cbrnAir = _patient getVariable ["ACM_cbrn_AirwayInflammation", 0];
