@@ -80,34 +80,53 @@ if (!isNull _medic && {local _medic}) then {
             };
 
             private _now = diag_tickTime;
-            if (_now < _endsAt) exitWith {
-                // Keep the exact medic3 state for the bounded placement window. Priority 2 is scoped to this
-                // already-owned chest procedure and prevents an old treatment-end RTM from resurfacing.
-                if ((toLowerANSI animationState _m) != "ainvpknlmstpsnonwnondnon_medic3"
-                    && {_now - _lastAssert >= 0.10}
-                    && {_asserts < 3}) then {
-                    [_m, "AinvPknlMstpSnonWnonDnon_medic3", 2] call ACME_fnc_doAnim;
-                    _args set [5, _now];
-                    _args set [6, _asserts + 1];
+            if (_now >= _endsAt) exitWith {
+                // The exact 2.65 s owner is the one-shot below. This PFH only keeps the requested state from
+                // being resurfaced-over by an older treatment-end RTM during that bounded window.
+                [_pfh] call CBA_fnc_removePerFrameHandler;
+                if ((uiNamespace getVariable ["ACME_CS_ApplyPFH", -1]) == _pfh) then {
+                    uiNamespace setVariable ["ACME_CS_ApplyPFH", -1];
                 };
             };
 
-            [_pfh] call CBA_fnc_removePerFrameHandler;
-            if ((uiNamespace getVariable ["ACME_CS_ApplyPFH", -1]) == _pfh) then {
-                uiNamespace setVariable ["ACME_CS_ApplyPFH", -1];
+            // Keep the exact medic3 state for the bounded placement window. Priority 2 is scoped to this
+            // already-owned chest procedure and prevents an old treatment-end RTM from resurfacing.
+            if ((toLowerANSI animationState _m) != "ainvpknlmstpsnonwnondnon_medic3"
+                && {_now - _lastAssert >= 0.10}
+                && {_asserts < 3}) then {
+                [_m, "AinvPknlMstpSnonWnonDnon_medic3", 2] call ACME_fnc_doAnim;
+                _args set [5, _now];
+                _args set [6, _asserts + 1];
             };
-            if ((uiNamespace getVariable ["ACME_CS_ApplyAnimSerial", -1]) != _serial) exitWith {};
+        }, 0.05, [_medic, _patient, _placeEpoch, _serial, _endsAt, -1e6, 0]] call CBA_fnc_addPerFrameHandler;
+        uiNamespace setVariable ["ACME_CS_ApplyPFH", _applyPFH];
 
-            // Exactly at the requested wall-clock boundary, hard handoff out of medic3. Do not let its authored
-            // full RTM or an ACE treatment-end animation keep the player trapped after the seal has been placed.
-            [_m, "chestSeal", _epoch, true] call ACME_fnc_treatmentPoseStop;
+        // One bounded timer owns the placement lifetime. It is generation/epoch guarded, so Flip/close/reopen or
+        // any newer treatment can pre-empt medic3 immediately and this callback becomes a no-op.
+        [{
+            params ["_m", "_p", "_epoch", "_serial"];
+            if ((uiNamespace getVariable ["ACME_CS_ApplyAnimSerial", -1]) != _serial) exitWith {};
+            private _pfh = uiNamespace getVariable ["ACME_CS_ApplyPFH", -1];
+            if (_pfh isEqualType 0 && {_pfh >= 0}) then {[_pfh] call CBA_fnc_removePerFrameHandler;};
+            uiNamespace setVariable ["ACME_CS_ApplyPFH", -1];
             uiNamespace setVariable ["ACME_CS_ApplyGestureUntil", 0];
+
+            if (isNull _m || {!local _m} || {!alive _m}) exitWith {};
+            private _state = _m getVariable ["ACME_treatmentPoseState", []];
+            if ((_state param [0, -2]) != _epoch || {(_state param [1, ""]) != "chestSeal"}) exitWith {};
+
+            // Cut medic3 at the requested wall-clock boundary instead of waiting for its authored RTM to finish.
+            [_m, "chestSeal", _epoch, true] call ACME_fnc_treatmentPoseStop;
+
+            private _display = uiNamespace getVariable ["ACME_CS_DLG", displayNull];
+            if (isNull _display
+                || {!((uiNamespace getVariable ["ACME_CS_Medic", objNull]) isEqualTo _m)}
+                || {!((uiNamespace getVariable ["ACME_CS_Patient", objNull]) isEqualTo _p)}) exitWith {};
 
             private _holdEpoch = [_m, _p, true] call ACME_fnc_chestSealProviderHoldStart;
             _m setVariable ["ACME_CS_providerHoldEpoch", _holdEpoch, false];
             uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch", _holdEpoch];
-        }, 0.05, [_medic, _patient, _placeEpoch, _serial, _endsAt, -1e6, 0]] call CBA_fnc_addPerFrameHandler;
-        uiNamespace setVariable ["ACME_CS_ApplyPFH", _applyPFH];
+        }, [_medic, _patient, _placeEpoch, _serial], _duration] call CBA_fnc_waitAndExecute;
     } else {
         uiNamespace setVariable ["ACME_CS_ApplyGestureUntil", 0];
     };
