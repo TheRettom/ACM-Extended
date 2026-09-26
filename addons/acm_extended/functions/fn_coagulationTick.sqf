@@ -49,7 +49,9 @@ if (_patients isEqualTo []) then {
             // Replicated object values already survive JIP. Send changes and owner refreshes,
             // retaining exact owner values without a stable-value heartbeat every three seconds.
             // Neutral endpoints are exact so retirement cannot strand a sub-threshold remote residue.
-            [_u,"ACME_ca_coagBaseMult",_pathologyBase,([0.005,0] select (_pathologyBase == 1)),0] call ACME_fnc_setVarNetApprox;
+            // Keep the lethal-triad base single-owned by circulation. Infection participates only in
+            // the derived clot-strength/final bleeding multiplier below.
+            [_u,"ACME_ca_coagBaseMult",_base,([0.005,0] select (_base == 1)),0] call ACME_fnc_setVarNetApprox;
             [_u,"ACME_coag_clotStrength",_strength,([0.002,0] select (_strength == 1)),0] call ACME_fnc_setVarNetApprox;
             [_u,"ACME_coag_dilutionSeverity",_dilutionSeverity,([0.002,0] select (_dilutionSeverity == 0)),0] call ACME_fnc_setVarNetApprox;
             [_u,"ACME_coag_extraMult",_extraMult,([0.005,0] select (_extraMult == 1)),0] call ACME_fnc_setVarNetApprox;
