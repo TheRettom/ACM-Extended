@@ -33,8 +33,8 @@ if (!_stillValid) exitWith {
     };
 };
 
-_medic setVariable ["ACME_DP_ClaimToken",_token,false];
-_medic setVariable ["ACME_DP_ClaimEpoch",_epoch,false];
+_medic setVariable ["ACME_DP_ClaimToken",_token,true];
+_medic setVariable ["ACME_DP_ClaimEpoch",_epoch,true];
 
 if (_part == "body") then {
     [_medic,_patient,_part] call ACME_fnc_directPressureTorso;
