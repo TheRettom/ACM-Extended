@@ -759,6 +759,21 @@ private _getMedEffect = {
         _acidMAPBase = 0;
     };
     private _effMAPpre = (_acidMAPBase + _rawSupport - _shockDrop - _caMAPdrop);
+
+    // The legacy acid baseline intentionally strips most ACME modifiers and rebuilds known support/shock
+    // terms. Burns and sepsis are new source-separated physiology, so their preload/SVR effects would be
+    // invisible to that baseline. When either is active, allow the patient's actual composed MAP to LOWER
+    // the acid perfusion value. Using min() means this cannot manufacture recovery or double-count pressors;
+    // it only exposes disease hypotension the old native-only baseline could not see.
+    private _newDiseaseShock = (_patient getVariable ["ACM_infection_Sepsis_Severity",0]) > 0.001
+        || {(_patient getVariable ["ACM_burns_ShockSeverity",0]) > 0.001};
+    if (_newDiseaseShock && {!_inCardiacArrest}) then {
+        private _bpDisease = [_patient] call ace_medical_status_fnc_getBloodPressure;
+        _bpDisease params [["_dDisease",0],["_sDisease",0]];
+        private _mapDisease = _dDisease + ((_sDisease - _dDisease) / 3);
+        if (_mapDisease > 0) then {_effMAPpre = _effMAPpre min _mapDisease;};
+    };
+
     _state set ["acidMAPBase", _acidMAPBase];
     _state set ["acidEffMAP", _effMAPpre];
     _state set ["acidArrestDriver", _inCardiacArrest];
