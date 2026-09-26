@@ -31,8 +31,8 @@ private _main = switch (_mode) do {
     case "chestSealWorkspace": {"ACME_ChestSealWorkspace"};
     case "junctional": {"ACME_JunctionalWork"};
     case "stethoscope": {"ACME_StethoscopeWork"};
-    case "chestSeal": {"AinvPknlMstpSnonWrflDnon_medic3"};
-    case "ncdSeat": {"AinvPknlMstpSnonWrflDnon_medic1"};
+    case "chestSeal": {"AinvPknlMstpSnonWnonDnon_medic3"};
+    case "ncdSeat": {"AinvPknlMstpSnonWnonDnon_medic1"};
     case "pulse": {"ACME_StethoscopeWork"};
     case "torsoBandage": {"AinvPknlMstpSnonWrflDnon_medic4"};
     case "headBandageLeft": {"AinvPknlMstpSnonWrflDnon_medic0"};
