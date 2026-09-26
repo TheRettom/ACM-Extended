@@ -145,6 +145,18 @@ private _commitRemoval = {
     private _entry = (getUnitLoadout _p) param [4, [], [[]]];
     if (_class == "" || {(count _entry) != 2}) exitWith {false};
 
+    // ACRE radios are inventory items. Removing a vest while its owner is actively transmitting can destroy the
+    // radio item before ACRE receives its normal PTT-up transition. When ACRE is present, hand the active local
+    // player through ACRE's own release path first. The handler captures the broadcasting radio ID before the
+    // inventory mutation, so its delayed plugin stop can still complete after the vest disappears.
+    // This is capability-detected only: ACME does not depend on ACRE and does nothing when ACRE is absent.
+    if (hasInterface
+        && {_p isEqualTo player}
+        && {!isNil "acre_sys_core_fnc_handleMultiPttKeyPressUp"}
+        && {missionNamespace getVariable ["acre_sys_core_pttKeyDown", false]}) then {
+        [] call acre_sys_core_fnc_handleMultiPttKeyPressUp;
+    };
+
     removeVest _p;
     if ((vest _p) != "") exitWith {false};
 
