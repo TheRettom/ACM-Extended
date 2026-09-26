@@ -44,7 +44,7 @@ if (!isNull _medic && {local _medic}) then {
     uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch", -1];
 
     // Immediate=true is intentional here. We are already inside the chest procedure; no second weapon/crouch
-    // preflight is allowed to delay the seal-placement theatre or let a stale medic1/medic4 continue underneath it.
+    // preflight is allowed to delay the seal-placement theatre or let a stale prior chest/NCD animation continue underneath it.
     private _placeEpoch = [_medic, "chestSeal", _duration, _patient, true] call ACME_fnc_treatmentPoseStart;
 
     if (_placeEpoch >= 0) then {
