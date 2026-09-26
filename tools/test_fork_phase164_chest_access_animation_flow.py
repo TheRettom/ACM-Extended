@@ -28,15 +28,19 @@ def test_patient_lift_waits_for_real_provider_medic4():
     wait_block = acquire.split("// After any Semi-Fowler lay-flat finishes", 1)[1]
     assert "ACME_chestAccessProviderReady" in wait_block
     assert "_args call _begin;" in wait_block
-    assert '"stop", true, _token' in acquire
+    # Patient-owner completion deliberately does NOT send a late provider stop packet anymore.
+    assert '"stop", true, _token' not in acquire
+    treatment = read("addons/core/overrides/fnc_treatment.sqf")
+    assert '[_m, _p, "stop", true, ((_m getVariable ["ACME_chestAccessProvider", []]) param [2, ""])] call ACME_fnc_chestAccessVestProvider;' in treatment
 
 def test_removal_order_is_lift_remove_park_release():
     s = read("addons/acm_extended/functions/fn_chestAccessVestAcquire.sqf")
-    begin = s.split("private _beginPatient = {", 1)[1]
+    begin = s.split("private _beginPatient = {", 1)[1].split("// After any Semi-Fowler lay-flat finishes", 1)[0]
     grab = begin.index('"ACME_HeadElevPatientGrab"')
-    commit = begin.index("call _commit;")
-    release = begin.index('"ACME_HeadElevPatientRelease"')
-    assert grab < commit < release
+    lower_stage = begin.index("// Start the lower interval from the callback that actually removes the")
+    commit = begin.index("private _removed = [_p,_ctx,_savedVar,_propVar,_pfhVar] call _commit;", lower_stage)
+    release = begin.index('"ACME_HeadElevPatientRelease"', commit)
+    assert grab < lower_stage < commit < release
     commit_fn = s.split("private _commitRemoval = {", 1)[1].split("// Animation is allowed", 1)[0]
     assert commit_fn.index("removeVest _p") < commit_fn.index("ACME_fnc_chestAccessVestPark")
 
@@ -64,7 +68,9 @@ def test_clinical_launch_is_native_and_generation_scoped():
     assert "ACME_chestAccess_readyServer" in block
     assert "ACM_core_fnc_treatmentNative" in block
     assert "ace_medical_treatment_fnc_treatment;" not in block
-    assert "ContinuousAction_" not in block
+    # Chest prep does not acquire/edit the continuous-action controller. A read-only DP handoff guard is allowed.
+    assert "ACM_core_fnc_beginContinuousAction" not in block
+    assert 'missionNamespace setVariable ["ACM_core_ContinuousAction_Active"' not in block
 
 def test_chest_seal_workspace_hands_directly_to_immediate_flip_and_back():
     flip = read("addons/acm_extended/functions/fn_chestSealFlip.sqf")
