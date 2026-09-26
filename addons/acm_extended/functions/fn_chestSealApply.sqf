@@ -89,12 +89,12 @@ if (!isNull _medic && {local _medic}) then {
                 };
             };
 
-            // Keep the exact medic3 state for the bounded placement window. Priority 2 is scoped to this
-            // already-owned chest procedure and prevents an old treatment-end RTM from resurfacing.
+            // Keep the exact medic3 state for the bounded placement window through the normal interpolated graph.
+            // Only physical Flip is allowed to hard-preempt provider animation with priority 2.
             if ((toLowerANSI animationState _m) != "ainvpknlmstpsnonwnondnon_medic3"
                 && {_now - _lastAssert >= 0.10}
                 && {_asserts < 3}) then {
-                [_m, "AinvPknlMstpSnonWnonDnon_medic3", 2] call ACME_fnc_doAnim;
+                [_m, "AinvPknlMstpSnonWnonDnon_medic3", 1] call ACME_fnc_doAnim;
                 _args set [5, _now];
                 _args set [6, _asserts + 1];
             };
