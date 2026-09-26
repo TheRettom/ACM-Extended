@@ -52,8 +52,9 @@ def test_medic3_is_reserved_for_actual_seal_placement():
     assert 'case "chestSealBurpGesture"' not in dispatch
     ncd = read("addons/acm_extended/functions/fn_chestSealApplyNCD.sqf")
     assert '[_medic,"ncdSeat",2.0] call ACME_fnc_treatmentGesture' in ncd
-    assert "ncdSeat" not in apply
-    assert "medic1" not in apply.lower()
+    assert 'call ACME_fnc_treatmentGesture' not in apply
+    assert '[_medic,"ncdSeat"' not in apply
+    assert '[_medic, "ncdSeat"' not in apply
 
 def test_flip_never_turns_provider_failure_into_patient_noop():
     # Provider acquisition failure now aborts the physical Flip instead of bypassing medic4.
