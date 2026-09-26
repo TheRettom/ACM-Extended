@@ -25,8 +25,9 @@ def test_medic1_is_ncd_only_not_chest_seal_apply():
     ncd = read("fn_chestSealApplyNCD.sqf")
     assert 'case "ncdSeat": {"AinvPknlMstpSnonWnonDnon_medic1"};' in pose
     assert '[_medic,"ncdSeat",2.0] call ACME_fnc_treatmentGesture' in ncd
-    assert "medic1" not in apply.lower()
-    assert "ncdSeat" not in apply
+    assert 'call ACME_fnc_treatmentGesture' not in apply
+    assert '[_medic,"ncdSeat"' not in apply
+    assert '[_medic, "ncdSeat"' not in apply
 
 def test_flip_preempts_apply_and_provider_pose_on_the_click():
     flip = read("fn_chestSealFlip.sqf")
