@@ -39,7 +39,7 @@ def test_movement_queues_are_explicit_priority_one():
     assert '[_medic, _main, 1] call ACME_fnc_doAnim;' in pose
     assert 'call ACME_fnc_patientAnimRequest' in roll
     assert 'private _animPriority = [1, 2] select _immediate;' in roll
-    assert 'private _lockPriority = [3, 4] select _immediate;' in roll
+    assert 'private _lockPriority = [3, 100] select _immediate;' in roll
     assert '[_medic, _kneel, 0] call ACME_fnc_doAnim;' in menu
 
 def test_hang_bag_normal_entry_and_exit_blend():
