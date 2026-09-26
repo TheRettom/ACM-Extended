@@ -88,7 +88,7 @@ def test_roll_uses_shared_medic4_pose_for_2_5_seconds():
 def test_specific_pose_wins_over_generic_roll():
     p = txt('functions/fn_postInit.sqf')
     assert 'private _poseOwned = (_medic getVariable ["ACME_treatmentPoseState", []]) isNotEqualTo []' in p
-    assert 'private _isStethoscope = toLower _classname == "usestethoscope"' in p
+    assert 'private _isStethoscope = toLower _classname in ["usestethoscope", "beginheadtiltchinlift"]' in p
     assert '{!_poseOwned} && {!_isStethoscope}' in p
 
 def test_auscultate_indentation_normalized():
