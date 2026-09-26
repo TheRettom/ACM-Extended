@@ -47,4 +47,4 @@ assert 'diag_tickTime + 0.15' in injury
 assert 'ACME_buildBatch = "B134";' in startup
 assert 'ACME_debugRevision = "rc18";' in startup
 
-print("PASS rc18: medical/transfusion UI repaint work is bounded and declarations are ordered")
+print("PASS 1.3.0: medical/transfusion UI repaint work is bounded and declarations are ordered")
