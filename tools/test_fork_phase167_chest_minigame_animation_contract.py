@@ -24,7 +24,7 @@ def test_chestseal_opens_on_frozen_medic4_to_workspace_handoff():
     acquire = read("addons/acm_extended/functions/fn_chestAccessVestAcquire.sqf")
     open_fn = read("addons/acm_extended/functions/fn_chestSealOpen.sqf")
     hold = read("addons/acm_extended/functions/fn_chestSealProviderHoldStart.sqf")
-    assert '{_ctx != "chestseal"}' in acquire
+    assert 'if (_ctx != "chestseal") then' in acquire
     assert '_mode == "chestAccess" && {_stage >= 3}' in open_fn
     assert open_fn.index("ACME_fnc_chestSealProviderHoldStart") < open_fn.index('"ACME_ChestSeal_Dialog"')
     assert '[_medic, "chestAccess", _accessEpoch, true] call ACME_fnc_treatmentPoseStop' in hold
@@ -38,6 +38,7 @@ def test_workspace_is_hands_on_chest_without_medic3():
 
 def test_medic3_is_reserved_for_actual_seal_placement():
     pose = read("addons/acm_extended/functions/fn_treatmentPoseStart.sqf")
+    init = read("addons/acm_extended/functions/fn_initChestSealProcedureRuntime.sqf")
     apply = read("addons/acm_extended/functions/fn_chestSealApply.sqf")
     burp = read("addons/acm_extended/functions/fn_chestSealBurp.sqf")
     thora = read("addons/acm_extended/functions/fn_thoraAftercareLocal.sqf")
@@ -64,12 +65,12 @@ def test_flip_never_turns_provider_failure_into_patient_noop():
     assert "if (!_started) exitWith" in flip
     fallback = flip.split("if (!_started) exitWith", 1)[1].split("// The diagram and casualty move together immediately.",1)[0]
     assert 'call ACME_fnc_chestSealRoll' not in fallback
-    assert '["ACME_CS_FlipPendingToken",""]' in fallback
-    assert '["ACME_CS_FlipLockedUntil",0]' in fallback
-    assert '["ACME_CS_FlipTarget",""]' in fallback
+    assert '["ACME_CS_FlipPendingToken", ""]' in fallback
+    assert '["ACME_CS_FlipLockedUntil", 0]' in fallback
+    assert '["ACME_CS_FlipTarget", ""]' in fallback
     assert "ACME_fnc_chestSealProviderHoldStart" in fallback
     assert 'ACME_DP_PauseTreatmentClass' in fallback
-    assert 'ACME_DP_Paused",false' in fallback
+    assert 'ACME_DP_Paused", false' in fallback
     assert "ACME_CS_ApplyGestureUntil" in flip
     assert 'if ((uiNamespace getVariable ["ACME_CS_ApplyGestureUntil",0]) > _now) exitWith {};' not in flip
     assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in flip
