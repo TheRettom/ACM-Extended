@@ -1,11 +1,9 @@
-// B48 chest-seal Flip: the casualty's ACTUAL visual orientation owns the front/back view.
-// A Flip does not pre-emptively swap the diagram and then hope the body catches up.  The requested opposite side
-// becomes visible as the casualty physically rolls; fn_chestSealTick continuously reclassifies the body.
+// Chest-seal Flip is a procedure-critical animation handoff.
+// A physical Flip immediately pre-empts any current provider chest animation and immediately starts the casualty roll.
 private _patient = uiNamespace getVariable ["ACME_CS_Patient", objNull];
 private _now = diag_tickTime;
 private _lockedUntil = uiNamespace getVariable ["ACME_CS_FlipLockedUntil", 0];
 if ((_lockedUntil isEqualType 0) && {_lockedUntil > _now}) exitWith {};
-if ((uiNamespace getVariable ["ACME_CS_ApplyGestureUntil",0]) > _now) exitWith {};
 if (isNull _patient) exitWith {};
 
 private _uiCurrent = uiNamespace getVariable ["ACME_CS_Side", "front"];
@@ -33,54 +31,64 @@ if (!_willAnimate) exitWith {
     [] call ACME_fnc_chestSealRender;
 };
 
-// Keep the current side until the provider actually enters the roll RTM.
 private _provider = uiNamespace getVariable ["ACME_CS_Medic", objNull];
 private _display = uiNamespace getVariable ["ACME_CS_DLG", displayNull];
 if (isNull _provider || {!local _provider} || {isNull _display}) exitWith {};
 private _session = uiNamespace getVariable ["ACME_CS_SessionToken", ""];
-private _token = format ["flip:%1:%2:%3",clientOwner,_session,diag_tickTime];
-uiNamespace setVariable ["ACME_CS_FlipPendingToken",_token];
-uiNamespace setVariable ["ACME_CS_VirtualFlip",false];
-uiNamespace setVariable ["ACME_CS_FlipLockedUntil",_now + 7];
+private _token = format ["flip:%1:%2:%3", clientOwner, _session, diag_tickTime];
+uiNamespace setVariable ["ACME_CS_FlipPendingToken", _token];
+uiNamespace setVariable ["ACME_CS_VirtualFlip", false];
+uiNamespace setVariable ["ACME_CS_FlipLockedUntil", _now + 3];
 private _button = _display displayCtrl 86426;
 _button ctrlEnable false;
 _button ctrlSetText "Flipping...";
 
-if ((_provider getVariable ["ACME_DP_Active",false])
-    && {(_provider getVariable ["ACME_DP_Patient",objNull]) isEqualTo _patient}) then {
-    _provider setVariable ["ACME_DP_Paused",true];
-    _provider setVariable ["ACME_DP_PauseTreatmentClass","chestsealflip"];
-    _provider setVariable ["ACME_DP_TreatmentBusy",true];
-    _provider setVariable ["ACME_DP_PoseToken",(_provider getVariable ["ACME_DP_PoseToken",0]) + 1];
-    _provider setVariable ["ACME_dah_gen",(_provider getVariable ["ACME_dah_gen",0]) + 1];
-    _provider setVariable ["ACME_DP_InPose",false];
-    _provider setVariable ["ACME_DP_LastPoseAssert",0];
+if ((_provider getVariable ["ACME_DP_Active", false])
+    && {(_provider getVariable ["ACME_DP_Patient", objNull]) isEqualTo _patient}) then {
+    _provider setVariable ["ACME_DP_Paused", true];
+    _provider setVariable ["ACME_DP_PauseTreatmentClass", "chestsealflip"];
+    _provider setVariable ["ACME_DP_TreatmentBusy", true];
+    _provider setVariable ["ACME_DP_PoseToken", (_provider getVariable ["ACME_DP_PoseToken", 0]) + 1];
+    _provider setVariable ["ACME_dah_gen", (_provider getVariable ["ACME_dah_gen", 0]) + 1];
+    _provider setVariable ["ACME_DP_InPose", false];
+    _provider setVariable ["ACME_DP_LastPoseAssert", 0];
 };
-// Leave the persistent hands-on-chest pose as a direct animation handoff into medic4.
-private _holdEpoch = _provider getVariable ["ACME_CS_providerHoldEpoch",-1];
-private _holdPose = _provider getVariable ["ACME_treatmentPoseState",[]];
-if ((_holdPose param [1,""]) == "chestSealWorkspace") then {
-    [_provider,"chestSealWorkspace",_holdEpoch,true] call ACME_fnc_treatmentPoseStop;
-};
-_provider setVariable ["ACME_CS_providerHoldEpoch",-1,false];
-uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch",-1];
 
-private _started = [_provider,"chestSealFlip",_patient] call ACME_fnc_rollProviderStart;
-private _pose = _provider getVariable ["ACME_treatmentPoseState",[]];
-private _epoch = if (_started) then {_pose param [0,-1]} else {-1};
-private _rollToken = if (_started) then {_provider getVariable ["ACME_rollProviderToken",""]} else {""};
-private _rollTime = missionNamespace getVariable ["ACME_CS_rollTime",1.85];
-if !(_rollTime isEqualType 0 && {finite _rollTime}) then {_rollTime = 1.85;};
+// Flip has absolute precedence inside the live chest procedure. Invalidate the seal-placement worker BEFORE
+// touching provider animation so its old 2.65 s callback can never wake up and restore medic3/workspace over Flip.
+private _applyPFH = uiNamespace getVariable ["ACME_CS_ApplyPFH", -1];
+if (_applyPFH isEqualType 0 && {_applyPFH >= 0}) then {[_applyPFH] call CBA_fnc_removePerFrameHandler;};
+uiNamespace setVariable ["ACME_CS_ApplyPFH", -1];
+uiNamespace setVariable ["ACME_CS_ApplyAnimSerial", (uiNamespace getVariable ["ACME_CS_ApplyAnimSerial", 0]) + 1];
+uiNamespace setVariable ["ACME_CS_ApplyGestureUntil", 0];
+
+// Retire ANY ACME-owned provider pose as a handoff. This includes seal medic3 and NCD medic1. The immediate
+// roll entry below then uses priority 2, deliberately overwriting the visible RTM on this same interaction.
+private _oldPose = _provider getVariable ["ACME_treatmentPoseState", []];
+private _oldMode = _oldPose param [1, ""];
+private _oldEpoch = _oldPose param [0, -1];
+if (_oldEpoch >= 0 && {_oldMode != ""}) then {
+    [_provider, _oldMode, _oldEpoch, true] call ACME_fnc_treatmentPoseStop;
+};
+_provider setVariable ["ACME_CS_providerHoldEpoch", -1, false];
+uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch", -1];
+
+private _rollTime = missionNamespace getVariable ["ACME_CS_rollTime", 1.85 / (call ACME_fnc_choreographyRate)];
+if !(_rollTime isEqualType 0 && {finite _rollTime}) then {_rollTime = 1.85 / (call ACME_fnc_choreographyRate);};
 _rollTime = (_rollTime max 0.1) min 5;
 
-// A physical Flip is staged: provider medic4 must acquire first, and chestSealFlipTick dispatches the patient
-// roll only after the requested work state is actually observed. If provider theatre cannot acquire, abort the
-// click cleanly instead of rolling the casualty from the button/prep state.
+// The Flip button is the one intentional hard-preemption path: provider medic4 begins now, without another
+// weapon/crouch preflight, and the casualty roll is dispatched on this click rather than waiting for a PFH sample.
+private _started = [_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart;
+private _pose = _provider getVariable ["ACME_treatmentPoseState", []];
+private _epoch = if (_started) then {_pose param [0, -1]} else {-1};
+private _rollToken = if (_started) then {_provider getVariable ["ACME_rollProviderToken", ""]} else {""};
+
 if (!_started) exitWith {
-    uiNamespace setVariable ["ACME_CS_FlipPendingToken",""];
-    uiNamespace setVariable ["ACME_CS_FlipLockedUntil",0];
-    uiNamespace setVariable ["ACME_CS_FlipTarget",""];
-    uiNamespace setVariable ["ACME_CS_VirtualFlip",false];
+    uiNamespace setVariable ["ACME_CS_FlipPendingToken", ""];
+    uiNamespace setVariable ["ACME_CS_FlipLockedUntil", 0];
+    uiNamespace setVariable ["ACME_CS_FlipTarget", ""];
+    uiNamespace setVariable ["ACME_CS_VirtualFlip", false];
 
     if (!isNull _display) then {
         private _b = _display displayCtrl 86426;
@@ -89,19 +97,33 @@ if (!_started) exitWith {
     };
 
     if (!isNull _provider && {local _provider}) then {
-        private _holdEpoch = [_provider,_patient] call ACME_fnc_chestSealProviderHoldStart;
-        _provider setVariable ["ACME_CS_providerHoldEpoch",_holdEpoch,false];
-        uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch",_holdEpoch];
+        private _holdEpoch = [_provider, _patient, true] call ACME_fnc_chestSealProviderHoldStart;
+        _provider setVariable ["ACME_CS_providerHoldEpoch", _holdEpoch, false];
+        uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch", _holdEpoch];
 
-        if ((_provider getVariable ["ACME_DP_PauseTreatmentClass",""]) == "chestsealflip") then {
-            _provider setVariable ["ACME_DP_Paused",false];
-            _provider setVariable ["ACME_DP_PauseTreatmentClass",""];
-            _provider setVariable ["ACME_DP_TreatmentBusy",false];
-            _provider setVariable ["ACME_DP_IdleStart",CBA_missionTime];
+        if ((_provider getVariable ["ACME_DP_PauseTreatmentClass", ""]) == "chestsealflip") then {
+            _provider setVariable ["ACME_DP_Paused", false];
+            _provider setVariable ["ACME_DP_PauseTreatmentClass", ""];
+            _provider setVariable ["ACME_DP_TreatmentBusy", false];
+            _provider setVariable ["ACME_DP_IdleStart", CBA_missionTime];
         };
     };
 };
 
-private _args = [_patient,_provider,_display,_session,_token,_epoch,_rollToken,_newSide,_rollTime,-1,_now + 5.5];
-private _flipPFH = [{_this call ACME_fnc_chestSealFlipTick;},0,_args] call CBA_fnc_addPerFrameHandler;
+// The diagram and casualty move together immediately. chestSealRoll revalidates owner-side eligibility and uses
+// an immediate priority-2 patient animation lease for this button path.
+uiNamespace setVariable ["ACME_CS_Side", _newSide];
+uiNamespace setVariable ["ACME_CS_FlipTarget", _newSide];
+uiNamespace setVariable ["ACME_CS_FlipLockedUntil", _now + _rollTime];
+[_patient, _newSide, false, _provider, false, true] call ACME_fnc_chestSealRoll;
+[] call ACME_fnc_chestSealRender;
+
+private _providerNative = missionNamespace getVariable ["ACME_rollProviderDuration", 2.2];
+if !(_providerNative isEqualType 0 && {finite _providerNative} && {_providerNative > 0}) then {_providerNative = 2.2;};
+private _providerWall = (_providerNative / (call ACME_fnc_choreographyRate)) + 0.55;
+private _deadline = _now + ((_providerWall max (_rollTime + 0.35)) min 3.0);
+
+private _args = [_patient, _provider, _display, _session, _token, _epoch, _rollToken,
+    _newSide, _rollTime, _now, _deadline];
+private _flipPFH = [{_this call ACME_fnc_chestSealFlipTick;}, 0, _args] call CBA_fnc_addPerFrameHandler;
 uiNamespace setVariable ["ACME_CS_FlipPFH", _flipPFH];
