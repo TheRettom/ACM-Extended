@@ -206,7 +206,7 @@ def test_priority_two_entry_is_scoped_to_explicit_immediate_chest_procedure_path
     assert 'if (_state param [18, false]) then {' in pose
     assert '[_medic, _main, 2] call ACME_fnc_doAnim;' in pose
     assert 'private _animPriority = [1, 2] select _immediate;' in roll
-    assert 'private _lockPriority = [3, 4] select _immediate;' in roll
+    assert 'private _lockPriority = [3, 100] select _immediate;' in roll
     assert 'if (!_immediate) then {' in roll
     assert '[_p, _trans, 2] call ACME_fnc_doAnim;' in roll
     assert '_medic switchMove [_main, _phase, 1, false];' in sync
