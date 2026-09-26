@@ -49,6 +49,24 @@
     [_patient] call FUNC(tickPatient);
 }] call CBA_fnc_addEventHandler;
 
+// Improper burn care still matters. A 2nd/3rd-degree burn covered with a generic dressing
+// instead of the silver nylon dressing or burn cream produces additional pain. This preserves
+// the imported treatment distinction without letting the dressing callback own systemic physiology.
+[QACEGVAR(medical_treatment,bandageLocal), {
+    params ["_patient", "_bodyPart", "_bandageClass"];
+    if (!GVAR(burnsEnabled)) exitWith {};
+    if (_bandageClass in ["ACM_SilverNylonDressing", "ACM_BurnCream"]) exitWith {};
+
+    private _woundNames = ACEGVAR(medical_damage,woundClassNames);
+    private _partKey = toLower _bodyPart;
+    private _wounds = ((_patient getVariable [VAR_OPEN_WOUNDS, createHashMap]) getOrDefault [_partKey, []])
+                    + ((_patient getVariable [VAR_BANDAGED_WOUNDS, createHashMap]) getOrDefault [_partKey, []]);
+
+    if ((_wounds findIf {(_woundNames param [floor ((_x select 0) / 10), ""]) in ["Burn2", "Burn3"]}) > -1) then {
+        [_patient, BURN_WRONG_DRESSING_PAIN] call ACEFUNC(medical_status,adjustPainLevel);
+    };
+}] call CBA_fnc_addEventHandler;
+
 // One locality-safe worker. No per-casualty PFH survives ownership migration.
 if (isNil QGVAR(runtimePFH)) then {
     GVAR(runtimePFH) = [{
