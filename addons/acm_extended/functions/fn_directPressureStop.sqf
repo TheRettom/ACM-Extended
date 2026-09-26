@@ -5,8 +5,17 @@ params [["_silent", false, [false]], ["_medic", ACE_player, [objNull]]];
 if (isNull _medic) exitWith {};
 
 private _wasActive = _medic getVariable ["ACME_DP_Active", false];
+private _pending = _medic getVariable ["ACME_DP_ClaimPending", []];
 private _patient = _medic getVariable ["ACME_DP_Patient", objNull];
 private _part = _medic getVariable ["ACME_DP_Part", ""];
+private _claimToken = _medic getVariable ["ACME_DP_ClaimToken", ""];
+private _claimEpoch = _medic getVariable ["ACME_DP_ClaimEpoch", -1];
+if (!_wasActive && {_pending isEqualType []} && {count _pending >= 4}) then {
+    _patient = _pending select 0;
+    _part = _pending select 1;
+    _claimToken = _pending select 2;
+    _claimEpoch = _pending select 3;
+};
 private _wasInPose = _medic getVariable ["ACME_DP_InPose", false];
 private _stateBefore = toLower animationState _medic;
 private _otherManeuver = (missionNamespace getVariable ["ACM_core_ContinuousAction_Active", false])
@@ -30,7 +39,12 @@ if (_d3 >= 0) then {removeMissionEventHandler ["Draw3D", _d3];};
 if (!_otherManeuver) then {[] call ace_interaction_fnc_hideMouseHint;};
 
 if (!isNull _patient && {_part != ""}) then {
-    [_patient, "directPressureMarker", [_medic, _part, false]] call ACME_fnc_ownerDispatch;
+    if (_claimToken != "") then {
+        [_patient, "directPressureClaim", ["release", [_medic, _part, _claimToken, _claimEpoch, owner _medic]]] call ACME_fnc_ownerDispatch;
+    } else {
+        // Compatibility cleanup for an episode created before atomic claims existed.
+        [_patient, "directPressureMarker", [_medic, _part, false]] call ACME_fnc_ownerDispatch;
+    };
 };
 
 // Break only our decorative hold. Priority 2 remains a narrow safety fallback when the engine is physically still
@@ -65,7 +79,10 @@ if (!_otherManeuver && {local _medic} && {alive _medic} && {isNull objectParent 
     ["ACME_DP_ClinicalYieldStart", 0],
     ["ACME_DP_PauseTreatmentClass", ""],
     ["ACME_DP_TreatmentBusy", false],
-    ["ACME_DP_OwnsContinuous", false]
+    ["ACME_DP_OwnsContinuous", false],
+    ["ACME_DP_ClaimPending", []],
+    ["ACME_DP_ClaimToken", ""],
+    ["ACME_DP_ClaimEpoch", -1]
 ];
 
 if (_wasActive) then {
