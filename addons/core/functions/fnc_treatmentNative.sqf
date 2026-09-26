@@ -301,7 +301,11 @@ if (_callbackProgress isEqualTo {}) then {
     ACEFUNC(medical_treatment,treatmentFailure),
     getText (_config >> "displayNameProgress"),
     _callbackProgress,
-    ["isNotInside", "isNotSwimming", "isNotInZeus"]
+    ([["isNotInside", "isNotSwimming", "isNotInZeus"], ["isNotInside", "isNotSwimming"]] select (
+        hasInterface
+        && {_medic isEqualTo (call ACME_fnc_controlledProvider)}
+        && {_medic isNotEqualTo player}
+    ))
 ] call ACEFUNC(common,progressBar);
 
 true
