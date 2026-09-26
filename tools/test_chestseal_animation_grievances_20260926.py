@@ -28,6 +28,8 @@ def test_medic1_is_ncd_only_not_chest_seal_apply():
     assert 'call ACME_fnc_treatmentGesture' not in apply
     assert '[_medic,"ncdSeat"' not in apply
     assert '[_medic, "ncdSeat"' not in apply
+    assert '"ncdSeat"' in apply  # cancellation-only: an old NCD pose must be retired before medic3 starts
+    assert apply.index('call ACME_fnc_treatmentPoseStop') < apply.index('"chestSeal", _duration, _patient, true] call ACME_fnc_treatmentPoseStart')
 
 def test_flip_preempts_apply_and_provider_pose_on_the_click():
     flip = read("fn_chestSealFlip.sqf")
