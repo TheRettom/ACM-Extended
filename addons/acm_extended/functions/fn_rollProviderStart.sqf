@@ -7,7 +7,12 @@
  * Movement cancels the provider theatre immediately. The patient roll itself remains owned by the action that
  * requested it and is not cancelled by moving the provider.
  */
-params [["_medic", objNull, [objNull]], ["_source", "", [""]], ["_patient", objNull, [objNull]]];
+params [
+    ["_medic", objNull, [objNull]],
+    ["_source", "", [""]],
+    ["_patient", objNull, [objNull]],
+    ["_forceImmediate", false, [false]]
+];
 if (isNull _medic || {!local _medic} || {!alive _medic}) exitWith {false};
 if ([_medic] call ACME_fnc_animBlocked) exitWith {false};
 
@@ -21,7 +26,7 @@ _medic setVariable ["ACME_rollProviderSource", _source];
 _medic setVariable ["ACME_rollProviderStarted", diag_tickTime];
 
 private _duration = missionNamespace getVariable ["ACME_rollProviderDuration", 2.2];
-private _poseEpoch = [_medic, "roll", _duration, _patient] call ACME_fnc_treatmentPoseStart;
+private _poseEpoch = [_medic, "roll", _duration, _patient, _forceImmediate] call ACME_fnc_treatmentPoseStart;
 if (_poseEpoch < 0) exitWith {
     _medic setVariable ["ACME_rollProviderActive", false];
     _medic setVariable ["ACME_rollProviderToken", ""];
@@ -45,7 +50,9 @@ private _finish = {
 [{
     params ["_unit", "_tok", "_epoch", "_fnFinish"];
     [_unit, _tok, _epoch, false] call _fnFinish;
-}, [_medic, _token, _poseEpoch, _finish], _duration + 2.5] call CBA_fnc_waitAndExecute;
+}, [_medic, _token, _poseEpoch, _finish],
+    if (_forceImmediate) then {(_duration / (call ACME_fnc_choreographyRate)) + 0.65} else {_duration + 2.5}
+] call CBA_fnc_waitAndExecute;
 
 private _pfh = [{
     params ["_args", "_id"];
