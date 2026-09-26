@@ -33,3 +33,7 @@ if (_sepsisPFH != -1) then {[_sepsisPFH] call CBA_fnc_removePerFrameHandler;};
     [QGVAR(Preload_Mult),1,true],
     [QGVAR(Coag_Mult),1,true]
 ];
+
+if (!isNil QGVAR(activePatients)) then {
+    GVAR(activePatients) = GVAR(activePatients) - [_patient];
+};
