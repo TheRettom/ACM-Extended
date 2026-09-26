@@ -103,11 +103,11 @@ def test_burn_and_sepsis_flow_through_authoritative_acme_endpoints():
 
     bp = read("addons/acm_extended/functions/fn_bpCompute.sqf")
     assert "ACM_burns_EffectiveVolumeDeficitL" in bp
-    assert "ACM_infection_Preload_Mult" in bp
+    assert "ACM_infection_EffectiveVolumeDeficitL" in bp
 
     do2 = read("addons/acm_extended/functions/fn_oxygenDelivery.sqf")
     assert "ACM_burns_EffectiveVolumeDeficitL" in do2
-    assert "ACM_infection_Preload_Mult" in do2
+    assert "ACM_infection_EffectiveVolumeDeficitL" in do2
 
     circ = read("addons/acm_extended/functions/fn_circHandle.sqf")
     assert "ACM_infection_Metabolic_Demand" in circ
