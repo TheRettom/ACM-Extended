@@ -42,6 +42,9 @@ if (!_stillValid) exitWith {
 _medic setVariable ["ACME_DP_ClaimToken",_token,true];
 _medic setVariable ["ACME_DP_ClaimEpoch",_epoch,true];
 
+[_patient,0.85] call ACME_fnc_markImportantSfx;
+[_medic,"ACME_DirectPressure"] remoteExec ["say3D",0];
+
 if (_part == "body") then {
     [_medic,_patient,_part] call ACME_fnc_directPressureTorso;
 } else {
