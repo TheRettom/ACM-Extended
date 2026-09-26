@@ -41,9 +41,8 @@ ACME_visualFx_ketamineGeneralRiseSec = 8.5;
 ACME_visualFx_ketamineGeneralFallSec = 7.0;
 ACME_visualFx_tunnelStart = 0.50; // same severe-range onset used by the ACM-style radial tunnel profile
 
-// Ketamine perceptual layering is intentionally dose-banded in fn_visualFxTick: sub-dissociative exposure favors
-// mild blur/diplopia + subtle vividness and motion-lag; stronger depth/zoom and chromatic separation arrive later.
-// ACME reproduces the magnitude of ACM's former ketamine chromatic pulse inside ONE PP handle. 0.86 comes close
-// to the old stacked ACM+ACME look without actually running two competing ChromAberration effects.
+// Ketamine perceptual layering is intentionally dose-banded in fn_visualFxTick. Analgesic exposure gets only
+// subtle WetDistortion near the upper end; chromatic/color separation starts above that band. Ketamine never owns
+// DynamicBlur or RadialBlur. ACME keeps ACM's former chromatic character in ONE gated PP handle at higher exposure.
 ACME_visualFx_ketamineLegacyChromEquivalentScale = 1.00;
 
