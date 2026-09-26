@@ -50,7 +50,7 @@ if (!isNull _medic && {local _medic}) then {
     if (_placeEpoch >= 0) then {
         private _applyPFH = [{
             params ["_args", "_pfh"];
-            _args params ["_m", "_p", "_epoch", "_serial", "_endsAt", "_lastAssert"];
+            _args params ["_m", "_p", "_epoch", "_serial", "_endsAt", "_lastAssert", "_asserts"];
 
             private _currentSerial = uiNamespace getVariable ["ACME_CS_ApplyAnimSerial", -1];
             private _display = uiNamespace getVariable ["ACME_CS_DLG", displayNull];
@@ -84,9 +84,11 @@ if (!isNull _medic && {local _medic}) then {
                 // Keep the exact medic3 state for the bounded placement window. Priority 2 is scoped to this
                 // already-owned chest procedure and prevents an old treatment-end RTM from resurfacing.
                 if ((toLowerANSI animationState _m) != "ainvpknlmstpsnonwnondnon_medic3"
-                    && {_now - _lastAssert >= 0.10}) then {
+                    && {_now - _lastAssert >= 0.10}
+                    && {_asserts < 3}) then {
                     [_m, "AinvPknlMstpSnonWnonDnon_medic3", 2] call ACME_fnc_doAnim;
                     _args set [5, _now];
+                    _args set [6, _asserts + 1];
                 };
             };
 
@@ -104,7 +106,7 @@ if (!isNull _medic && {local _medic}) then {
             private _holdEpoch = [_m, _p, true] call ACME_fnc_chestSealProviderHoldStart;
             _m setVariable ["ACME_CS_providerHoldEpoch", _holdEpoch, false];
             uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch", _holdEpoch];
-        }, 0.05, [_medic, _patient, _placeEpoch, _serial, _endsAt, -1e6]] call CBA_fnc_addPerFrameHandler;
+        }, 0.05, [_medic, _patient, _placeEpoch, _serial, _endsAt, -1e6, 0]] call CBA_fnc_addPerFrameHandler;
         uiNamespace setVariable ["ACME_CS_ApplyPFH", _applyPFH];
     } else {
         uiNamespace setVariable ["ACME_CS_ApplyGestureUntil", 0];
