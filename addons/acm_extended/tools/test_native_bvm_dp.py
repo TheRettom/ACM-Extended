@@ -50,6 +50,7 @@ def setup():
         ACME_fnc_bodyPartName = {_this select 0};
         ACME_fnc_medLog = {_pressureLogs pushBack _this;};
         ACME_fnc_directPressureHasFracture = {false};
+        ACME_fnc_clinicalEpoch = {0};
         ACM_damage_fnc_clotWoundsOnBodyPart = {};
         ace_medical_status_fnc_updateWoundBloodLoss = {};
         CBA_fnc_execNextFrame = {_waits pushBack [_this select 0,_this select 1];};
