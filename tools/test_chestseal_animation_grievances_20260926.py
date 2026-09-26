@@ -17,6 +17,7 @@ def test_seal_placement_is_exact_unarmed_medic3_for_265_seconds():
     assert '[_m, "AinvPknlMstpSnonWnonDnon_medic3", 2] call ACME_fnc_doAnim;' in apply
     assert '_asserts < 3' in apply
     assert '[_m, "chestSeal", _epoch, true] call ACME_fnc_treatmentPoseStop;' in apply
+    assert '}, [_medic, _patient, _placeEpoch, _serial], _duration] call CBA_fnc_waitAndExecute;' in apply
     assert '[_m, _p, true] call ACME_fnc_chestSealProviderHoldStart' in apply
 
 def test_medic1_is_ncd_only_not_chest_seal_apply():
