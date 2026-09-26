@@ -24,3 +24,7 @@ params ["_patient"];
     [QGVAR(InfectionRiskMult),1,true],
     [QGVAR(LastTickLocal),-1,false]
 ];
+
+if (!isNil QGVAR(activePatients)) then {
+    GVAR(activePatients) = GVAR(activePatients) - [_patient];
+};
