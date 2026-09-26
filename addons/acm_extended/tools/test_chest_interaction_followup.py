@@ -12,19 +12,17 @@ def fn(name):
     return (ADDON / "functions" / f"fn_{name}.sqf").read_text(encoding="utf-8-sig")
 
 
-def test_patient_flip_cannot_dispatch_from_the_button_or_prep_state():
+def test_patient_flip_dispatches_immediately_and_preempts_provider_animation():
     request = fn("chestSealFlip")
     wait = fn("chestSealFlipTick")
-    assert "call ACME_fnc_chestSealRoll" not in request
-    assert wait.count("call ACME_fnc_chestSealRoll") == 1
-    dispatch = wait.index("call ACME_fnc_chestSealRoll")
-    assert wait.index("(toLowerANSI animationState _provider) == _work") < dispatch
-    assert wait.index('(_pose param [3,-2]) >= 1') < dispatch
-    assert wait.index("_args set [9,diag_tickTime]") < dispatch
-    for guard in ("ACME_CS_SessionToken", "ACME_CS_FlipPendingToken",
-                  "ACME_rollProviderToken", '(_pose param [0,-2]) != _epoch',
-                  "diag_tickTime >= _deadline"):
-        assert guard in wait[:dispatch]
+    assert request.count("call ACME_fnc_chestSealRoll") == 1
+    assert "call ACME_fnc_chestSealRoll" not in wait
+    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in request
+    assert '[_patient, _newSide, false, _provider, false, true] call ACME_fnc_chestSealRoll' in request
+    assert request.index('ACME_CS_ApplyAnimSerial') < request.index('call ACME_fnc_rollProviderStart')
+    assert request.index('call ACME_fnc_treatmentPoseStop') < request.index('call ACME_fnc_rollProviderStart')
+    assert 'animationState _provider' not in wait
+    assert 'if (_rollStarted < 0) exitWith {call _finish;};' in wait
 
 
 def test_closing_a_panel_invalidates_pending_roll_before_restoration():
