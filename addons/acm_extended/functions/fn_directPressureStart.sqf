@@ -29,4 +29,5 @@ if !((_medic getVariable ["ACME_DP_ClaimPending", []]) isEqualTo []) exitWith {
 private _epoch = [_patient] call ACME_fnc_clinicalEpoch;
 private _token = format ["%1:%2:%3:%4", owner _medic, netId _medic, diag_frameNo, serverTime];
 _medic setVariable ["ACME_DP_ClaimPending", [_patient, _bodyPart, _token, _epoch], false];
+_medic setVariable ["ACME_DP_ClaimRequestedAt", diag_tickTime, false];
 [_patient, "directPressureClaim", ["claim", [_medic, _bodyPart, _token, _epoch, owner _medic]]] call ACME_fnc_ownerDispatch;
