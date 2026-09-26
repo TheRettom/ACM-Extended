@@ -94,7 +94,7 @@ if (_stage == 3) then {[_patient] call FUNC(handleSepsisPFH);};
 // Infection requests a fever setpoint. ACME's thermal writer decides the actual temperature after
 // hemorrhage, environment, burns and rewarming have all contributed.
 private _feverOffset = [0,0.6,1.6,2.6] select (_stage max 0 min 3);
-_patient setVariable [QGVAR(Fever_Offset), _feverOffset, true];
+[_patient,QGVAR(Fever_Offset),_feverOffset,0.01,5] call ACME_fnc_setVarNetApprox;
 
 private _temp = _patient getVariable ["ACME_hypo_temp", 37];
 private _feverC = (_temp - 37) max 0;
@@ -174,18 +174,13 @@ if (_permanent) then {
     _coagMult = _coagMult max 1.10;
 };
 
-{
-    _x params ["_name","_value"];
-    _patient setVariable [_name,_value,true];
-} forEach [
-    [QGVAR(HR_Adjust),_hrAdj],
-    [QGVAR(RR_Adjust),_rrAdj],
-    [QGVAR(Resistance_Delta),_resistDelta],
-    [QGVAR(Metabolic_Demand),_metabolicDemand],
-    [QGVAR(EffectiveVolumeDeficitL),_effectiveVolumeDeficitL],
-    [QGVAR(Coag_Mult),_coagMult],
-    [QGVAR(Sepsis_Severity),_sepsisSeverity]
-];
+[_patient,QGVAR(HR_Adjust),_hrAdj,0.05,5] call ACME_fnc_setVarNetApprox;
+[_patient,QGVAR(RR_Adjust),_rrAdj,0.05,5] call ACME_fnc_setVarNetApprox;
+[_patient,QGVAR(Resistance_Delta),_resistDelta,0.05,5] call ACME_fnc_setVarNetApprox;
+[_patient,QGVAR(Metabolic_Demand),_metabolicDemand,0.002,5] call ACME_fnc_setVarNetApprox;
+[_patient,QGVAR(EffectiveVolumeDeficitL),_effectiveVolumeDeficitL,0.005,5] call ACME_fnc_setVarNetApprox;
+[_patient,QGVAR(Coag_Mult),_coagMult,0.002,5] call ACME_fnc_setVarNetApprox;
+[_patient,QGVAR(Sepsis_Severity),_sepsisSeverity,0.005,5] call ACME_fnc_setVarNetApprox;
 
 if ((_stage >= 2 || {_permanent}) && {!isNil "ACME_circ_activePatients"}) then {
     ACME_circ_activePatients pushBackUnique _patient;
