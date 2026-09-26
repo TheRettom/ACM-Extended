@@ -38,7 +38,8 @@ def test_movement_queues_are_explicit_priority_one():
     assert '[_medic, _transition, 1] call ACME_fnc_doAnim;' in pose
     assert '[_medic, _main, 1] call ACME_fnc_doAnim;' in pose
     assert 'call ACME_fnc_patientAnimRequest' in roll
-    assert '_trans, 1, "chest-seal-roll"' in roll
+    assert 'private _animPriority = [1, 2] select _immediate;' in roll
+    assert 'private _lockPriority = [3, 4] select _immediate;' in roll
     assert '[_medic, _kneel, 0] call ACME_fnc_doAnim;' in menu
 
 def test_hang_bag_normal_entry_and_exit_blend():
@@ -83,6 +84,7 @@ def test_remaining_hard_switches_are_known_state_locks_only():
     assert '_medic switchMove [_main, _phase, 1, false];' in pose
     assert '_medic switchMove [_main, _phase, 1, false];' in sync
     assert '["ace_common_switchMove", [_p, _hold]] call CBA_fnc_globalEvent;' in roll
-    # Ordinary work and roll entry still start through priority-one interpolation.
+    # Ordinary work remains interpolated; the explicit chest-seal Flip path is the scoped hard-preemption exception.
     assert '[_medic, _main, 1] call ACME_fnc_doAnim;' in pose
-    assert '_trans, 1, "chest-seal-roll"' in roll
+    assert 'if (_state param [18, false]) then {' in pose
+    assert 'private _animPriority = [1, 2] select _immediate;' in roll
