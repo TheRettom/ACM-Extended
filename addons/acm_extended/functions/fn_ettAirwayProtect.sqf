@@ -17,6 +17,9 @@
 params ["_patient"];
 if (isNull _patient || {!alive _patient} || {!(_patient isKindOf "CAManBase")}) exitWith {};
 if (!(_patient getVariable ["ACME_ETT_Inserted", false])) exitWith {};
+// A migrated cuff sitting at the cords is no longer a protected tracheal airway. The migration/obstruction
+// worker owns that failure state until the tube is repositioned or removed; do not erase its obstruction here.
+if (_patient getVariable ["ACME_ETT_Obstructing", false]) exitWith {};
 // and the cuff has to be up. an uninflated cuff neither seals the trachea nor keeps anything out of it, so a tube
 // sitting there with a flat cuff protects nothing. this is the one thing the tube costs over a supraglottic: the
 // prep. Once the cuff is inflated it adds the tube's stronger aspiration seal; the airway-state function also
