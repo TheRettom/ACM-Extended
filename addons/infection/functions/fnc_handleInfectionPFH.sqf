@@ -125,6 +125,14 @@ if (!_permanent && {_stage == 3} && {missionNamespace getVariable ["ACME_hcEff_i
     };
 };
 
+if (_permanent && {!(_patient getVariable ["ACME_requiresEvac",false])}) then {
+    if (!isNil "ACME_fnc_evacuationRequirementCommit") then {
+        [_patient,true,true,true,false] call ACME_fnc_evacuationRequirementCommit;
+    } else {
+        _patient setVariable ["ACME_requiresEvac",true,true];
+    };
+};
+
 // Source-separated drives. ACME's existing endpoints compose them exactly once.
 private _hrAdj = switch (_stage) do {
     case 1: {3};
