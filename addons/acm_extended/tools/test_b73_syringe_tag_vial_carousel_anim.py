@@ -185,7 +185,8 @@ def test_other_current_medical_transition_entries_use_priority_one():
     ]:
         assert state in seq
     assert 'call ACME_fnc_patientAnimRequest' in roll
-    assert '_trans, 1, "chest-seal-roll"' in roll
+    assert '["_immediate", false, [false]]' in roll
+    assert 'private _animPriority = [1, 2] select _immediate;' in roll
 
 def test_animation_helpers_default_to_interpolated_priority_one():
     held = txt('functions/fn_doAnimHeld.sqf')
