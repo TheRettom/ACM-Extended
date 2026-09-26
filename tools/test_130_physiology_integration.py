@@ -115,6 +115,8 @@ def test_burn_and_sepsis_flow_through_authoritative_acme_endpoints():
 
     coag = read("addons/acm_extended/functions/fn_coagulationTick.sqf")
     assert "ACM_infection_Coag_Mult" in coag
+    assert 'ACME_ca_coagBaseMult",_base' in coag
+    assert 'ACME_ca_coagBaseMult",_pathologyBase' not in coag
 
     temp = read("addons/acm_extended/functions/fn_hypothermiaTick.sqf")
     assert "ACM_burns_HeatLossDrive" in temp
@@ -189,6 +191,7 @@ def test_ocular_irritation_and_structural_trauma_are_separate():
     assert 'ACME_hcEff_ophthalmology' in structural
     assert "structuralRecoveryMinutes" in structural
     assert "ACME_requiresEvac" in structural
+    assert "private _permanent" in structural
 
     blast = read("addons/ophthalmology/functions/fnc_handleExplosion.sqf")
     assert "ACE_player) exitWith" not in blast
@@ -214,3 +217,16 @@ def test_efak_remains_optional_and_not_bundled():
     assert not (ROOT / "addons/FAK-main").exists()
     inventory = read("addons/acm_extended/functions/fn_itemCount.sqf")
     assert "efak_medical_fnc_countItem" in inventory
+
+
+def test_130_debug_overlay_exposes_integrated_physiology():
+    debug = read("addons/acm_extended/functions/fn_debugMenuClinical.sqf")
+    assert "1.3 PHYSIOLOGY" in debug
+    for name in [
+        "ACM_burns_BurnBurden",
+        "ACM_infection_Sepsis_Severity",
+        "ACM_infection_EffectiveVolumeDeficitL",
+        "ACM_ophthalmology_eyeInjuries",
+        "ACME_laryngo_vagalUntil",
+    ]:
+        assert name in debug
