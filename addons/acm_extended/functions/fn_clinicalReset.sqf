@@ -34,7 +34,7 @@ if (_phase == "begin") exitWith {
         _patient setVariable [_x, nil, true];
     } forEach [
         "ACME_laryngo_pool", "ACME_laryngo_poolVomit", "ACME_laryngo_poolBlood",
-        "ACME_laryngo_emesis", "ACME_laryngo_secretions"
+        "ACME_laryngo_emesis", "ACME_laryngo_secretions", "ACME_airwayBloodEventSerial"
     ];
 
     _patient setVariable ["ACME_alt_ptxSample", nil, false];
