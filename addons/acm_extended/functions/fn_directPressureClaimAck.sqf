@@ -11,6 +11,7 @@ private _same = (_pending isEqualType []) && {count _pending >= 4}
 if (!_same) exitWith {};
 
 _medic setVariable ["ACME_DP_ClaimPending",[],false];
+_medic setVariable ["ACME_DP_ClaimRequestedAt",-1,false];
 
 private _stillValid = _accepted
     && {!isNull _patient}
