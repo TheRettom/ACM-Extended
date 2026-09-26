@@ -48,7 +48,7 @@ private _validAccess = [
     GVAR(TransfusionMenu_Selected_AccessSite)
 ] call ACME_fnc_transfusionAccessValid;
 if (!_validAccess) exitWith {
-    ["Establish and select an IV or IO before hanging fluid.",2.5,ACE_player,13] call ACEFUNC(common,displayTextStructured);
+    ["Establish and select an IV or IO before hanging fluid.",2.5,_medic,13] call ACEFUNC(common,displayTextStructured);
 };
 
 private _vehicle = objectParent _medic;
