@@ -9,6 +9,7 @@
   ["ACM_burns_AirwayBurnOnset", "cba", true, true],
   ["ACM_burns_AirwayInflammation", "", true, true],
   ["ACM_burns_BurnSurface", "", true, true],
+  ["ACM_burns_BurnProtected", "", true, true],
   ["ACM_burns_BurnBurden", "", true, true],
   ["ACM_burns_SystemicBurden", "", true, true],
   ["ACM_burns_LastBurnAt", "cba", true, true],
