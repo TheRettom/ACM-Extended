@@ -17,13 +17,17 @@ if (isNull _patient) exitWith {[[], "", 0]};
 
 private _vom = (_patient getVariable ["ACM_airway_AirwayObstructionVomit_State", 0]) max 0;
 private _blood = (_patient getVariable ["ACM_airway_AirwayObstructionBlood_State", 0]) max 0;
+private _bloodEvent = (_patient getVariable ["ACME_airwayBloodEventSerial", 0]) max 0;
+// Older casualties/builds may have no event serial yet. Preserve their current contents without inventing
+// additional events; the first owner-side bleed event will establish the serial.
+if (_bloodEvent <= 0 && {_blood > 0}) then {_bloodEvent = _blood;};
 private _secretions = _patient getVariable ["ACME_laryngo_secretions", []];
 private _secretionStage = (_secretions param [1, 0]) max 0 min 4;
 private _legacy = +(_patient getVariable ["ACME_laryngo_pool", []]);
 
 private _remainingFor = {
-    params ["_ledgerVar", "_native", "_perEvent", "_cap", "_kind", "_legacy"];
-    if (_native <= 0) exitWith {0};
+    params ["_ledgerVar", "_active", "_eventSerial", "_perEvent", "_cap", "_kind", "_legacy"];
+    if (!_active || {_eventSerial <= 0}) exitWith {0};
 
     private _ledger = +(_patient getVariable [_ledgerVar, []]);
     private _seen = 0;
@@ -53,23 +57,23 @@ private _remainingFor = {
     };
 
     // With no prior debit ledger, the current native count is the initial physical contents.
-    if (_seen <= 0 && {_remaining <= 0}) exitWith {(_native * _perEvent) min _cap};
+    if (_seen <= 0 && {_remaining <= 0}) exitWith {(_eventSerial * _perEvent) min _cap};
 
     // Native counters increase by event. Add only the newly-created contamination, never the historical total.
-    if (_native > _seen) then {
-        _remaining = (_remaining + ((_native - _seen) * _perEvent)) min _cap;
+    if (_eventSerial > _seen) then {
+        _remaining = (_remaining + ((_eventSerial - _seen) * _perEvent)) min _cap;
     };
 
     // A native clear/reset can only reduce what remains. It can never resurrect an older pool.
-    if (_native < _seen) then {
-        _remaining = _remaining min ((_native * _perEvent) min _cap);
+    if (_eventSerial < _seen) then {
+        _remaining = _remaining min ((_eventSerial * _perEvent) min _cap);
     };
 
     _remaining max 0 min _cap
 };
 
-private _vomitRemaining = ["ACME_laryngo_poolVomit", _vom, 2, 8, "v", _legacy] call _remainingFor;
-private _bloodRemaining = ["ACME_laryngo_poolBlood", _blood, 2, 6, "b", _legacy] call _remainingFor;
+private _vomitRemaining = ["ACME_laryngo_poolVomit", _vom > 0, _vom, 2, 8, "v", _legacy] call _remainingFor;
+private _bloodRemaining = ["ACME_laryngo_poolBlood", _blood > 0, _bloodEvent, 2, 6, "b", _legacy] call _remainingFor;
 
 if (_vom > 0 && {_vomitRemaining > 0}) exitWith {
     [["v", _vom], "v", _vomitRemaining]
