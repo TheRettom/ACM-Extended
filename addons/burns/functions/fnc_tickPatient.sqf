@@ -46,7 +46,7 @@ if ((_now - _lastBurn) > 300) then {
     private _floor = if (_permanent) then {0.18 max (_burden * 0.30)} else {0};
     _systemic = (_systemic - (_dt / _recoverySec)) max _floor;
 };
-_patient setVariable [QGVAR(SystemicBurden),_systemic,true];
+[_patient,QGVAR(SystemicBurden),_systemic,0.002,5] call ACME_fnc_setVarNetApprox;
 
 // Capillary leak is an effective intravascular-volume deficit. It is NOT blood loss: fluids can offset it,
 // hemoglobin is not deleted, and the shock phenotype is not falsely labeled hemorrhagic.
@@ -55,12 +55,12 @@ private _heatLoss = linearConversion [0.05,0.75,_systemic,0,1,true];
 private _hrAdj = 18 * _systemic;
 private _resist = 10 * _systemic;
 
-_patient setVariable [QGVAR(EffectiveVolumeDeficitL),_deficitL,true];
-_patient setVariable [QGVAR(HeatLossDrive),_heatLoss,true];
-_patient setVariable [QGVAR(HR_Adjust),_hrAdj,true];
-_patient setVariable [QGVAR(Resistance_Delta),_resist,true];
-_patient setVariable [QGVAR(ShockSeverity),linearConversion [0.12,0.70,_systemic,0,1,true],true];
-_patient setVariable [QGVAR(InfectionRiskMult),1 + (1.5 * _burden),true];
+[_patient,QGVAR(EffectiveVolumeDeficitL),_deficitL,0.005,5] call ACME_fnc_setVarNetApprox;
+[_patient,QGVAR(HeatLossDrive),_heatLoss,0.005,5] call ACME_fnc_setVarNetApprox;
+[_patient,QGVAR(HR_Adjust),_hrAdj,0.05,5] call ACME_fnc_setVarNetApprox;
+[_patient,QGVAR(Resistance_Delta),_resist,0.05,5] call ACME_fnc_setVarNetApprox;
+[_patient,QGVAR(ShockSeverity),linearConversion [0.12,0.70,_systemic,0,1,true],0.005,5] call ACME_fnc_setVarNetApprox;
+[_patient,QGVAR(InfectionRiskMult),1 + (1.5 * _burden),0.005,5] call ACME_fnc_setVarNetApprox;
 
 // Upper-airway burn edema is its own source. Never overwrite ACM_CBRN_AirwayInflammation.
 if (_patient getVariable [QGVAR(AirwayBurned),false]) then {
@@ -77,7 +77,7 @@ if (_patient getVariable [QGVAR(AirwayBurned),false]) then {
 } else {
     _airway = (_airway - ((10 / 60) * _dt)) max 0;
 };
-_patient setVariable [QGVAR(AirwayInflammation),_airway,true];
+[_patient,QGVAR(AirwayInflammation),_airway,0.05,5] call ACME_fnc_setVarNetApprox;
 
 if ((_systemic > 0.001 || {_airway > 0.001}) && {!isNil "ACME_circ_activePatients"}) then {
     ACME_circ_activePatients pushBackUnique _patient;
