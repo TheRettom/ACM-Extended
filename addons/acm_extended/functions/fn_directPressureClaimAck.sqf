@@ -8,7 +8,13 @@ private _same = (_pending isEqualType []) && {count _pending >= 4}
     && {(_pending select 1) == _part}
     && {(_pending select 2) == _token}
     && {(_pending select 3) == _epoch};
-if (!_same) exitWith {};
+if (!_same) exitWith {
+    // A delayed accepted ACK from a timed-out/superseded request must release only its own owner-side token.
+    // Token matching in directPressureClaimLocal prevents this from touching a newer episode from the same medic.
+    if (_accepted && {!isNull _patient}) then {
+        [_patient,"directPressureClaim",["release",[_medic,_part,_token,_epoch,_providerOwner]]] call ACME_fnc_ownerDispatch;
+    };
+};
 
 _medic setVariable ["ACME_DP_ClaimPending",[],false];
 _medic setVariable ["ACME_DP_ClaimRequestedAt",-1,false];
