@@ -53,7 +53,7 @@ private _token = format ["%1:%2:%3", clientOwner, CBA_missionTime, random 1];
 private _rollTime = missionNamespace getVariable ["ACME_CS_rollTime", 1.85 / (call ACME_fnc_choreographyRate)];
 if (!(_rollTime isEqualType 0) || {!finite _rollTime} || {_rollTime <= 0}) then {_rollTime = 1.85 / (call ACME_fnc_choreographyRate);};
 private _animPriority = [1, 2] select _immediate;
-private _lockPriority = [3, 4] select _immediate;
+private _lockPriority = [3, 100] select _immediate;
 private _leaseToken = [_patient, _trans, _animPriority, "chest-seal-roll", _provider, _rollTime + 0.45, _lockPriority, _token] call ACME_fnc_patientAnimRequest;
 if (_leaseToken == "") exitWith {_patient setVariable ["ACME_CS_rollUntil", -1, false];};
 _patient setVariable ["ACME_CS_rollToken", _token, false];
