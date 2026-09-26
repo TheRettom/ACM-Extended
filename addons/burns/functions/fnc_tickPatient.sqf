@@ -31,6 +31,14 @@ if (!_permanent && {_hardcore} && {_burden >= GVAR(hardcoreEvacBurden)}) then {
     };
 };
 
+if (_permanent && {!(_patient getVariable ["ACME_requiresEvac",false])}) then {
+    if (!isNil "ACME_fnc_evacuationRequirementCommit") then {
+        [_patient,true,true,true,false] call ACME_fnc_evacuationRequirementCommit;
+    } else {
+        _patient setVariable ["ACME_requiresEvac",true,true];
+    };
+};
+
 // The acute leak/thermal load is allowed to settle in ordinary gameplay. Anatomical burn burden remains,
 // preserving wound care and infection risk without making every burn a mission-long hidden debuff.
 if ((_now - _lastBurn) > 300) then {
