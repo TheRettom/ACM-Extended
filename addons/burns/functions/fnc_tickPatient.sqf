@@ -60,7 +60,22 @@ private _resist = 10 * _systemic;
 [_patient,QGVAR(HR_Adjust),_hrAdj,0.05,5] call ACME_fnc_setVarNetApprox;
 [_patient,QGVAR(Resistance_Delta),_resist,0.05,5] call ACME_fnc_setVarNetApprox;
 [_patient,QGVAR(ShockSeverity),linearConversion [0.12,0.70,_systemic,0,1,true],0.005,5] call ACME_fnc_setVarNetApprox;
-[_patient,QGVAR(InfectionRiskMult),1 + (1.5 * _burden),0.005,5] call ACME_fnc_setVarNetApprox;
+
+// Proper burn coverage reduces, but does not abolish, skin-barrier infection risk.
+// A newly inflicted burn clears protection on that region in XEH_postInit.
+private _surface = _patient getVariable [QGVAR(BurnSurface),[0,0,0,0,0,0]];
+private _protected = _patient getVariable [QGVAR(BurnProtected),[false,false,false,false,false,false]];
+private _weights = [0.09,0.36,0.09,0.09,0.18,0.18];
+private _unprotectedBurden = 0;
+if (_surface isEqualType [] && {count _surface == 6} && {_protected isEqualType []} && {count _protected == 6}) then {
+    {
+        private _careMult = [1,0.45] select (_protected select _forEachIndex);
+        _unprotectedBurden = _unprotectedBurden + ((_surface select _forEachIndex) * _x * _careMult);
+    } forEach _weights;
+} else {
+    _unprotectedBurden = _burden;
+};
+[_patient,QGVAR(InfectionRiskMult),1 + (1.5 * (_unprotectedBurden min 1)),0.005,5] call ACME_fnc_setVarNetApprox;
 
 // Upper-airway burn edema is its own source. Never overwrite ACM_CBRN_AirwayInflammation.
 if (_patient getVariable [QGVAR(AirwayBurned),false]) then {
