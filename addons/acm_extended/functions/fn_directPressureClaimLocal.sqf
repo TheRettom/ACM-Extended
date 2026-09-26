@@ -72,8 +72,7 @@ if (!_currentValid && {!isNull _currentMedic || {!(_claim isEqualTo [])}}) then 
     _currentToken = "";
 };
 
-private _validRequest = alive _patient
-    && {alive _medic}
+private _validRequest = alive _medic
     && {!(_medic getVariable ["ACE_isUnconscious",false])}
     && {_providerOwner == owner _medic}
     && {_epoch == ([_patient] call ACME_fnc_clinicalEpoch)}
