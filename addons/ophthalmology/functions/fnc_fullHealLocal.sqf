@@ -27,3 +27,7 @@ if (hasInterface && {_patient isEqualTo ACE_player}) then {
     [false,0] call FUNC(effectEyeInjury);
     [false,[1,1]] call FUNC(effectHurtEye);
 };
+
+if (!isNil QGVAR(activePatients)) then {
+    GVAR(activePatients) = GVAR(activePatients) - [_patient];
+};
