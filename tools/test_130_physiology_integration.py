@@ -159,6 +159,10 @@ def test_ett_has_explicit_better_aspiration_protection_than_igel():
     protect = read("addons/acm_extended/functions/fn_ettAirwayProtect.sqf")
     assert "not equivalent" in protect
     assert "stronger aspiration seal" in protect
+    assert "ACME_ETT_Obstructing" in protect
+
+    airway = read("addons/airway/functions/fnc_getAirwayState.sqf")
+    assert "ACME_ETT_Obstructing" in airway
 
 
 def test_adult_vagal_intubation_reflex_is_transient_and_uses_sole_writers():
