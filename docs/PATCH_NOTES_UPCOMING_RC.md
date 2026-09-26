@@ -1,6 +1,106 @@
-# ACM Extended — Upcoming Release Candidate Patch Notes
+# ACM Extended — 1.2.3 Release Notes
 
-These notes cover the cumulative backlog/stability work from the validated batch series through residual backlog BF. This is still an RC/testing build until live multiplayer acceptance is completed.
+These notes cover the cumulative 1.2.3 changes promoted from the release-candidate series into the stable 1.2.3 build.
+
+## B156 compatibility, shared supplies and animation ownership
+
+- Preserve ACM's scalar medication API while accepting current ACE effect-pair results in Extended readers; repair the native medication summary bridge.
+- Rebuild coagulation's base separately from its combined output, process active patients at 5 Hz, and stop unchanged coagulation broadcasts.
+- Allow patient supplies through ACE's sharing setting across treatment minigames and their medical-menu gates. Keep explicit medication source selection and exact-donor refunds.
+- Prevent stale airway, hemolysis and mercy callbacks from restoring effects after a full heal; resume current native workers after ownership transfer.
+- Use one 1.5x choreography rate, correct observer freeze drift, and restore ACM's animated continuous crouch with generation-safe menu cleanup.
+- Fix repeated medication Save, final partial-push timing and native prepared-dose rounding; preserve source volumes and cancellation receipts.
+- Runtime identity is **1.2.3 / B156**. See [patch details](patch-notes/2026-09-25-1.2.3-b156-compat-supplies-animation.md).
+
+## B155 chest-entry timing and UI follow-up
+
+- Reduced the unified debug menu width and added a subtle shared black background.
+- IV splay copies keep their original colors, fade with distance, and remain beneath the main tray icon.
+- Chest-seal entry tolerates missed provider-animation frames and delayed patient preparation; cancellation and session ownership remain enforced.
+- Fixed the optional tag-font startup lookup, duplicate expansion compilation, and missing Zeus override load-order dependency.
+- Audited the supplied mixed-install RPT and all 14 stale-function reports. External modpack errors remain separately documented.
+- Runtime identity is **1.2.3 / B155**. See [patch details](patch-notes/2026-09-25-1.2.3-b155-entry-ui.md) and [RPT findings](audits/2026-09-25-b155-rpt-audit.md).
+
+## B154 IV tray and debug menu repair
+
+- Rebuilt all 20 IV tray textures with HEMTT. B153's handwritten PAA containers omitted the mipmap offset table; an independent loader reported zero images despite the custom pixel decoder displaying them.
+- The extra-stock `+` is positioned and committed inside its tile before becoming visible. Its position no longer animates from the UI origin.
+- Consolidated the debug display into one transparent overlay, with a wider full-width identity header, yellow section headings and section spacing. Removed debug pages and their navigation controls.
+- The Debug settings category now has one menu toggle. All diagnostic sections appear together.
+- Runtime identity is **1.2.3 / B154**. See [patch details](patch-notes/2026-09-25-1.2.3-b154-ui.md).
+
+## B153 runtime continuation
+
+- Patient spawners create a carrier-equipped unit class directly and retire delayed armor repair before treatment begins.
+- Semi-Fowler's to CPR lowering is covered by the CPR session's cancellation and duplicate-start protection.
+- Delayed direct-pressure pose repair respects incoming interventions and CPR/BVM transfer pauses.
+- IV tray pictures use pre-rendered poses with pixel-correct proportions and upward-only stock fanning.
+- Removed the retired carry-drop override; compatibility warnings retain real conflict checks and explain complete-fork installation.
+- Runtime identity is **1.2.3 / B153**. See [patch details and runtime checks](patch-notes/2026-09-25-1.2.3-b153-runtime.md).
+
+## Player-facing hotfix
+
+- Reworked the IV tray catheter stack so the visible catheter is centered, inventory copies fan upward only with lower opacity, and the extra-stock `+` badge stays inside the tray tile.
+- Tibial IO access no longer passes fluid through a tourniqueted leg or Zone 3 AAJT-S/REBOA occlusion.
+- Stopped Narc Box carousel hover/repaint loops that repeatedly brightened syringes and disturbed the push-duration editor; typed seconds now remain with the prepared syringe.
+- Medication pushes are blocked on an exact IV/IO access while a non-empty Blood, FreshBlood, or FBTK bag remains on that line. Empty/removed blood bags clear the restriction.
+- Medic-role providers can perform thoracostomy but do not see a chest-tube tray slot. Doctor-role providers have access to both.
+- Check Breathing / Inspect Chest now let native ACM own their normal patient roll instead of opening an unnecessary ACME roll-only `Preparing...` state.
+- Range or interaction loss during `Preparing...` terminally cancels that generation, and launch performs a fresh treatment/interaction validation.
+- The `Preparing...` banner is text-only with no black backing panel.
+- Patient-spawner casualties receive the plate carrier during the initial spawn/loadout transaction, before unconsciousness or injury setup.
+- Semi-Fowler without a backpack or carrier is now a provider-held continuous maneuver using the Putdown animation family, frozen at the support frame until release.
+- Manual/unsupported Semi-Fowler cancels on movement, range loss, provider invalidation or a competing flat-required intervention and never auto-resumes.
+- Supported Semi-Fowler stays elevated during BVM. CPR permanently cancels it; BVM -> CPR performs one lay-flat and retains chest-access custody through the handoff.
+- Runtime identity is **1.2.3 / B152** with no RC suffix in the debug menu.
+
+## Wake posture restoration
+
+- Successful on-foot wake requests now restore consciousness into ACM's lying state rather than immediately playing the ordinary ACE wake/get-out animation.
+- `WasTreated` and `Lying_State` are armed before the WakeUp event because ACE calls `setUnconsciousAnim(false)` before publishing `ace_unconscious`.
+- The existing ACM `onUnconscious(false)` flow then consumes `WasTreated`, retains `Lying_State`, and exposes the normal separate Get Up action.
+- Vehicle wake behavior is intentionally unchanged.
+- Runtime identity is **1.2.3 / B150** with no RC suffix in the debug menu.
+
+## Consciousness wake repair
+
+- Fixed the shared wake path used by ammonia inhalant, Slap Awake, Shake Awake, spontaneous waking and painful fracture stimulation.
+- CBA state-machine conditions execute with the patient object as the direct call context. The September 22 wake gate incorrectly treated that context as an argument array, which could terminate the WakeUp transition before the casualty became conscious.
+- `canWake` now explicitly accepts both direct-object state-machine calls and normal array calls.
+- The ACME WakeUp observer now normalizes the direct object event payload before reading it.
+- Fracture-pressure waking now uses the same `requestWake` authority as ammonia/slap instead of publishing its own parallel event.
+- Clinical blockers are preserved: active anesthetic sedation, rocuronium paralysis, active seizure, cardiac arrest and other explicit forced-unconscious states still prevent inappropriate waking.
+- Runtime identity is **1.2.3 / B147 / rc4**.
+
+## Persistent Direct Pressure under CPR / BVM
+
+- Direct BVM start no longer tears down the provider's existing Direct Pressure episode on the same casualty.
+- Direct CPR and BVM entry both mark Direct Pressure as paused, retire only its visual hold generation, and leave the DP worker, inputs, target and accumulated hold state intact.
+- The Direct Pressure worker now treats both provider-local and patient-owner CPR/BVM handoff clocks as higher-priority maneuver ownership, preventing a brief pressure-marker or pose reassertion during the BVM -> CPR delayed swap.
+- Normal BVM treatment-bridge entry now uses the same pre-launch DP pause contract as CPR even when no plate-carrier/Semi-Fowler chest preparation is required.
+- When CPR/BVM and their handoff window are truly finished, Direct Pressure resumes from the existing episode rather than requiring a second Apply Direct Pressure action.
+- Runtime identity is **1.2.3 / B146 / rc3**.
+
+## 1.2.3 RC2 intervention priority and preparation
+
+- Long chest-access preparation is now one-click. The medical menu closes immediately and a top-center **Preparing...** banner owns the transition so CPR/BVM cannot be spam queued.
+- Escape/F0 cancels only the current preparation generation and returns to the medical menu.
+- Carrier-removal provider teardown is now synchronous on the medic machine immediately before native treatment launch; a remote casualty owner can no longer deliver a late pose-stop packet over newly started CPR/BVM.
+- Direct Pressure explicitly recognizes native CPR/BVM ownership. It yields its pose and clinical marker before higher-priority choreography and cannot reassert because the short launcher treatment finished.
+- Semi-Fowler patient choreography uses lower animation-lock priority than interventions, does not seize collision/pin ownership when a higher-priority patient animation is live, and remains suspended until CPR/BVM plus the transfer window are clear.
+- Repeated CPR <-> BVM swaps reuse one stable chest-access lease, reinforced by a patient-owner server-time handoff deadline.
+- Plate-carrier return is accelerated on the casualty itself: 0.75 s lift, 0.02 s hold, 0.88 s lower with a token-scoped 1.60x animation coefficient.
+- Starting another intervention during carrier return is queued immediately after the short restore instead of becoming stranded in preparation.
+
+## 1.2.3 CPR / BVM chest access
+
+- CPR and all explicit BVM variants now share one exact chest-access/plate-carrier preparation path.
+- Plate-carrier custody remains open while either CPR or BVM is active, including repeated middle-mouse swaps.
+- A bounded CPR/BVM handoff token prevents the carrier from being restored during the controller transition gap.
+- Patient-owner restoration independently refuses to re-dress the casualty under active CPR or BVM.
+- Carrier-off choreography now completes in approximately 1.52 seconds using chest-specific timings, without changing Semi-Fowler timing.
+- Removed the synthetic post-removal settle gap so the queued intervention can launch before the medic4 hands-on-chest pose reaches its frozen hold.
+
 
 ## Stability and multiplayer ownership
 
@@ -43,7 +143,7 @@ These notes cover the cumulative backlog/stability work from the validated batch
 ## Direct pressure and procedure interaction
 
 - Preserved Direct Pressure as a non-exclusive treatment state where compatible actions can pause/resume pressure without incorrectly granting clotting time.
-- Retained BVM integration behavior where an accepted BVM interaction ends that provider's pressure episode.
+- CPR/BVM now temporarily yield a same-provider Direct Pressure episode instead of ending it; the pressure marker and provider pose remain suppressed until both maneuver roles and their bounded transfer window are clear.
 - Reconciled pressure ownership and cleanup tests with the current controller model.
 
 ## Medical menu presentation

@@ -13,6 +13,13 @@ private _awakeResist = if (missionNamespace getVariable ["ACME_sys_paralytic", t
 private _tbiResist = if (missionNamespace getVariable ["ACME_sys_tbi", true]) then {_unit getVariable ["ACME_tbi_resistAdd", 0]} else {0};
 private _flightG = if (missionNamespace getVariable ["ACME_sys_flight", true]) then {_unit getVariable ["ACME_flightG_resistAdd", 0]} else {0};
 private _shockResist = _unit getVariable ["ACME_shock_resistDelta", 0];
+private _infectionResist = _unit getVariable ["ACM_infection_Resistance_Delta", 0];
+private _burnResist = _unit getVariable ["ACM_burns_Resistance_Delta", 0];
+private _laryngoVagalResist = 0;
+if (CBA_missionTime < (_unit getVariable ["ACME_laryngo_vagalUntil",-1])) then {
+    private _sev = (_unit getVariable ["ACME_laryngo_vagalSeverity",0]) max 0 min 1;
+    _laryngoVagalResist = -((missionNamespace getVariable ["ACME_laryngo_vagalResistDrop",28]) * _sev);
+};
 
 private _autoPeepDrop = 0;
 private _apVal = _unit getVariable ["ACME_vent_autoPEEP", 0];
@@ -21,7 +28,7 @@ if (_apVal > 2 && {missionNamespace getVariable ["ACME_sys_vent", true]} && {_un
 };
 
 _unit setVariable [VAR_PERIPH_RES,
-    1 max (DEFAULT_PERIPH_RES + _peripheralResistanceAdjustment + _circResist + _pressorAdd + _lidoToxResist + _esmToxResist + _infToxResist + _awakeResist + _tbiResist + _flightG + _shockResist + _autoPeepDrop),
+    1 max (DEFAULT_PERIPH_RES + _peripheralResistanceAdjustment + _circResist + _pressorAdd + _lidoToxResist + _esmToxResist + _infToxResist + _awakeResist + _tbiResist + _flightG + _shockResist + _infectionResist + _burnResist + _laryngoVagalResist + _autoPeepDrop),
     _syncValue
 ];
 _unit setVariable ["ACME_resistanceApplied_tbi", _tbiResist, false];

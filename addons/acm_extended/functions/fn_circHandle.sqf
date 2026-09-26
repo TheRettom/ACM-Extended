@@ -245,7 +245,6 @@ private _getMedEffect = {
     };
     [_patient,"ACME_ca_mapDropEased",_caMAPdrop,0.02,2] call ACME_fnc_setVarNetApprox;
     _state set ["caMAPdrop", _caMAPdrop];
-    private _coagMult = linearConversion [1, _caFloor, _ionizedCa, 1, (missionNamespace getVariable ["ACME_ca_coagMaxMult", 1.4]), true];
 
     // hypothermia, the third leg of the lethal triad. cold impairs the clotting cascade, which is a coagulopathy
     // multiplied onto the calcium one. it blunts the response to catecholamines, because the myocardium is cold,
@@ -253,10 +252,6 @@ private _getMedEffect = {
     // after the shock hr arc. the core temp is in degrees c.
     private _temp = _patient getVariable ["ACME_hypo_temp", 37];
     _state set ["temp", _temp];
-    private _hypoCoag = linearConversion [
-        (missionNamespace getVariable ["ACME_hypo_coagStartTemp", 35]),
-        (missionNamespace getVariable ["ACME_hypo_coagFullTemp", 32]),
-        _temp, 1, (missionNamespace getVariable ["ACME_hypo_coagMaxMult", 1.6]), true];
     private _hypoBlunt = linearConversion [
         (missionNamespace getVariable ["ACME_hypo_bluntStartTemp", 34]),
         (missionNamespace getVariable ["ACME_hypo_bluntFullTemp", 30]),
@@ -282,20 +277,17 @@ private _getMedEffect = {
     // acidosis carried in state, recomputed in the offset section below, which gives a one-tick lag that is
     // immaterial at the accrual rate. correcting acidosis, through restored perfusion or a plasma-lyte buffer,
     // therefore improves clotting as well as the pressor response.
-    private _acidCoag = linearConversion [
-        (missionNamespace getVariable ["ACME_acidosis_coagThreshold", 0.3]),
-        1,
-        (_state getOrDefault ["acidosis", 0]),
-        1,
-        (missionNamespace getVariable ["ACME_acidosis_coagMaxMult", 1.3]),
-        true];
+    private _coagParts = [_patient, _ionizedCa, _state getOrDefault ["acidosis", 0]] call ACME_fnc_coagulationBase;
+    _coagParts params ["_coagBase", "_coagMult", "_hypoCoag", "_acidCoag"];
     _state set ["calciumCoagMult", _coagMult];
     _state set ["hypoCoagMult", _hypoCoag];
     _state set ["acidCoagMult", _acidCoag];
-    // the combined coagulopathy is calcium times hypothermia times acidosis. the native circulation drainer
-    // reads it.
-    [_patient,"ACME_ca_coagMult",(_coagMult * _hypoCoag * _acidCoag),0.005,2] call ACME_fnc_setVarNetApprox;
-    _state set ["coagMult", (_coagMult * _hypoCoag * _acidCoag)];
+    // Circulation owns the base; only coagulationTick publishes the combined bleeding multiplier.
+    // A changed base enrolls immediately, including recovery back to normal.
+    private _previousBase = _patient getVariable ["ACME_ca_coagBaseMult", 1];
+    [_patient,"ACME_ca_coagBaseMult",_coagBase,([0.005,0] select (_coagBase == 1)),0] call ACME_fnc_setVarNetApprox;
+    _state set ["coagMult", _coagBase];
+    if (_coagBase != _previousBase) then {[[_patient]] call ACME_fnc_coagulationTick;};
 
     // Route observations do not synthesize drug dose or turn norepinephrine into epinephrine.
     private _pressorDrive = 0;
@@ -767,6 +759,21 @@ private _getMedEffect = {
         _acidMAPBase = 0;
     };
     private _effMAPpre = (_acidMAPBase + _rawSupport - _shockDrop - _caMAPdrop);
+
+    // The legacy acid baseline intentionally strips most ACME modifiers and rebuilds known support/shock
+    // terms. Burns and sepsis are new source-separated physiology, so their preload/SVR effects would be
+    // invisible to that baseline. When either is active, allow the patient's actual composed MAP to LOWER
+    // the acid perfusion value. Using min() means this cannot manufacture recovery or double-count pressors;
+    // it only exposes disease hypotension the old native-only baseline could not see.
+    private _newDiseaseShock = (_patient getVariable ["ACM_infection_Sepsis_Severity",0]) > 0.001
+        || {(_patient getVariable ["ACM_burns_ShockSeverity",0]) > 0.001};
+    if (_newDiseaseShock && {!_inCardiacArrest}) then {
+        private _bpDisease = [_patient] call ace_medical_status_fnc_getBloodPressure;
+        _bpDisease params [["_dDisease",0],["_sDisease",0]];
+        private _mapDisease = _dDisease + ((_sDisease - _dDisease) / 3);
+        if (_mapDisease > 0) then {_effMAPpre = _effMAPpre min _mapDisease;};
+    };
+
     _state set ["acidMAPBase", _acidMAPBase];
     _state set ["acidEffMAP", _effMAPpre];
     _state set ["acidArrestDriver", _inCardiacArrest];
@@ -829,6 +836,10 @@ private _getMedEffect = {
     if (missionNamespace getVariable ["ACME_sys_do2", true]) then {
         private _do2v = [_patient] call ACME_fnc_oxygenDelivery;
         _state set ["do2", _do2v];
+        // DO2 remains oxygen supply. Infection raises demand, so anaerobic debt keys on supply/demand adequacy.
+        private _metabolicDemand = (_patient getVariable ["ACM_infection_Metabolic_Demand", 1]) max 1;
+        private _do2Adequacy = _do2v / _metabolicDemand;
+        _state set ["do2Adequacy", _do2Adequacy];
 
         // guard 1. a casualty who is awake and saturating is winning. if they are conscious and their SpO2 meets what
         // ACM needs to keep them up, they are perfusing their brain by definition, whatever the delivery arithmetic
@@ -867,12 +878,12 @@ private _getMedEffect = {
         private _clear = missionNamespace getVariable ["ACME_do2_clearFrac", 0.58];
         private _inDeficit = _state getOrDefault ["do2Deficit", false];
         if (_inDeficit) then {
-            if (_do2v >= _clear) then {
+            if (_do2Adequacy >= _clear) then {
                 _inDeficit = false;
                 _state set ["do2RecoveredAt", _now];  // start the reperfusion window.
             };
         } else {
-            if (_do2v < _crit) then { _inDeficit = true; };
+            if (_do2Adequacy < _crit) then { _inDeficit = true; };
         };
         _state set ["do2Deficit", _inDeficit];
         // on ROSC, open the reperfusion window. delivery is climbing back and the tissue is repaying, so the moments
@@ -889,7 +900,7 @@ private _getMedEffect = {
         private _inReperf = (_now - (_state getOrDefault ["do2RecoveredAt", -1e9])) < _reperfWin;
 
         if (_inDeficit && {!_awakeOK} && {!_inReperf} && {!_arrestNow}) then {
-            private _deficit = linearConversion [_crit, (missionNamespace getVariable ["ACME_do2_lethalFrac", 0.2]), _do2v, 0, 1, true];
+            private _deficit = linearConversion [_crit, (missionNamespace getVariable ["ACME_do2_lethalFrac", 0.2]), _do2Adequacy, 0, 1, true];
             _metabolicAcidosis = (_metabolicAcidosis
                 + ((missionNamespace getVariable ["ACME_do2_acidosisPerSec", 0.0009]) * _deficit * _acidDt)) min 1;
         };

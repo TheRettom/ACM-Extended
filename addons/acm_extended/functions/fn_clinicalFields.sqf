@@ -1,6 +1,54 @@
 /* NA4 patient fields: [name, clock-kind, clear-on-full-heal, persist=true].
    Supplier transaction ledgers and runtime handler ownership are not saved patient state. */
 [
+  // 1.3.0 imported physiology is registered here so hard resets, owner restore and
+  // persistent casualties use the same ACME clinical-state contract as native systems.
+  // Derived endpoint drives are clear-on-heal but rebuilt by their owner-local workers,
+  // so they are not serialized.
+  ["ACM_burns_AirwayBurned", "", true, true],
+  ["ACM_burns_AirwayBurnOnset", "cba", true, true],
+  ["ACM_burns_AirwayInflammation", "", true, true],
+  ["ACM_burns_BurnSurface", "", true, true],
+  ["ACM_burns_BurnProtected", "", true, true],
+  ["ACM_burns_BurnBurden", "", true, true],
+  ["ACM_burns_SystemicBurden", "", true, true],
+  ["ACM_burns_LastBurnAt", "cba", true, true],
+  ["ACM_burns_PermanentInjury", "", true, true],
+  ["ACM_burns_EffectiveVolumeDeficitL", "", true, false],
+  ["ACM_burns_HeatLossDrive", "", true, false],
+  ["ACM_burns_HR_Adjust", "", true, false],
+  ["ACM_burns_Resistance_Delta", "", true, false],
+  ["ACM_burns_ShockSeverity", "", true, false],
+  ["ACM_burns_InfectionRiskMult", "", true, false],
+
+  ["ACM_infection_Infection_Stage", "", true, true],
+  ["ACM_infection_Infection_EligibleTime", "cba", true, true],
+  ["ACM_infection_Infection_RiskAccumulator", "", true, true],
+  ["ACM_infection_Infection_NextStageTime", "cba", true, true],
+  ["ACM_infection_Infection_TreatmentAccumulator", "", true, true],
+  ["ACM_infection_Sepsis_Onset", "cba", true, true],
+  ["ACM_infection_Sepsis_Permanent", "", true, true],
+  ["ACM_infection_Fever_Offset", "", true, false],
+  ["ACM_infection_Sepsis_Severity", "", true, false],
+  ["ACM_infection_HR_Adjust", "", true, false],
+  ["ACM_infection_RR_Adjust", "", true, false],
+  ["ACM_infection_Resistance_Delta", "", true, false],
+  ["ACM_infection_Metabolic_Demand", "", true, false],
+  ["ACM_infection_EffectiveVolumeDeficitL", "", true, false],
+  ["ACM_infection_Coag_Mult", "", true, false],
+
+  ["ACM_ophthalmology_dustInjuryLight", "", true, true],
+  ["ACM_ophthalmology_dustInjuryHeavy", "", true, true],
+  ["ACM_ophthalmology_eyeInjuries", "", true, true],
+  ["ACM_ophthalmology_eyeInjurySevere", "", true, true],
+  ["ACM_ophthalmology_ocularPermanent", "", true, true],
+  ["ACM_ophthalmology_eyeShieldItem", "", true, true],
+  ["ACM_ophthalmology_eyeShieldIndex", "", true, true],
+  ["ACM_ophthalmology_eyeShieldAppliedAt", "cba", true, true],
+
+  ["ACME_laryngo_vagalUntil", "cba", true, false],
+  ["ACME_laryngo_vagalSeverity", "", true, false],
+
   // The PTX model stores elapsed durations, never an owner's raw scheduler clock.
   ["ACME_ptx_state", "", true, true],
   ["ACME_ptx_tensionSeverity", "", true, true],
@@ -60,6 +108,10 @@
   ["ACME_laryngo_pool", "", true],
   ["ACME_laryngo_secretions", "", true],
   ["ACME_nativeVomitActive", "", true],
+  ["ACME_nativeCollapseActive", "", true],
+  ["ACME_nativeBloodObstructionActive", "", true],
+  ["ACME_nativeHemolysisActive", "", true],
+  ["ACME_nrb_oxygenSource", "", true, false],
   ["ACME_laryngo_bloody", "", true],
   ["ACME_laryngoStimulusAt", "cba", true],
   ["ACME_laryngoStimulusStrength", "", true],
@@ -435,6 +487,11 @@
   ],
   [
     "ACME_ca_coagMaxMult",
+    "",
+    true
+  ],
+  [
+    "ACME_ca_coagBaseMult",
     "",
     true
   ],

@@ -29,13 +29,18 @@ def provider_contract(text=None):
         '[_u, _rest, 2] call ACME_fnc_doAnim;',
         'if ([_unit] call ACME_fnc_providerStanceOwned) exitWith {};',
         '_unit setUnitPos "AUTO";',
+        'private _hardDeadline = CBA_missionTime + 6.0;',
     ):
         assert contains(s,frag),frag
     assert not contains(s, '_u setUnitPos "UP";')
     assert not contains(s, 'private _dragger = "DraggerBase";')
-    # No head-position caller can drift to a different provider controller.
+    # Provider theatre is intentionally independent of patient state/acknowledgement.
     assert contains(source('headElevMedicStart'), '[_medic, "elevate"] call ACME_fnc_headElevMedicSeq;')
     assert contains(source('headElevateStop'), '[_medic, "lower"] call ACME_fnc_headElevMedicSeq;')
+    assert 'headElevMedicReady' not in s
+    assert 'ACME_headElev_pendingMove' not in s
+    assert 'ace_medical_gui_menuDisplay' not in s
+    assert '_watchMenu' not in s
 
 
 def setup():
@@ -56,6 +61,8 @@ def setup():
         private _local=true; private _parent=objNull; private _blocked=false;
         private _weapon="rifle"; private _anim="idle"; private _stances=[];
         private _jobs=[]; private _prep=0; private _stanceOwned=false;
+        ACME_fnc_treatmentPoseStop={};
+        ACME_fnc_menuPoseStop={};
         ACME_fnc_animBlocked={_blocked};
         ACME_fnc_medicAnimationPrep={_prep=_prep+1;0.1};
         ACME_fnc_providerStanceOwned={_stanceOwned};

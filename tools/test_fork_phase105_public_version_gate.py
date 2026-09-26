@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Phase 105: keep public/runtime/debug version identity set to v1.2.2."""
+"""Phase 105: keep public/runtime/debug version identity set to v1.2.4."""
 from pathlib import Path
 import re
 
@@ -7,9 +7,9 @@ ROOT = Path(__file__).resolve().parents[1]
 CFG = ROOT / 'addons/acm_extended/config.cpp'
 START = ROOT / 'addons/acm_extended/functions/fn_initForkStartupRuntime.sqf'
 DEBUG = [ROOT / 'addons/acm_extended/functions' / name for name in (
-    'fn_debugMenuClinical.sqf', 'fn_debugMenuNetwork.sqf'
+    'fn_debugMenuClinical.sqf',
 )]
-EXPECTED = '1.2.2'
+EXPECTED = '1.2.4'
 
 
 def main() -> None:

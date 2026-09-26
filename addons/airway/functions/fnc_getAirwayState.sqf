@@ -29,6 +29,14 @@ if (_patient getVariable ["ACM_airway_SurgicalAirway_State", false]) exitWith {
 // an unsecured tube scores lower rather than perfect, because the tube is in and not tied down, so it can migrate.
 // this mirrors the unsecured handling of the surgical airway on the line above.
 if (_patient getVariable ["ACME_ETT_Inserted", false]) exitWith {
+    // A tube migrated until its cuff sits at the glottis is a failed airway, not a definitive one.
+    // Suction can temporarily clear pooled fluid and improve the window, but only repositioning/removal
+    // restores normal patency.
+    if (_patient getVariable ["ACME_ETT_Obstructing", false]) exitWith {
+        private _fluid = (_patient getVariable ["ACM_airway_AirwayObstructionVomit_State",0])
+            + (_patient getVariable ["ACM_airway_AirwayObstructionBlood_State",0]);
+        [0.35,0] select (_fluid > 0)
+    };
     if (!(missionNamespace getVariable ["ACME_ett_protectsAirway", true])) then {
         1
     } else {
@@ -77,7 +85,13 @@ if (((_patient getVariable ["ACM_airway_AirwayObstructionVomit_State", 0]) + (_p
     };
 };
 
-private _airwayInflammation = (_patient getVariable ["ACM_CBRN_AirwayInflammation", 0]);
+// CBRN and burns own separate inflammation sources. Compose them here so neither subsystem
+// can erase the other. A tracheal ETT/cric has already exited above and therefore bypasses this
+// upper-airway edema; an i-gel remains supraglottic and does not.
+private _airwayInflammation = (
+    (_patient getVariable ["ACM_CBRN_AirwayInflammation", 0]) +
+    (_patient getVariable ["ACM_burns_AirwayInflammation", 0])
+) min 100;
 
 if (_airwayInflammation > 10) then {
     if (_airwayInflammation >= 100) then {

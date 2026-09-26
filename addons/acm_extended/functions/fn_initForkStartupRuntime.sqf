@@ -1,8 +1,8 @@
 ACME_infusion_version = getText (configFile >> "CfgPatches" >> "ACM_Extended" >> "version");
-if (ACME_infusion_version == "") then { ACME_infusion_version = "1.2.2.1"; };
-ACME_buildBatch = "B143";
-ACME_debugRevision = "rc27";
-ACME_networkAuditRevision = "NA2-live-collaboration-source-candidate";
+if (ACME_infusion_version == "") then { ACME_infusion_version = "1.3.0"; };
+ACME_buildBatch = "DEV-130-PHYS1";
+ACME_debugRevision = "PHYS1";
+ACME_networkAuditRevision = "NA3-1.3.0-dev";
 call ACME_fnc_chestSealNetInit;
 [] call ACME_fnc_ventCustodyInit;
 [{ call ACME_fnc_ownerInit; }, []] call CBA_fnc_execNextFrame;

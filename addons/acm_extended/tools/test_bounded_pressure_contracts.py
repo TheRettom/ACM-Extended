@@ -23,7 +23,12 @@ def assert_entry_exit_contract(start, stop):
 
 
 def assert_nonexclusive_contract(start, regions):
-    has(start, 'if (missionNamespace getVariable ["ACM_core_ContinuousAction_Active",false]) exitWith')
+    has(start, 'private _providerManeuver = (missionNamespace getVariable ["ACM_core_ContinuousAction_Active", false])')
+    has(start, '_medic getVariable ["ACM_circulation_isPerformingCPR", false]')
+    has(start, '_medic getVariable ["ACM_breathing_isUsingBVM", false]')
+    has(start, '[_patient] call ACM_core_fnc_cprActive')
+    has(start, '[_patient] call ACM_core_fnc_bvmActive')
+    has(start, 'if (_providerManeuver) exitWith')
     has(start, 'if (_bodyPart == "body") then')
     for name in ('directPressureTorso', 'directPressureSelf', 'directPressureLimb'):
         has(start, 'call ACME_fnc_' + name)
@@ -37,8 +42,12 @@ def assert_nonexclusive_contract(start, regions):
 
 
 def assert_compatible_work_contract(tick, hang, bp):
-    has(tick, 'private _mustYieldClinical = _maneuverActive || {_manualPause};')
+    has(tick, 'private _nativeCpr = [_patient] call ACM_core_fnc_cprActive;')
+    has(tick, 'private _nativeBvm = [_patient] call ACM_core_fnc_bvmActive;')
+    has(tick, 'private _mustYieldClinical = _maneuverActive || {_manualPause} || {_chestPrep} || {_headProvider} || {_treatmentBusy};')
     has(tick, 'if (_mustYieldClinical) exitWith')
+    # Higher-priority work must yield before the decorative pressure pose can run.
+    assert tick.index('if (_mustYieldClinical) exitWith') < tick.index('call ACME_fnc_directPressurePose')
     has(tick, 'private _yieldDuration = (CBA_missionTime - _yieldStart) max 0;')
     for key in ('ACME_DP_Start', 'ACME_DP_NextClot'):
         has(tick, f'_medic setVariable ["{key}", (_medic getVariable ["{key}", CBA_missionTime]) + _yieldDuration];')
