@@ -82,8 +82,8 @@ if (!_otherManeuver && {local _medic} && {alive _medic} && {isNull objectParent 
     ["ACME_DP_OwnsContinuous", false],
     ["ACME_DP_ClaimPending", []],
     ["ACME_DP_ClaimRequestedAt", -1],
-    ["ACME_DP_ClaimToken", ""],
-    ["ACME_DP_ClaimEpoch", -1]
+    ["ACME_DP_ClaimToken", "", true],
+    ["ACME_DP_ClaimEpoch", -1, true]
 ];
 
 if (_wasActive) then {
