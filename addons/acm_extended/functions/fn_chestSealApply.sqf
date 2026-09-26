@@ -32,7 +32,7 @@ if (!isNull _medic && {local _medic}) then {
     uiNamespace setVariable ["ACME_CS_ApplyGestureUntil", _endsAt];
 
     // Retire whatever chest-procedure pose is currently visible as a handoff. This explicitly kills an old
-    // ncdSeat/medic1 episode as well as the hands-on-chest workspace before medic3 takes ownership.
+    // NCD provider episode as well as the hands-on-chest workspace before seal placement takes ownership.
     private _pose = _medic getVariable ["ACME_treatmentPoseState", []];
     private _poseMode = _pose param [1, ""];
     private _poseEpoch = _pose param [0, -1];
