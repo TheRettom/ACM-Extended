@@ -14,7 +14,7 @@ def test_seal_placement_is_exact_unarmed_medic3_for_265_seconds():
     assert 'case "chestSeal": {"AinvPknlMstpSnonWnonDnon_medic3"};' in pose
     assert '[_medic, "chestSeal", _duration, _patient, true] call ACME_fnc_treatmentPoseStart' in apply
     assert 'private _endsAt = diag_tickTime + _duration;' in apply
-    assert '[_m, "AinvPknlMstpSnonWnonDnon_medic3", 2] call ACME_fnc_doAnim;' in apply
+    assert '[_m, "AinvPknlMstpSnonWnonDnon_medic3", 1] call ACME_fnc_doAnim;' in apply
     assert '_asserts < 3' in apply
     assert '[_m, "chestSeal", _epoch, true] call ACME_fnc_treatmentPoseStop;' in apply
     assert '}, [_medic, _patient, _placeEpoch, _serial], _duration] call CBA_fnc_waitAndExecute;' in apply
@@ -57,9 +57,9 @@ def test_immediate_flip_uses_hard_provider_and_patient_precedence_only_on_explic
     provider = read("fn_rollProviderStart.sqf")
     patient = read("fn_chestSealRoll.sqf")
     assert '["_forceImmediate", false, [false]]' in pose
-    assert 'if (_state param [18, false]) then {' in pose
-    assert '[_medic, _main, 2] call ACME_fnc_doAnim;' in pose
-    assert '[_medic, _main, 1] call ACME_fnc_doAnim;' in pose
+    assert 'if (currentWeapon _medic != "") then {_medic selectWeapon "";};' in pose
+    assert 'private _hardOverride = (_state param [18, false]) && {(_state param [1, ""]) == "roll"};' in pose
+    assert '[_medic, _main, [1, 2] select _hardOverride] call ACME_fnc_doAnim;' in pose
     assert '[_medic, "roll", _duration, _patient, _forceImmediate] call ACME_fnc_treatmentPoseStart' in provider
     assert 'private _animPriority = [1, 2] select _immediate;' in patient
     assert 'private _lockPriority = [3, 100] select _immediate;' in patient

@@ -136,9 +136,9 @@ def test_provider_roll_uses_normal_interpolation_except_immediate_chestseal_flip
     flip = txt('functions/fn_chestSealFlip.sqf')
     assert 'case "roll": {"AinvPknlMstpSnonWnonDnon_medic4"};' in pose
     assert '[_medic, _transition, 1] call ACME_fnc_doAnim;' in pose
-    assert '[_medic, _main, 1] call ACME_fnc_doAnim;' in pose
-    assert 'if (_state param [18, false]) then {' in pose
-    assert '[_medic, _main, 2] call ACME_fnc_doAnim;' in pose
+    assert 'private _hardOverride = (_state param [18, false]) && {(_state param [1, ""]) == "roll"};' in pose
+    assert '[_medic, _main, [1, 2] select _hardOverride] call ACME_fnc_doAnim;' in pose
+    assert 'if (currentWeapon _medic != "") then {_medic selectWeapon "";};' in pose
     assert 'ACME_fnc_medicAnimationPrep' in pose
     assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in flip
 
@@ -202,10 +202,9 @@ def test_priority_two_entry_is_scoped_to_explicit_immediate_chest_procedure_path
     pose = txt('functions/fn_treatmentPoseStart.sqf')
     roll = txt('functions/fn_chestSealRoll.sqf')
     sync = txt('functions/fn_treatmentPoseSync.sqf')
-    assert '[_medic, _main, 1] call ACME_fnc_doAnim;' in pose
     assert '[_medic, _transition, 1] call ACME_fnc_doAnim;' in pose
-    assert 'if (_state param [18, false]) then {' in pose
-    assert '[_medic, _main, 2] call ACME_fnc_doAnim;' in pose
+    assert 'private _hardOverride = (_state param [18, false]) && {(_state param [1, ""]) == "roll"};' in pose
+    assert '[_medic, _main, [1, 2] select _hardOverride] call ACME_fnc_doAnim;' in pose
     assert 'private _animPriority = [1, 2] select _immediate;' in roll
     assert 'private _lockPriority = [3, 100] select _immediate;' in roll
     assert 'if (!_immediate) then {' in roll

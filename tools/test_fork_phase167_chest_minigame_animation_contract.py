@@ -50,7 +50,7 @@ def test_medic3_is_reserved_for_actual_seal_placement():
     assert 'case "chestSeal": {"AinvPknlMstpSnonWnonDnon_medic3"};' in pose
     assert 'ACME_CS_applyAnimSeconds = 2.65;' in init
     assert '[_medic, "chestSeal", _duration, _patient, true] call ACME_fnc_treatmentPoseStart' in apply
-    assert '"AinvPknlMstpSnonWnonDnon_medic3", 2] call ACME_fnc_doAnim' in apply
+    assert '"AinvPknlMstpSnonWnonDnon_medic3", 1] call ACME_fnc_doAnim' in apply
     assert '}, [_medic, _patient, _placeEpoch, _serial], _duration] call CBA_fnc_waitAndExecute;' in apply
     assert "ACME_fnc_chestSealProviderHoldStart" in apply
     assert "chestSealBurpGesture" not in burp
