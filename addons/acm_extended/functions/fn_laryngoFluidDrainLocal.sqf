@@ -63,7 +63,11 @@ if (_remaining <= 0) then {
         _patient setVariable ["ACME_laryngo_emesis", [], true];
     } else {
         if (_kind == "b") then {
-            _patient setVariable ["ACME_laryngo_poolBlood", [], true];
+            // Preserve the last event serial at zero volume. A later genuine bleeding event increments the serial
+            // and therefore contributes exactly one new contamination delta. Clearing this ledger would make the
+            // monotonic serial look like total current volume and could refill a freshly suctioned airway to the cap.
+            private _eventSerial = (_patient getVariable ["ACME_airwayBloodEventSerial", 0]) max 0;
+            _patient setVariable ["ACME_laryngo_poolBlood", [_eventSerial, 0], true];
             [_patient, [["blood", 0]], true] call ACM_airway_fnc_setAirwayState;
         };
         if (_kind == "s") then {_patient setVariable ["ACME_laryngo_secretions", [], true];};
