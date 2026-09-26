@@ -46,6 +46,8 @@
         _patient setVariable [QGVAR(AirwayBurnOnset),CBA_missionTime,true];
     };
 
+    if (isNil QGVAR(activePatients)) then {GVAR(activePatients) = [];};
+    GVAR(activePatients) pushBackUnique _patient;
     [_patient] call FUNC(tickPatient);
 }] call CBA_fnc_addEventHandler;
 
@@ -67,17 +69,43 @@
     };
 }] call CBA_fnc_addEventHandler;
 
-// One locality-safe worker. No per-casualty PFH survives ownership migration.
+// One locality-safe worker. Active casualties tick frequently; healthy units are not scanned.
+// A slow discovery fallback recovers JIP/locality migration and any state restored by ACME clinical persistence.
+if (isNil QGVAR(activePatients)) then {GVAR(activePatients) = [];};
+if (isNil QGVAR(lastDiscovery)) then {GVAR(lastDiscovery) = -1;};
 if (isNil QGVAR(runtimePFH)) then {
     GVAR(runtimePFH) = [{
+        private _active = GVAR(activePatients) select {!isNull _x && {alive _x}};
+
         {
-            if (local _x && {alive _x} && {_x isKindOf "CAManBase"}) then {
-                private _needs = (_x getVariable [QGVAR(BurnBurden),0]) > 0.001
-                    || {(_x getVariable [QGVAR(AirwayInflammation),0]) > 0.001}
-                    || {_x getVariable [QGVAR(PermanentInjury),false]};
-                if (_needs) then {[_x] call FUNC(tickPatient);};
+            private _patient = _x;
+            if (local _patient) then {
+                [_patient] call FUNC(tickPatient);
             };
-        } forEach allUnits;
+        } forEach _active;
+
+        _active = _active select {
+            local _x && {
+                (_x getVariable [QGVAR(BurnBurden),0]) > 0.001
+                || {(_x getVariable [QGVAR(AirwayInflammation),0]) > 0.001}
+                || {_x getVariable [QGVAR(PermanentInjury),false]}
+            }
+        };
+
+        if (GVAR(lastDiscovery) < 0 || {CBA_missionTime - GVAR(lastDiscovery) >= 10}) then {
+            GVAR(lastDiscovery) = CBA_missionTime;
+            {
+                if (local _x && {alive _x} && {
+                    (_x getVariable [QGVAR(BurnBurden),0]) > 0.001
+                    || {(_x getVariable [QGVAR(AirwayInflammation),0]) > 0.001}
+                    || {_x getVariable [QGVAR(PermanentInjury),false]}
+                }) then {
+                    _active pushBackUnique _x;
+                };
+            } forEach allUnits;
+        };
+
+        GVAR(activePatients) = _active;
     }, 2, []] call CBA_fnc_addPerFrameHandler;
 };
 
