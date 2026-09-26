@@ -52,6 +52,9 @@ private _settings = [
     // these workers or strand existing equipment; runtime actions enforce the separate access policy.
     // what is left in this list is genuinely optional: a mission can run without it and nothing else notices.
     ["ACME_sys_junc",      "CHECKBOX", ["Junctional Wounds", "Junctional hemorrhage + Combat-Gauze/pressure chain. OFF: junctional wounds are neither inflicted nor bled. Takes effect immediately."], [_cSys, "Systems"], true, 1, {}],
+    ["ACME_interventionAnimations", "CHECKBOX",
+        ["Intervention Animations", "Show ACME/ACM provider and casualty treatment animations. OFF keeps the same treatment times, progress bars, item use, procedure timing and clinical effects, but suppresses treatment theatre. Takes effect on newly-started intervention presentation."],
+        [_cSys, "Presentation"], true, 1, {}],
     ["ACME_sys_dp",        "CHECKBOX", ["Direct Pressure", "Hold-pressure hemorrhage control. OFF: direct pressure cannot be started, and any hold in progress is released. Takes effect immediately."], [_cSys, "Systems"], true, 1, {}],
     ["ACME_sys_chestSeal", "CHECKBOX", ["Chest Seal Mini-game", "Drag-to-find seal placement. Off = ACM's instant seal. OFF: the mini-game cannot be opened and seals are handled without it. Takes effect immediately."], [_cSys, "Systems"], true, 1, {}],
     ["ACME_sys_hang",      "CHECKBOX", ["Hang Bag", "Raise an IV/blood bag for gravity-assisted flow. OFF: the bag cannot be raised, and a bag being held is lowered. Takes effect immediately."], [_cSys, "Systems"], true, 1, {}],
