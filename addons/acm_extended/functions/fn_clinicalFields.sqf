@@ -33,7 +33,7 @@
   ["ACM_infection_RR_Adjust", "", true, false],
   ["ACM_infection_Resistance_Delta", "", true, false],
   ["ACM_infection_Metabolic_Demand", "", true, false],
-  ["ACM_infection_Preload_Mult", "", true, false],
+  ["ACM_infection_EffectiveVolumeDeficitL", "", true, false],
   ["ACM_infection_Coag_Mult", "", true, false],
 
   ["ACM_ophthalmology_dustInjuryLight", "", true, true],
