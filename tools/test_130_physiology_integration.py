@@ -69,6 +69,11 @@ def test_hardcore_new_physiology_is_centralized():
     assert "hardcorePersistentOcular" not in read("addons/ophthalmology/initSettings.inc.sqf")
 
 
+def test_new_burn_classes_do_not_enter_penetrating_fatal_trauma_logic():
+    wounds = read("addons/core/overrides/fnc_woundsHandlerBase.sqf")
+    assert '["ThermalBurn","ChemicalBurn","Burn1","Burn2","Burn3"]' in wounds
+
+
 def test_burns_do_not_fake_hemorrhage_or_own_cbrn_state():
     xeh = read("addons/burns/XEH_postInit.sqf")
     assert "Blood_Volume" not in xeh
