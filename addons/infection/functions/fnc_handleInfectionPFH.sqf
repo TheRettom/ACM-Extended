@@ -17,7 +17,7 @@ if (!_enabled) exitWith {
         [QGVAR(RR_Adjust),0],
         [QGVAR(Resistance_Delta),0],
         [QGVAR(Metabolic_Demand),1],
-        [QGVAR(Preload_Mult),1],
+        [QGVAR(EffectiveVolumeDeficitL),0],
         [QGVAR(Coag_Mult),1],
         [QGVAR(Sepsis_Severity),0]
     ];
@@ -162,14 +162,15 @@ private _metabolicDemand = switch (_stage) do {
     case 3: {1.18 + (0.22 * _sepsisSeverity)};
     default {1};
 };
-private _preloadMult = if (_stage == 3) then {1 - (0.18 * _sepsisSeverity)} else {1};
+// Septic capillary leak/relative hypovolemia is an effective-volume deficit, not lost RBC mass.
+private _effectiveVolumeDeficitL = if (_stage == 3) then {1.4 * _sepsisSeverity} else {0};
 private _coagMult = if (_stage == 3) then {1 + (0.25 * _sepsisSeverity)} else {1};
 
 if (_permanent) then {
     // Hardcore sequelae are deliberately modest but field-unresolved. The patient can be stabilized
     // and transported; they are not forced into an unwinnable continuous collapse.
     _metabolicDemand = _metabolicDemand max 1.08;
-    _preloadMult = _preloadMult min 0.94;
+    _effectiveVolumeDeficitL = _effectiveVolumeDeficitL max 0.35;
     _coagMult = _coagMult max 1.10;
 };
 
@@ -181,7 +182,7 @@ if (_permanent) then {
     [QGVAR(RR_Adjust),_rrAdj],
     [QGVAR(Resistance_Delta),_resistDelta],
     [QGVAR(Metabolic_Demand),_metabolicDemand],
-    [QGVAR(Preload_Mult),_preloadMult],
+    [QGVAR(EffectiveVolumeDeficitL),_effectiveVolumeDeficitL],
     [QGVAR(Coag_Mult),_coagMult],
     [QGVAR(Sepsis_Severity),_sepsisSeverity]
 ];
