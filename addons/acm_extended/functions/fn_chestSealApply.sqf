@@ -16,7 +16,7 @@ private _patient = uiNamespace getVariable ["ACME_CS_Patient", objNull];
 uiNamespace setVariable ["ACME_CS_SealsLeft",
     [_medic, _patient, "ACM_ChestSeal"] call ACME_fnc_treatmentSupplyCount];
 
-// AinvPknlMstpSnonWrflDnon_medic3 is reserved ONLY for physically applying a seal.
+// AinvPknlMstpSnonWnonDnon_medic3 is reserved ONLY for physically applying a seal.
 // Any previous placement worker is retired before the new seal owns its 2.65 s window.
 if (!isNull _medic && {local _medic}) then {
     private _oldPFH = uiNamespace getVariable ["ACME_CS_ApplyPFH", -1];
@@ -83,9 +83,9 @@ if (!isNull _medic && {local _medic}) then {
             if (_now < _endsAt) exitWith {
                 // Keep the exact medic3 state for the bounded placement window. Priority 2 is scoped to this
                 // already-owned chest procedure and prevents an old treatment-end RTM from resurfacing.
-                if ((toLowerANSI animationState _m) != "ainvpknlmstpsnonwrfldnon_medic3"
+                if ((toLowerANSI animationState _m) != "ainvpknlmstpsnonwnondnon_medic3"
                     && {_now - _lastAssert >= 0.10}) then {
-                    [_m, "AinvPknlMstpSnonWrflDnon_medic3", 2] call ACME_fnc_doAnim;
+                    [_m, "AinvPknlMstpSnonWnonDnon_medic3", 2] call ACME_fnc_doAnim;
                     _args set [5, _now];
                 };
             };
