@@ -1,5 +1,5 @@
 ACME_infusion_version = getText (configFile >> "CfgPatches" >> "ACM_Extended" >> "version");
-if (ACME_infusion_version == "") then { ACME_infusion_version = "1.2.2.1"; };
+if (ACME_infusion_version == "") then { ACME_infusion_version = "1.2.4"; };
 ACME_buildBatch = "B143";
 ACME_debugRevision = "rc27";
 ACME_networkAuditRevision = "NA2-live-collaboration-source-candidate";
