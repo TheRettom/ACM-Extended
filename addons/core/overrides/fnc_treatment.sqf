@@ -4,6 +4,7 @@
  * Native ACM/ACE remains authoritative for treatment timing, inventory, callbacks, cancellation and patient state.
  */
 params ["_medic", "_patient", "_bodyPart", "_classname"];
+private _animationsEnabled = missionNamespace getVariable ["ACME_interventionAnimations", true];
 
 // A Zeus remote-controlled NPC is the client's active medical provider, not the curator avatar.
 // ACE's isNotInZeus requirement is correct for the curator interface itself, but it must not block
@@ -300,7 +301,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
     };
     private _preflightReady = _dpPoseReady || {_emptyHandsNow && {stance _medic == "CROUCH"}};
 
-    if (!_isBypass && {!_headOwned} && {!_preflightReady} && {local _medic} && {!isNull _medic} && {alive _medic} && {isNull objectParent _medic}) exitWith {
+    if (_animationsEnabled && {!_isBypass} && {!_headOwned} && {!_preflightReady} && {local _medic} && {!isNull _medic} && {alive _medic} && {isNull objectParent _medic}) exitWith {
         if (_medic getVariable ["ACME_treatmentPreflightActive", false]) exitWith {false};
 
         _medic setVariable ["ACME_treatmentPreflightActive", true, false];
@@ -423,7 +424,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
         };
     };
 
-    if (_started && {local _medic} && {!isNull _medic} && {isNull objectParent _medic}) then {
+    if (_animationsEnabled && {_started} && {local _medic} && {!isNull _medic} && {isNull objectParent _medic}) then {
         if (_mode != "") then {
             [{
                 params ["_m", "_mode", "_window"];
