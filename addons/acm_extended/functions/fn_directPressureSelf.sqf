@@ -18,6 +18,7 @@ _medic setVariable ["ACME_DP_OwnsContinuous", false];
 // Direct Pressure has no keyboard cancellation binding. MMB is handled by the mission-display guard; the explicit
 // Stop Direct Pressure menu action is the deliberate UI fallback. Escape/H remain available to the player.
 _medic setVariable ["ACME_DP_KeyIDs", []];
+["", "Stop Direct Pressure", ""] call ace_interaction_fnc_showMouseHint;
 
 [_medic, "activity",
  "%1 started Direct pressure on own %2",
