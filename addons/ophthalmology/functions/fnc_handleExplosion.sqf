@@ -30,12 +30,24 @@ if ((random 100) < _heavyPercent) then {
     private _eyes = _unit getVariable [QGVAR(eyeInjuries),[1,1]];
     if !(_eyes isEqualType [] && {count _eyes == 2}) then {_eyes = [1,1];};
 
-    // A blast can injure one or both eyes. Bilateral structural injury is reserved for the
-    // strongest unprotected exposures; ordinary events damage one random eye.
+    // A blast can injure one or both eyes. An actively worn rigid shield strongly protects only
+    // the covered eye; it does not grant whole-face protection or alter the uncovered eye.
+    private _shieldItem = _unit getVariable [QGVAR(eyeShieldItem),""];
+    private _shieldIndex = _unit getVariable [QGVAR(eyeShieldIndex),-1];
+    private _shieldActive = _shieldIndex in [0,1] && {_shieldItem != ""} && {(hmd _unit) == _shieldItem};
+    private _shieldProtection = 0.90;
+
     private _first = floor random 2;
+    if (_shieldActive && {_first == _shieldIndex} && {random 1 < _shieldProtection}) then {
+        _first = 1 - _shieldIndex;
+    };
     _eyes set [_first,0];
+
     if (_strength > 0.85 && {_unprotected > 0.75} && {random 1 < 0.25}) then {
-        _eyes set [1 - _first,0];
+        private _second = 1 - _first;
+        if !(_shieldActive && {_second == _shieldIndex} && {random 1 < _shieldProtection}) then {
+            _eyes set [_second,0];
+        };
     };
 
     _unit setVariable [QGVAR(eyeInjuries),_eyes,true];
