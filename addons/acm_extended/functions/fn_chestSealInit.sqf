@@ -33,6 +33,11 @@ uiNamespace setVariable ["ACME_CS_Side", "front"];
 uiNamespace setVariable ["ACME_CS_Dragging", false];
 uiNamespace setVariable ["ACME_CS_ArchBlend", 0];
 uiNamespace setVariable ["ACME_CS_FingerGlow", []];
+// A newly-created display is a new presentation generation. Invalidate placement callbacks from any abnormal
+// prior teardown before this panel can acquire provider animation ownership.
+uiNamespace setVariable ["ACME_CS_ApplyGestureSerial",
+    (uiNamespace getVariable ["ACME_CS_ApplyGestureSerial",0]) + 1];
+uiNamespace setVariable ["ACME_CS_ApplyGestureUntil",0];
 uiNamespace setVariable ["ACME_CS_FlipLockedUntil", 0];
 uiNamespace setVariable ["ACME_CS_VirtualFlip", false];
 uiNamespace setVariable ["ACME_CS_Held", false];
