@@ -12,6 +12,7 @@ params ["_patient"];
     [QGVAR(AirwayBurnOnset),-1,true],
     [QGVAR(AirwayInflammation),0,true],
     [QGVAR(BurnSurface),[0,0,0,0,0,0],true],
+    [QGVAR(BurnProtected),[false,false,false,false,false,false],true],
     [QGVAR(BurnBurden),0,true],
     [QGVAR(SystemicBurden),0,true],
     [QGVAR(LastBurnAt),-1,true],
