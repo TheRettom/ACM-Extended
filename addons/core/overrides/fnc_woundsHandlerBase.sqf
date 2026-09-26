@@ -132,7 +132,7 @@ private _bodyPartVisParams = [_unit, false, false, false, false]; // params arra
         _newForPart pushBack +_injury;
         _acmeNewWounds set [_bodyPart, _newForPart];
 
-        if (!(_woundTypeToAdd in ["ThermalBurn","ChemicalBurn"]) && (_bodyPart isEqualTo "head" || {_bodyPart isEqualTo "body" && {_woundDamage > PENETRATION_THRESHOLD}})) then {
+        if (!(_woundTypeToAdd in ["ThermalBurn","ChemicalBurn","Burn1","Burn2","Burn3"]) && (_bodyPart isEqualTo "head" || {_bodyPart isEqualTo "body" && {_woundDamage > PENETRATION_THRESHOLD}})) then {
             _criticalDamage = true;
             if (EGVAR(damage,enable)) then {
                 if ([_unit, _bodyPartDamage] call EFUNC(damage,handleTrauma)) then {
