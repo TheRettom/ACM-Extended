@@ -205,6 +205,8 @@ def test_ocular_irritation_and_structural_trauma_are_separate():
     blast = read("addons/ophthalmology/functions/fnc_handleExplosion.sqf")
     assert "ACE_player) exitWith" not in blast
     assert "explosionSource" not in blast
+    assert "eyeShieldIndex" in blast
+    assert "_shieldProtection = 0.90" in blast
 
 
 def test_new_durable_physiology_is_in_clinical_persistence():
