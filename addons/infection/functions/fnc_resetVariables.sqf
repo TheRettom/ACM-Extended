@@ -30,7 +30,7 @@ if (_sepsisPFH != -1) then {[_sepsisPFH] call CBA_fnc_removePerFrameHandler;};
     [QGVAR(RR_Adjust),0,true],
     [QGVAR(Resistance_Delta),0,true],
     [QGVAR(Metabolic_Demand),1,true],
-    [QGVAR(Preload_Mult),1,true],
+    [QGVAR(EffectiveVolumeDeficitL),0,true],
     [QGVAR(Coag_Mult),1,true]
 ];
 
