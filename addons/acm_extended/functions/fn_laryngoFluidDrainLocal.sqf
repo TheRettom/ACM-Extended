@@ -42,8 +42,11 @@ switch (_kind) do {
         _patient setVariable ["ACME_laryngo_poolVomit", [_native, _remaining], true];
     };
     case "b": {
-        private _native = (_patient getVariable ["ACM_airway_AirwayObstructionBlood_State", 0]) max 0;
-        _patient setVariable ["ACME_laryngo_poolBlood", [_native, _remaining], true];
+        private _eventSerial = (_patient getVariable ["ACME_airwayBloodEventSerial", 0]) max 0;
+        if (_eventSerial <= 0) then {
+            _eventSerial = (_patient getVariable ["ACM_airway_AirwayObstructionBlood_State", 0]) max 0;
+        };
+        _patient setVariable ["ACME_laryngo_poolBlood", [_eventSerial, _remaining], true];
     };
     case "s": {
         private _secretions = _patient getVariable ["ACME_laryngo_secretions", []];
