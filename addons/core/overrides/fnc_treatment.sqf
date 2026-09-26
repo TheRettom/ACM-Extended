@@ -5,6 +5,17 @@
  */
 params ["_medic", "_patient", "_bodyPart", "_classname"];
 
+// A Zeus remote-controlled NPC is the client's active medical provider, not the curator avatar.
+// ACE's isNotInZeus requirement is correct for the curator interface itself, but it must not block
+// interventions performed while actually controlling an NPC medic. Keep every other interaction gate.
+private _controlledProvider = if (hasInterface) then {call ACME_fnc_controlledProvider} else {objNull};
+private _remoteControlledMedic = hasInterface
+    && {!isNull _controlledProvider}
+    && {_medic isEqualTo _controlledProvider}
+    && {_medic isNotEqualTo player};
+private _providerInteractChecks = ["isNotInside", "isNotSwimming"];
+if (!_remoteControlledMedic) then {_providerInteractChecks pushBack "isNotInZeus";};
+
 // This debug command has no physical treatment or provider animation. Execute directly,
 // so empty-hands preflight, the progress bar and the generic patient settle cannot consume the click.
 if (_classname == "ACME_DebugInduceSeizure") exitWith {
@@ -65,7 +76,7 @@ if !([_medic, _classname] call ACME_fnc_procedureActionAllowed) exitWith {false}
 if (_classname in ["ACME_ApplyChestSeal", "ACME_PerformNARSPEAR", "ACME_VentOpenPatient"]) exitWith {
     if (isNull _medic || {isNull _patient} || {!local _medic}) exitWith {false};
     if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
-    if !([_medic, _patient, ["isNotInside", "isNotSwimming", "isNotInZeus"]] call ace_common_fnc_canInteractWith) exitWith {false};
+    if !([_medic, _patient, _providerInteractChecks] call ace_common_fnc_canInteractWith) exitWith {false};
     if ((_medic distance _patient) > ace_medical_gui_maxDistance) exitWith {false};
     ace_medical_gui_pendingReopen = false;
     if (_classname == "ACME_VentOpenPatient") then {
@@ -129,7 +140,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
     if (_needsChestAccess && {_needsPhysicalPrep} && {!_alreadyPrepared}
         && {local _medic} && {!isNull _medic} && {alive _medic}) exitWith {
         if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
-        if !([_medic, _patient, ["isNotInside", "isNotSwimming", "isNotInZeus"]] call ace_common_fnc_canInteractWith) exitWith {false};
+        if !([_medic, _patient, _providerInteractChecks] call ace_common_fnc_canInteractWith) exitWith {false};
         if ((_medic distance _patient) > ace_medical_gui_maxDistance) exitWith {false};
         if (_medic getVariable ["ACME_chestAccessPreflightActive", false]) exitWith {false};
 
@@ -441,7 +452,7 @@ if (uiNamespace getVariable ["ace_interact_menu_cursorMenuOpened", false]) exitW
     true
 };
 if !(_this call ace_medical_treatment_fnc_canTreat) exitWith {false};
-if !([_medic, _patient, ["isNotInside", "isNotSwimming", "isNotInZeus"]] call ace_common_fnc_canInteractWith) exitWith {false};
+if !([_medic, _patient, _providerInteractChecks] call ace_common_fnc_canInteractWith) exitWith {false};
 if !([_medic, _patient] call ACME_fnc_ventRecoveryNear) exitWith {false};
 [_medic, _patient] call ACME_fnc_ventConnectPatient;
 true
