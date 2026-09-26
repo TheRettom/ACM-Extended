@@ -45,13 +45,21 @@ if (_op != "claim" || {isNull _medic}) exitWith {};
 private _currentMedic = _claim param [0,objNull,[objNull]];
 private _currentToken = _claim param [1,"",[""]];
 private _currentEpoch = _claim param [2,-1,[0]];
+private _currentOwner = _claim param [3,-1,[0]];
+private _currentAt = _claim param [4,-1,[0]];
+private _currentActive = !isNull _currentMedic
+    && {_currentMedic getVariable ["ACME_DP_Active",false]}
+    && {(_currentMedic getVariable ["ACME_DP_Patient",objNull]) isEqualTo _patient}
+    && {toLowerANSI (_currentMedic getVariable ["ACME_DP_Part",""]) == _part};
+private _currentPending = !isNull _currentMedic
+    && {_currentAt >= 0}
+    && {(serverTime - _currentAt) <= 3}
+    && {_currentOwner == owner _currentMedic};
 private _currentValid = !isNull _currentMedic
     && {alive _currentMedic}
     && {!(_currentMedic getVariable ["ACE_isUnconscious",false])}
-    && {_currentMedic getVariable ["ACME_DP_Active",false]}
-    && {(_currentMedic getVariable ["ACME_DP_Patient",objNull]) isEqualTo _patient}
-    && {toLowerANSI (_currentMedic getVariable ["ACME_DP_Part",""]) == _part}
-    && {_currentEpoch == ([_patient] call ACME_fnc_clinicalEpoch)};
+    && {_currentEpoch == ([_patient] call ACME_fnc_clinicalEpoch)}
+    && {_currentActive || {_currentPending}};
 
 // A dead/disconnected/stale holder never blocks the next provider.
 if (!_currentValid && {!isNull _currentMedic || {!(_claim isEqualTo [])}}) then {
@@ -74,7 +82,7 @@ private _validRequest = alive _patient
 
 private _accepted = _validRequest && {isNull _currentMedic || {_currentMedic isEqualTo _medic}};
 if (_accepted) then {
-    _patient setVariable [_claimKey,[_medic,_token,_epoch,_providerOwner],true];
+    _patient setVariable [_claimKey,[_medic,_token,_epoch,_providerOwner,serverTime],true];
     // Reserve the clinical slot immediately. Activation on the provider follows the ACK.
     _patient setVariable [_pressKey,_medic,true];
     if (_part == "body") then {
