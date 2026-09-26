@@ -40,6 +40,7 @@ if ((random 100) < _heavyPercent) then {
 
     _unit setVariable [QGVAR(eyeInjuries),_eyes,true];
     _unit setVariable [QGVAR(eyeInjurySevere),({ _x < 0.25 } count _eyes) >= 2,true];
+    if (!isNil QGVAR(activePatients)) then {GVAR(activePatients) pushBackUnique _unit;};
     _unit setVariable [QGVAR(structuralLastTick),CBA_missionTime,false];
 
     if (hasInterface && {_unit isEqualTo ACE_player}) then {
