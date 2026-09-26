@@ -80,7 +80,7 @@ def test_tsp_animate_rewrite_optional_sling_support():
 def test_roll_uses_shared_medic4_pose_for_2_5_seconds():
     r = txt('functions/fn_rollProviderStart.sqf')
     assert '["ACME_rollProviderDuration", 2.2]' in r
-    assert '[_medic, "roll", _duration, _patient] call ACME_fnc_treatmentPoseStart' in r
+    assert '[_medic, "roll", _duration, _patient, _forceImmediate] call ACME_fnc_treatmentPoseStart' in r
     assert '[_unit, "roll", _epoch] call ACME_fnc_treatmentPoseStop' in r
     f = txt('functions/fn_chestSealFlip.sqf')
     assert 'ACME_fnc_rollProviderStart' in f

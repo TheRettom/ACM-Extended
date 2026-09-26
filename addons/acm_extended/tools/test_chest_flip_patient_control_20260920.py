@@ -28,12 +28,17 @@ def test_flip_button_uses_only_authoritative_roll_eligibility():
     assert 'ACME_CS_ProcedureGrounded' not in src
     assert 'ACME_CS_VirtualFlip", true' in src
 
-def test_flip_rechecks_after_provider_prep_before_patient_dispatch():
-    src = read("fn_chestSealFlipTick.sqf")
-    guard = src.index('if !([_patient] call ACME_fnc_chestSealCanPhysicalRoll)')
-    dispatch = src.index('call ACME_fnc_chestSealRoll')
-    assert guard < dispatch
-    assert 'ACME_CS_VirtualFlip", true' in src[guard:dispatch]
+def test_flip_dispatches_immediately_but_patient_owner_rechecks_authority():
+    click = read("fn_chestSealFlip.sqf")
+    tick = read("fn_chestSealFlipTick.sqf")
+    roll = read("fn_chestSealRoll.sqf")
+    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in click
+    assert '[_patient, _newSide, false, _provider, false, true] call ACME_fnc_chestSealRoll' in click
+    assert 'call ACME_fnc_chestSealRoll' not in tick
+    gate = roll.index('if !([_patient] call ACME_fnc_chestSealCanPhysicalRoll) exitWith {};')
+    anim = roll.index('call ACME_fnc_patientAnimRequest')
+    assert gate < anim
+    assert 'private _animPriority = [1, 2] select _immediate;' in roll
 
 def test_patient_owner_rejects_stale_or_remote_roll_before_side_effects():
     src = read("fn_chestSealRoll.sqf")

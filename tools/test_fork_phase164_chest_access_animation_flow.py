@@ -66,16 +66,18 @@ def test_clinical_launch_is_native_and_generation_scoped():
     assert "ace_medical_treatment_fnc_treatment;" not in block
     assert "ContinuousAction_" not in block
 
-def test_chest_seal_workspace_hands_directly_to_flip_and_back():
+def test_chest_seal_workspace_hands_directly_to_immediate_flip_and_back():
     flip = read("addons/acm_extended/functions/fn_chestSealFlip.sqf")
     tick = read("addons/acm_extended/functions/fn_chestSealFlipTick.sqf")
     close = read("addons/acm_extended/functions/fn_chestSealClose.sqf")
-    assert '"ACME_CS_providerHoldEpoch",-1' in flip
-    assert '[_provider,"chestSealWorkspace",_holdEpoch,true] call ACME_fnc_treatmentPoseStop;' in flip
+    assert '"ACME_CS_providerHoldEpoch", -1' in flip
+    assert '[_provider, _oldMode, _oldEpoch, true] call ACME_fnc_treatmentPoseStop;' in flip
+    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in flip
+    assert '[_patient, _newSide, false, _provider, false, true] call ACME_fnc_chestSealRoll' in flip
     assert '[_provider,"roll",_epoch,_current] call ACME_fnc_treatmentPoseStop;' in tick
     assert "ACME_fnc_chestSealProviderHoldStart" in tick
-    assert "_providerAtHold" in tick
-    assert '(_poseNow param [3,-2]) >= 3' in tick
+    assert "_providerCompleted" in tick
+    assert "_providerDone" in tick
     assert 'ACME_fnc_headElevMedicSeq' in close
     assert '[_flipMedic,_poseMode,_poseEpoch,true] call ACME_fnc_treatmentPoseStop;' in close
 

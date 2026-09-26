@@ -131,16 +131,16 @@ def test_selected_carousel_syringe_has_only_one_live_hitbox():
     assert '_activeHit ctrlShow _activeUsable' in render
 
 
-def test_provider_roll_uses_crouch_connected_wrapper_and_no_switchmove_fallback():
-    # Historical identity retained. Current provider theatre uses the literal BI medic4 state
-    # after the shared crouch/empty-hands preflight; no priority-two provider entry is used.
+def test_provider_roll_uses_normal_interpolation_except_immediate_chestseal_flip():
     pose = txt('functions/fn_treatmentPoseStart.sqf')
     flip = txt('functions/fn_chestSealFlip.sqf')
     assert 'case "roll": {"AinvPknlMstpSnonWnonDnon_medic4"};' in pose
     assert '[_medic, _transition, 1] call ACME_fnc_doAnim;' in pose
     assert '[_medic, _main, 1] call ACME_fnc_doAnim;' in pose
+    assert 'if (_state param [18, false]) then {' in pose
+    assert '[_medic, _main, 2] call ACME_fnc_doAnim;' in pose
     assert 'ACME_fnc_medicAnimationPrep' in pose
-    assert 'ACME_fnc_rollProviderStart' in flip
+    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in flip
 
 def test_chest_seal_patient_roll_interpolates_without_priority_two():
     # Historical name retained. Normal entry is priority one; forbidding the
@@ -197,15 +197,17 @@ def test_animation_helpers_default_to_interpolated_priority_one():
     assert '(_x param [2, 2])' not in queue
 
 
-def test_no_acme_medical_animation_entry_uses_priority_two_switchmove_fallback():
-    # Historical identity retained. Priority two is allowed only as a scoped exact-state repair/lock,
-    # never as the ordinary provider-work entry path.
+def test_priority_two_entry_is_scoped_to_explicit_immediate_chest_procedure_paths():
     pose = txt('functions/fn_treatmentPoseStart.sqf')
     roll = txt('functions/fn_chestSealRoll.sqf')
     sync = txt('functions/fn_treatmentPoseSync.sqf')
     assert '[_medic, _main, 1] call ACME_fnc_doAnim;' in pose
     assert '[_medic, _transition, 1] call ACME_fnc_doAnim;' in pose
-    assert '_trans, 1, "chest-seal-roll"' in roll
+    assert 'if (_state param [18, false]) then {' in pose
+    assert '[_medic, _main, 2] call ACME_fnc_doAnim;' in pose
+    assert 'private _animPriority = [1, 2] select _immediate;' in roll
+    assert 'private _lockPriority = [3, 100] select _immediate;' in roll
+    assert 'if (!_immediate) then {' in roll
     assert '[_p, _trans, 2] call ACME_fnc_doAnim;' in roll
     assert '_medic switchMove [_main, _phase, 1, false];' in sync
 
