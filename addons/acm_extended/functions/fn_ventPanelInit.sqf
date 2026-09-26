@@ -505,12 +505,12 @@ if (_doBoot) then {
     // the power-on jingle, a beat into the lit splash. it is distinct from ventilator_startup_sfx, which is the
     // mechanical spin-up on the self-test screen, and from the running loop.
     [{
-        params ["_bT0"];
+        params ["_bT0", "_viewer"];
         if ((uiNamespace getVariable ["ACME_vent_bootT0", -1]) isEqualTo _bT0
             && {!isNull (uiNamespace getVariable ["ACME_vent_dlg", displayNull])}) then {
             if (!isNull _viewer) then {playSound3D ["acm_extended\sound\vent_jingle_sfx.ogg", _viewer, false, getPosASL _viewer, 3, 1, 30];};
         };
-    }, [_bT0], (_blackout + _jingleDelay)] call CBA_fnc_waitAndExecute;
+    }, [_bT0, _viewer], (_blackout + _jingleDelay)] call CBA_fnc_waitAndExecute;
 } else {
     // no boot on this open, so route straight to the correct screen now.
     (_dlg displayCtrl 87760) ctrlShow false;
