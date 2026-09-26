@@ -394,7 +394,7 @@ class CfgPatches {
 class CfgMods {
     class ACM_Extended {
         dir = "@ACM Extended [DEV Branch]";
-        name = "ACM Extended";
+        name = "ACM Extended [DEV Branch]";
         picture = "\acm_extended\ui\ACME_logo.paa";
         logo = "\acm_extended\ui\ACME_logo.paa";
         logoOver = "\acm_extended\ui\ACME_logo.paa";
