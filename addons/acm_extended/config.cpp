@@ -7930,7 +7930,7 @@ class ace_medical_treatment_actions {
         allowedSelections[] = {"Body"};
         condition = "[_medic, _patient, false] call ACME_fnc_manualPlateCarrierCanToggle";
         callbackStart = "";
-        callbackSuccess = "";
+        callbackSuccess = "[_patient, 'manualPlateCarrier', [_medic, _patient, false]] call ACME_fnc_ownerDispatch";
         callbackFailure = "";
         callbackProgress = "";
         animationMedic = "";
@@ -7945,6 +7945,7 @@ class ace_medical_treatment_actions {
     class ACME_ManualReplacePlateCarrier: ACME_ManualRemovePlateCarrier {
         displayName = "Replace Plate Carrier";
         condition = "[_medic, _patient, true] call ACME_fnc_manualPlateCarrierCanToggle";
+        callbackSuccess = "[_patient, 'manualPlateCarrier', [_medic, _patient, true]] call ACME_fnc_ownerDispatch";
     };
 
     // Keep the existing assessment action; B31 gives its medic one pose owner.
