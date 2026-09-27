@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Phase 105: keep public/runtime/debug version identity set to v1.2.4.1.1."""
+"""Phase 105: keep public/runtime/debug version identity set to v1.2.4.1."""
 from pathlib import Path
 import re
 
