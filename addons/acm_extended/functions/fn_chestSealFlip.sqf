@@ -100,7 +100,7 @@ if (!_started) exitWith {
     };
 
     if (!isNull _provider && {local _provider}) then {
-        private _holdEpoch = [_provider, _patient, true] call ACME_fnc_chestSealProviderHoldStart;
+        private _holdEpoch = [_provider, _patient] call ACME_fnc_chestSealProviderHoldStart;
         _provider setVariable ["ACME_CS_providerHoldEpoch", _holdEpoch, false];
         uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch", _holdEpoch];
 
@@ -114,8 +114,8 @@ if (!_started) exitWith {
 };
 
 // Patient motion is dispatched by chestSealFlipTick on the first frame the exact medic4 work state is observed.
- // That is the same sequencing used by auscultation and chest-entry flips, but because the old pose is already
- // handed off and logical weapon selection is cleared above there is no extra holster or crouch delay.
+// That is the same sequencing used by auscultation and chest-entry flips, but because the old pose is already
+// handed off and logical weapon selection is cleared above there is no extra holster or crouch delay.
 private _providerNative = missionNamespace getVariable ["ACME_rollProviderDuration", 2.2];
 if !(_providerNative isEqualType 0 && {finite _providerNative} && {_providerNative > 0}) then {_providerNative = 2.2;};
 private _providerWall = (_providerNative / (call ACME_fnc_choreographyRate)) + 0.55;
