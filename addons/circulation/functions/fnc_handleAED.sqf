@@ -20,7 +20,6 @@ params ["_medic", "_patient"];
 
 if ((_patient getVariable [QGVAR(AED_PFH), -1]) != -1) exitWith {};
 
-private _inVehicle = !(isNull (objectParent _medic));
 
 _patient setVariable [QGVAR(AED_Provider), _patient, true];
 _medic setVariable [QGVAR(AED_Target_Patient), _patient, true];
