@@ -1916,6 +1916,7 @@ class CfgFunctions {
             class suctionObservers {};
             class ownerDispatch {};
             class patientInteractionDistance {};
+            class patientInteractionReachable {};
             class headElevEffective {};
             class canCheckPatientDogtags {};
             class headElevHoldStart {};
