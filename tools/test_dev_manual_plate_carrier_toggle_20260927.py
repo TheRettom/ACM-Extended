@@ -19,12 +19,14 @@ def test_dev_actions_are_mutually_exclusive_body_equipment_toggles():
     assert 'allowedSelections[] = {"Body"};' in remove
     assert 'allowSelfTreatment = 1;' in remove
     assert '[_medic, _patient, false] call ACME_fnc_manualPlateCarrierCanToggle' in remove
+    assert "[_patient, 'manualPlateCarrier', [_medic, _patient, false]] call ACME_fnc_ownerDispatch" in remove
     assert 'animationMedic = "";' in remove
     assert 'animationMedicProne = "";' in remove
     assert 'ACM_rollToBack = 0;' in remove
 
     assert 'displayName = "Replace Plate Carrier";' in replace
     assert '[_medic, _patient, true] call ACME_fnc_manualPlateCarrierCanToggle' in replace
+    assert "[_patient, 'manualPlateCarrier', [_medic, _patient, true]] call ACME_fnc_ownerDispatch" in replace
 
 
 def test_toggle_functions_are_registered_and_owner_routed():
