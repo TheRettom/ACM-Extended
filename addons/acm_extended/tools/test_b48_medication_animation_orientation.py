@@ -79,7 +79,8 @@ def test_exact_chest_roll_provider_animation_is_forced():
     assert 'if (currentWeapon _medic != "") then {_medic selectWeapon "";};' in s
     assert '["_forceImmediate", false, [false]]' in s
     assert '[_medic, "roll", _duration, _patient, _forceImmediate] call ACME_fnc_treatmentPoseStart' in r
-    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in f
+    assert '[_provider, "chestSealFlip", _patient] call ACME_fnc_rollProviderStart' in f
+    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' not in f
     launch = block(txt('config.cpp'), 'ACME_ApplyChestSeal')
     for key in ['animationMedic = "";', 'animationMedicProne = "";', 'animationMedicSelf = "";', 'animationMedicSelfProne = "";']:
         assert key in launch
