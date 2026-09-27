@@ -12,17 +12,19 @@ def fn(name):
     return (ADDON / "functions" / f"fn_{name}.sqf").read_text(encoding="utf-8-sig")
 
 
-def test_patient_flip_dispatches_immediately_and_preempts_provider_animation():
+def test_patient_flip_preempts_old_pose_then_uses_standard_medic4_sequence():
     request = fn("chestSealFlip")
     wait = fn("chestSealFlipTick")
-    assert request.count("call ACME_fnc_chestSealRoll") == 1
-    assert "call ACME_fnc_chestSealRoll" not in wait
-    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in request
-    assert '[_patient, _newSide, false, _provider, false, true] call ACME_fnc_chestSealRoll' in request
+    assert "call ACME_fnc_chestSealRoll" not in request
+    assert wait.count("call ACME_fnc_chestSealRoll") == 1
+    assert '[_provider, "chestSealFlip", _patient] call ACME_fnc_rollProviderStart' in request
+    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' not in request
     assert request.index('ACME_CS_ApplyAnimSerial') < request.index('call ACME_fnc_rollProviderStart')
     assert request.index('call ACME_fnc_treatmentPoseStop') < request.index('call ACME_fnc_rollProviderStart')
-    assert 'animationState _provider' not in wait
-    assert 'if (_rollStarted < 0) exitWith {call _finish;};' in wait
+    dispatch = wait.index("call ACME_fnc_chestSealRoll")
+    assert '_work == "ainvpknlmstpsnonwnondnon_medic4"' in wait[:dispatch]
+    assert '(toLowerANSI animationState _provider) == _work' in wait[:dispatch]
+    assert '[_patient,_side,false,_provider,false,true] call ACME_fnc_chestSealRoll;' in wait
 
 
 def test_closing_a_panel_invalidates_pending_roll_before_restoration():
