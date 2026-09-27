@@ -67,7 +67,7 @@ def test_flip_never_turns_provider_failure_into_patient_noop():
     # The workspace is restored and the user can retry without moving the casualty out of sequence.
     flip = read("addons/acm_extended/functions/fn_chestSealFlip.sqf")
     assert "if (!_started) exitWith" in flip
-    fallback = flip.split("if (!_started) exitWith", 1)[1].split("// The diagram and casualty move together immediately.",1)[0]
+    fallback = flip.split("if (!_started) exitWith", 1)[1].split("// Patient motion is dispatched by chestSealFlipTick",1)[0]
     assert 'call ACME_fnc_chestSealRoll' not in fallback
     assert '["ACME_CS_FlipPendingToken", ""]' in fallback
     assert '["ACME_CS_FlipLockedUntil", 0]' in fallback
