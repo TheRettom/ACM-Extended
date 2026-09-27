@@ -40,6 +40,7 @@ missionNamespace setVariable ["ACM_core_ContinuousAction_Cancel_EscapeID", -1];
 if (dialog) then {closeDialog 0;};
 
 private _notInVehicle = isNull objectParent _medic;
+private _medicVehicleAtStart = vehicle _medic;
 
 // The stethoscope is a long provider pose. Weapon state is owned by treatmentPoseStart/medicAnimationPrep; do not
 // use selectWeapon "" here, because a sidearm can remain visibly attached after its logical selection is cleared.
@@ -96,7 +97,7 @@ if (_isDialog) then {
 
 private _pfh = [{
     params ["_args", "_idPFH"];
-    _args params ["_medic", "_patient", "_bodyPart", "_extraArgs", "_notInVehicle", "_poseEpoch", "_perFrame", "_onCancel", "_dialogID", "_dialogKeyEH", "_scopeDisplay", "_keyID", "_isDialog", "_epoch"];
+    _args params ["_medic", "_patient", "_bodyPart", "_extraArgs", "_notInVehicle", "_medicVehicleAtStart", "_poseEpoch", "_perFrame", "_onCancel", "_dialogID", "_dialogKeyEH", "_scopeDisplay", "_keyID", "_isDialog", "_epoch"];
 
     // A newer continuous action owns the globals now. Remove only this scope's PFH/input hook and its token-safe pose;
     // never execute the old cancellation/reopen path against the new owner.
@@ -112,9 +113,8 @@ private _pfh = [{
 
     private _patientCondition = isNull _patient;
     private _medicCondition = isNull _medic || {!local _medic} || {!(alive _medic)} || {_medic getVariable ["ACE_isUnconscious", false]};
-    private _vehicleCondition = (objectParent _medic isNotEqualTo objectParent _patient);
-    private _enteredVehicle = _notInVehicle && {!isNull objectParent _medic};
-    private _distanceCondition = (!isNull _patient) && {(_patient distance2D _medic > ace_medical_gui_maxDistance)};
+    private _medicVehicleChanged = (vehicle _medic) isNotEqualTo _medicVehicleAtStart;
+    private _reachLost = !_patientCondition && {!([_medic, _patient] call ACME_fnc_patientInteractionReachable)};
 
     private _dialogCondition = dialog;
     if (_isDialog) then {
@@ -123,8 +123,7 @@ private _pfh = [{
 
     // DO NOT include treatmentPoseEpisode here. Bell pickup/drag state and animation retirement cannot close the
     // scope. Only an explicit close/ESC or a genuinely invalid treatment context ends the action.
-    if (_patientCondition || _medicCondition || _enteredVehicle || !ACM_core_ContinuousAction_Active || _dialogCondition
-        || {(!_notInVehicle && _vehicleCondition) || {(_notInVehicle && _distanceCondition)}}) exitWith {
+    if (_patientCondition || _medicCondition || _medicVehicleChanged || _reachLost || !ACM_core_ContinuousAction_Active || _dialogCondition) exitWith {
         [_idPFH] call CBA_fnc_removePerFrameHandler;
 
         if (_isDialog) then {
@@ -162,6 +161,6 @@ private _pfh = [{
     };
 
     _args call _perFrame;
-}, 0, [_medic, _patient, _bodyPart, _extraArgs, _notInVehicle, _poseEpoch, _perFrame, _onCancel, _dialogID, _dialogKeyEH, _scopeDisplay, _keyID, _isDialog, _epoch]] call CBA_fnc_addPerFrameHandler;
+}, 0, [_medic, _patient, _bodyPart, _extraArgs, _notInVehicle, _medicVehicleAtStart, _poseEpoch, _perFrame, _onCancel, _dialogID, _dialogKeyEH, _scopeDisplay, _keyID, _isDialog, _epoch]] call CBA_fnc_addPerFrameHandler;
 
 missionNamespace setVariable ["ACM_core_ContinuousAction_PFH", _pfh];
