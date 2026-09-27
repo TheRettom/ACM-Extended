@@ -1,7 +1,7 @@
 ACME_infusion_version = getText (configFile >> "CfgPatches" >> "ACM_Extended" >> "version");
 if (ACME_infusion_version == "") then { ACME_infusion_version = "1.3.0"; };
-ACME_buildBatch = "DEV-130-PHYS1-PC3";
-ACME_debugRevision = "PHYS1-PC3";
+ACME_buildBatch = "DEV-130-PHYS1-PC4";
+ACME_debugRevision = "PHYS1-PC4";
 ACME_networkAuditRevision = "NA3-1.3.0-dev";
 call ACME_fnc_chestSealNetInit;
 [] call ACME_fnc_ventCustodyInit;
