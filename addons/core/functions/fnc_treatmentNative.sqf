@@ -20,8 +20,8 @@
 
 params ["_medic", "_patient", "_bodyPart", "_classname"];
 
-private _medicVehicle = objectParent _medic;
-private _sameVehicleTreatment = !isNull _medicVehicle && {(objectParent _patient) isEqualTo _medicVehicle};
+private _medicVehicle = vehicle _medic;
+private _sameVehicleTreatment = _medicVehicle isNotEqualTo _medic && {(vehicle _patient) isEqualTo _medicVehicle};
 
 // Delay by a frame if cursor menu is open to prevent progress bar failing
 if (uiNamespace getVariable [QACEGVAR(interact_menu,cursorMenuOpened), false]) exitWith {
