@@ -131,7 +131,7 @@ def test_selected_carousel_syringe_has_only_one_live_hitbox():
     assert '_activeHit ctrlShow _activeUsable' in render
 
 
-def test_provider_roll_uses_normal_interpolation_except_immediate_chestseal_flip():
+def test_chestseal_flip_reuses_standard_provider_roll_interpolation():
     pose = txt('functions/fn_treatmentPoseStart.sqf')
     flip = txt('functions/fn_chestSealFlip.sqf')
     assert 'case "roll": {"AinvPknlMstpSnonWnonDnon_medic4"};' in pose
@@ -140,7 +140,8 @@ def test_provider_roll_uses_normal_interpolation_except_immediate_chestseal_flip
     assert '[_medic, _main, [1, 2] select _hardOverride] call ACME_fnc_doAnim;' in pose
     assert 'if (currentWeapon _medic != "") then {_medic selectWeapon "";};' in pose
     assert 'ACME_fnc_medicAnimationPrep' in pose
-    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in flip
+    assert '[_provider, "chestSealFlip", _patient] call ACME_fnc_rollProviderStart' in flip
+    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' not in flip
 
 def test_chest_seal_patient_roll_interpolates_without_priority_two():
     # Historical name retained. Normal entry is priority one; forbidding the
