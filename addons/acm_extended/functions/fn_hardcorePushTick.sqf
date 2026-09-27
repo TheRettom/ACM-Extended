@@ -11,9 +11,10 @@ if !(missionNamespace getVariable ["ACME_hcEff_medications",false]) exitWith {["
 private _medic = _job getOrDefault ["medic",objNull];
 private _patient = _job getOrDefault ["patient",objNull];
 if (isNull _medic || {isNull _patient} || {!local _medic} || {!alive _medic} || {_medic getVariable ["ACE_isUnconscious",false]}) exitWith {["provider"] call ACME_fnc_hardcorePushStop;};
-// Exact ACM AED leash semantics: same objectParent plus configured distance, or the same vehicle.
+// Keep the syringe alive anywhere the patient is clinically reachable. Same-vehicle care bypasses model-origin
+// spacing; other contexts retain the configured AED-style leash.
 private _leash = missionNamespace getVariable ["ACM_circulation_AEDDistanceLimit",5];
-if (((objectParent _medic) isNotEqualTo (objectParent _patient)) || {(_patient distance _medic) > _leash}) exitWith {["leash"] call ACME_fnc_hardcorePushStop;};
+if !([_medic, _patient, _leash] call ACME_fnc_patientInteractionReachable) exitWith {["leash"] call ACME_fnc_hardcorePushStop;};
 private _body = _job getOrDefault ["bodyPart","body"];
 private _site = _job getOrDefault ["site",-2];
 private _identity = [_patient,_body,_site] call ACME_fnc_medicationLineIdentity;
