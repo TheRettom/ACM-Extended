@@ -32,10 +32,7 @@ private _leash = if (_mode == "torso") then {
 } else {
     missionNamespace getVariable ["ACME_DP_leashDist", 2.7]
 };
-private _medicVehicle = objectParent _medic;
-private _patientVehicle = objectParent _patient;
-if (_stop == "" && {_medicVehicle isNotEqualTo _patientVehicle}) then {_stop = "far";};
-if (_stop == "" && {(_medic distance _patient) > _leash}) then {_stop = "far";};
+if (_stop == "" && {!([_medic, _patient, _leash] call ACME_fnc_patientInteractionReachable)}) then {_stop = "far";};
 
 if (_stop != "") exitWith {
     if (_stop == "far") then {["Direct pressure released.", 2, _medic] call ace_common_fnc_displayTextStructured;};
