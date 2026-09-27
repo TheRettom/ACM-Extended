@@ -1825,6 +1825,9 @@ class CfgFunctions {
             class chestAccessVestRestore {};
             class chestAccessVestProvider {};
             class chestAccessPreparing {};
+            class manualPlateCarrierCanToggle {};
+            class manualPlateCarrierCommit {};
+            class registerManualPlateCarrierRuntime {};
             class chestSealProviderHoldStart {};
             class registerMegacodeInteractionRuntime {};
             class registerVentilatorKeybindRuntime {};
@@ -7911,6 +7914,37 @@ class ace_medical_treatment_actions {
         ACM_rollToBack = "false";  // a conscious pain patient. do not force them supine.
         sounds[] = {};
         ACM_menuIcon = "ACME_Spray_Esketamine";
+    };
+
+    // DEV PC1 manual chest-access gear toggle. This is deliberately separate from temporary chest-access
+    // custody: Remove Plate Carrier stores the exact vest loadout persistently and leaves it off across later
+    // interventions; Replace Plate Carrier is the only normal path that restores that manually removed carrier.
+    class ACME_ManualRemovePlateCarrier: CheckPulse {
+        displayName = "Remove Plate Carrier";
+        displayNameProgress = "";
+        category = "advanced";
+        treatmentLocations[] = {"All"};
+        medicRequired = 0;
+        allowSelfTreatment = 1;
+        treatmentTime = 0.001;
+        allowedSelections[] = {"Body"};
+        condition = "[_medic, _patient, false] call ACME_fnc_manualPlateCarrierCanToggle";
+        callbackStart = "";
+        callbackSuccess = "";
+        callbackFailure = "";
+        callbackProgress = "";
+        animationMedic = "";
+        animationMedicProne = "";
+        animationMedicSelf = "";
+        animationMedicSelfProne = "";
+        ACM_rollToBack = 0;
+        items[] = {};
+        consumeItem = 0;
+        ACM_menuIcon = "";
+    };
+    class ACME_ManualReplacePlateCarrier: ACME_ManualRemovePlateCarrier {
+        displayName = "Replace Plate Carrier";
+        condition = "[_medic, _patient, true] call ACME_fnc_manualPlateCarrierCanToggle";
     };
 
     // Keep the existing assessment action; B31 gives its medic one pose owner.
