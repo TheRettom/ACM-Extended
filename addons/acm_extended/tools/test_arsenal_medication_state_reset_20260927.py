@@ -29,3 +29,10 @@ def test_reset_function_is_registered():
     cfg = read("config.cpp")
     assert "class resetPersonalMedicationKit {};" in cfg
     assert "class registerSyringeLifecycleRuntime {};" in cfg
+
+
+def test_death_keeps_the_partial_vial_ledger_on_the_corpse():
+    s = read("functions/fn_registerSyringeLifecycleRuntime.sqf")
+    killed = s.split('player addEventHandler ["Killed"', 1)[1].split('player addEventHandler ["Respawn"', 1)[0]
+    assert "ACME_fnc_narcStoreCommit" in killed
+    assert "ACME_fnc_resetPersonalMedicationKit" not in killed
