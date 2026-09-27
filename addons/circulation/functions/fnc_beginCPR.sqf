@@ -123,6 +123,7 @@ if (!isNil "ACME_fnc_treatmentPoseStop") then {[_medic] call ACME_fnc_treatmentP
 [QACEGVAR(common,setAnimSpeedCoef), [_medic, 1]] call CBA_fnc_globalEvent;
 
 private _notInVehicle = isNull objectParent _medic;
+private _medicVehicleAtStart = vehicle _medic;
 private _initialAnimation = animationState _medic;
 private _startDelay = 2;
 GVAR(loopCPR) = false;
@@ -146,7 +147,7 @@ private _CPRStartTime = _readyAt + 0.2;
 // session down on the next frame and can never leave a two-second delayed callback that later starts an old CPR.
 private _controller = [{
     params ["_args", "_idPFH"];
-    _args params ["_medic", "_patient", "_notInVehicle", "_readyAt", "_CPRStartTime", "_fnc_doCPRAnimation", "_epoch"];
+    _args params ["_medic", "_patient", "_notInVehicle", "_medicVehicleAtStart", "_readyAt", "_CPRStartTime", "_fnc_doCPRAnimation", "_epoch"];
 
     // A newer CPR episode owns the provider. The newer start synchronously removed these old input hooks, so the old
     // PFH retires itself only. It must not remove possibly reused handler ids or mutate any current client globals.
@@ -156,9 +157,8 @@ private _controller = [{
 
     private _patientCondition = isNull _patient || {(!(IS_UNCONSCIOUS(_patient)) && alive _patient)};
     private _medicCondition = isNull _medic || {!(alive _medic)} || {IS_UNCONSCIOUS(_medic)} || {!local _medic};
-    private _vehicleCondition = (objectParent _medic isNotEqualTo objectParent _patient);
-    private _enteredVehicle = _notInVehicle && {!isNull objectParent _medic};
-    private _distanceCondition = (!isNull _patient) && {(_patient distance2D _medic) > ACEGVAR(medical_gui,maxDistance)};
+    private _medicVehicleChanged = (vehicle _medic) isNotEqualTo _medicVehicleAtStart;
+    private _reachLost = !isNull _patient && {!([_medic, _patient] call ACME_fnc_patientInteractionReachable)};
     private _ownsCPR = !isNull _patient
         && {(_patient getVariable [QGVAR(CPR_session), []]) isEqualTo [_medic, _epoch]}
         && {(_patient getVariable [QGVAR(CPR_Medic), objNull]) isEqualTo _medic};
@@ -166,7 +166,7 @@ private _controller = [{
 
     if (_patientCondition || _medicCondition || !_ownsCPR || _swapToBVM || dialog
         || {_medic getVariable [QGVAR(CPR_Cancel), false]}
-        || {_enteredVehicle} || {(!_notInVehicle && _vehicleCondition) || {(_notInVehicle && _distanceCondition)}}) exitWith {
+        || {_medicVehicleChanged} || {_reachLost}) exitWith {
         private _started = (_medic getVariable [QGVAR(CPR_StartedEpoch), -1]) == _epoch;
         if !([_medic, _patient, _epoch] call FUNC(cprCleanupLocal)) exitWith {};
 
@@ -314,6 +314,6 @@ private _controller = [{
         };
         _medic setVariable [QGVAR(isPerformingCPR), GVAR(CPRActive), true];
     };
-}, 0, [_medic, _patient, _notInVehicle, _readyAt, _CPRStartTime, _fnc_doCPRAnimation, _epoch]] call CBA_fnc_addPerFrameHandler;
+}, 0, [_medic, _patient, _notInVehicle, _medicVehicleAtStart, _readyAt, _CPRStartTime, _fnc_doCPRAnimation, _epoch]] call CBA_fnc_addPerFrameHandler;
 
 GVAR(CPR_ControllerPFH) = _controller;
