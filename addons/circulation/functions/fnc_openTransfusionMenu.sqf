@@ -124,7 +124,6 @@ _display setVariable ["ACM_TX_CloseID", _closeID];
     private _ctrl = _display displayCtrl _x;
     if (!isNull _ctrl) then {
         _ctrl ctrlShow false;
-        _ctrl ctrlEnable false;
     };
 } forEach [
     86120, 86121, 86122, 86123, 86124, 86125, 86126, 86127, 86128, 86129, 86130,
