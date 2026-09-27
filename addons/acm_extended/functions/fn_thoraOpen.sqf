@@ -130,8 +130,7 @@ private _abort = {
         || {(uiNamespace getVariable ["ACME_Thora_EntryCancelToken", ""]) == _lease}
         || {!alive _m}
         || {_m getVariable ["ACE_isUnconscious", false]}
-        || {isNull objectParent _m && {(_m distance _p) > ace_medical_gui_maxDistance}}
-        || {objectParent _m isNotEqualTo objectParent _p}) exitWith {true};
+        || {!([_m, _p] call ACME_fnc_patientInteractionReachable)}) exitWith {true};
 
     private _readyLease = _p getVariable ["ACME_chestAccess_readyLease", ""];
     private _ready = _p getVariable ["ACME_chestAccess_readyServer", -1];
@@ -144,8 +143,7 @@ private _abort = {
         || {(uiNamespace getVariable ["ACME_Thora_ChestAccessLease", ""]) != _lease}
         || {!alive _m}
         || {_m getVariable ["ACE_isUnconscious", false]}
-        || {isNull objectParent _m && {(_m distance _p) > ace_medical_gui_maxDistance}}
-        || {objectParent _m isNotEqualTo objectParent _p};
+        || {!([_m, _p] call ACME_fnc_patientInteractionReachable)};
     if (_cancelled) exitWith {
         [_p, _m, _lease, _finish, _release, true] call _abort;
     };
