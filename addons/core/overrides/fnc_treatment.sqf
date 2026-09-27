@@ -14,10 +14,10 @@ if ((toLowerANSI _classname) == "cpr"
     _this set [2, _bodyPart];
 };
 
-private _medicVehicle = objectParent _medic;
-private _sameVehicleTreatment = !isNull _medicVehicle && {(objectParent _patient) isEqualTo _medicVehicle};
+private _medicVehicle = vehicle _medic;
+private _sameVehicleTreatment = _medicVehicle isNotEqualTo _medic && {(vehicle _patient) isEqualTo _medicVehicle};
 private _interactionChecks = [["isNotInside", "isNotSwimming", "isNotInZeus"], ["isNotSwimming", "isNotInZeus"]] select _sameVehicleTreatment;
-private _rangeOkay = _sameVehicleTreatment || {(_medic distance _patient) <= ace_medical_gui_maxDistance};
+private _rangeOkay = [_medic, _patient] call ACME_fnc_patientInteractionReachable;
 
 // Head positioning is provider theatre, never a global treatment lock. Any newly accepted medical click preempts
 // a leftover/current Semi-Fowler provider sequence before normal treatment gating runs. Manual unsupported
@@ -322,8 +322,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
                 || {!alive _m}
                 || {_classKey == "checkbreathing" && {!alive _p}}
                 || {_m getVariable ["ACE_isUnconscious", false]}
-                || {isNull objectParent _m && {(_m distance _p) > ace_medical_gui_maxDistance}}
-                || {objectParent _m isNotEqualTo objectParent _p};
+                || {!([_m, _p] call ACME_fnc_patientInteractionReachable)};
             if (_cancelled) exitWith {
                 [_m,_p,_leaseId,_classKey,_tok,_finish,true] call _abort;
             };
@@ -333,8 +332,8 @@ if (_classname != "ACME_ConnectETVent") exitWith {
             // into a delayed treatment start.
             private _stillTreatable = _args call ace_medical_treatment_fnc_canTreat;
             private _stillInteractive = [_m, _p, [["isNotInside","isNotSwimming","isNotInZeus"],["isNotSwimming","isNotInZeus"]] select (!isNull objectParent _m && {objectParent _m isEqualTo objectParent _p})] call ace_common_fnc_canInteractWith;
-            if (!_stillTreatable || {!_stillInteractive} || {isNull objectParent _m && {(_m distance _p) > ace_medical_gui_maxDistance}}
-                || {objectParent _m isNotEqualTo objectParent _p}) exitWith {
+            if (!_stillTreatable || {!_stillInteractive}
+                || {!([_m, _p] call ACME_fnc_patientInteractionReachable)}) exitWith {
                 _m setVariable ["ACME_chestAccessPreflightCancel", true, false];
                 [_m,_p,_leaseId,_classKey,_tok,_finish,true] call _abort;
             };
@@ -408,9 +407,8 @@ if (_classname != "ACME_ConnectETVent") exitWith {
                 || {!alive _m}
                 || {_classKey == "checkbreathing" && {!alive _p}}
                 || {_m getVariable ["ACE_isUnconscious", false]}
-                || {isNull objectParent _m && {(_m distance _p) > ace_medical_gui_maxDistance}}
-                || {objectParent _m isNotEqualTo objectParent _p}
-                || {!([_m, _p, [["isNotInside","isNotSwimming","isNotInZeus"],["isNotSwimming","isNotInZeus"]] select (!isNull objectParent _m && {objectParent _m isEqualTo objectParent _p})] call ace_common_fnc_canInteractWith)};
+                || {!([_m, _p] call ACME_fnc_patientInteractionReachable)}
+                || {!([_m, _p, [["isNotInside","isNotSwimming","isNotInZeus"],["isNotSwimming","isNotInZeus"]] select ((vehicle _m) isNotEqualTo _m && {(vehicle _m) isEqualTo (vehicle _p)})] call ace_common_fnc_canInteractWith)};
             if (_invalid) exitWith {
                 _m setVariable ["ACME_chestAccessPreflightCancel", true, false];
                 true
