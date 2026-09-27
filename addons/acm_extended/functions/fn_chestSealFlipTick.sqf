@@ -1,5 +1,6 @@
-// Completion watcher for an already-dispatched chest-seal Flip.
-// The button itself starts provider medic4 and the casualty roll immediately; this PFH never gates roll startup.
+// Coordinate the chest-seal Flip with the same exact medic4 provider theatre used by the other chest flips.
+// The click already pre-empts the old chest pose. This PFH waits only until Arma reports the requested medic4
+// work state, then dispatches the casualty roll immediately. There is no full-animation wait before the roll starts.
 disableSerialization;
 params ["_args","_handle"];
 _args params ["_patient","_provider","_display","_session","_token","_epoch","_rollToken",
@@ -12,7 +13,7 @@ private _finish = {
         uiNamespace setVariable ["ACME_CS_FlipPFH",-1];
     };
 
-    // Retire only this Flip's provider owner. A newer animation episode is never stopped by an old completion.
+    // Retire only this Flip's provider roll. A stale completion can never touch a newer provider episode.
     if (!isNull _provider && {local _provider}
         && {(_provider getVariable ["ACME_rollProviderToken",""]) == _rollToken}
         && {_rollToken != ""}) then {
@@ -21,14 +22,15 @@ private _finish = {
         _provider setVariable ["ACME_rollProviderPFH",-1];
         _provider setVariable ["ACME_rollProviderToken",""];
         _provider setVariable ["ACME_rollProviderActive",false];
-        [_provider,"roll",_epoch,_current] call ACME_fnc_treatmentPoseStop;
+        [_provider,"roll",_epoch,true] call ACME_fnc_treatmentPoseStop;
     };
     if (!_current) exitWith {};
 
-    // Restore hands-on-chest only when another provider action has not already taken animation ownership.
+    // Hand directly from medic4 back into the same hands-on-chest workspace. Do not use the old immediate/priority-2
+    // path here; the normal empty-hands transition is what keeps the selected weapon from reappearing.
     private _after = if (isNull _provider) then {[]} else {_provider getVariable ["ACME_treatmentPoseState",[]]};
     if (_after isEqualTo [] && {!isNull _provider} && {local _provider}) then {
-        private _holdEpoch = [_provider,_patient,true] call ACME_fnc_chestSealProviderHoldStart;
+        private _holdEpoch = [_provider,_patient] call ACME_fnc_chestSealProviderHoldStart;
         _provider setVariable ["ACME_CS_providerHoldEpoch",_holdEpoch,false];
         uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch",_holdEpoch];
     };
@@ -41,6 +43,7 @@ private _finish = {
         _button ctrlEnable true;
         _button ctrlSetText "Flip";
     };
+
     if (!isNull _provider
         && {(_provider getVariable ["ACME_DP_PauseTreatmentClass",""]) == "chestsealflip"}) then {
         _provider setVariable ["ACME_DP_Paused",false];
@@ -55,17 +58,52 @@ if (!_current || {isNull _display} || {isNull _patient} || {isNull _provider}
     || {(uiNamespace getVariable ["ACME_CS_SessionToken",""]) != _session}
     || {!((uiNamespace getVariable ["ACME_CS_Patient",objNull]) isEqualTo _patient)}) exitWith {call _finish;};
 
-// Startup is never deferred to this PFH anymore. A negative stamp is malformed/stale state and is retired.
-if (_rollStarted < 0) exitWith {call _finish;};
+if (_rollStarted >= 0) exitWith {
+    private _patientDone = diag_tickTime >= (_rollStarted + _rollTime);
+    private _poseNow = _provider getVariable ["ACME_treatmentPoseState",[]];
+    private _providerStillRoll = (_poseNow param [0,-2]) == _epoch
+        && {(_poseNow param [1,""]) == "roll"}
+        && {(_provider getVariable ["ACME_rollProviderToken",""]) == _rollToken};
+    private _providerCompleted = (_provider getVariable ["ACME_rollProviderCompletedEpoch",-1]) == _epoch;
+    private _providerDone = _providerCompleted || {!_providerStillRoll} || {diag_tickTime >= _deadline};
 
-private _patientDone = diag_tickTime >= (_rollStarted + _rollTime);
-private _poseNow = _provider getVariable ["ACME_treatmentPoseState",[]];
-private _providerStillRoll = (_poseNow param [0,-2]) == _epoch
-    && {(_poseNow param [1,""]) == "roll"}
-    && {(_provider getVariable ["ACME_rollProviderToken",""]) == _rollToken};
-private _providerCompleted = (_provider getVariable ["ACME_rollProviderCompletedEpoch",-1]) == _epoch;
-private _providerDone = _providerCompleted || {!_providerStillRoll} || {diag_tickTime >= _deadline};
+    // Both accelerated motions are bounded. The provider never has to finish some unrelated prior animation first.
+    if (_patientDone && {_providerDone}) then {call _finish;};
+};
 
-// Both authored motions get their bounded accelerated window, but a missing animation callback can no longer
-// strand the button for five-plus seconds. The deadline is derived at click time and capped at three seconds.
-if (_patientDone && {_providerDone}) then {call _finish;};
+// If physical control becomes invalid before medic4 actually starts, keep the panel usable and perform only the
+// procedural view change. Never animate a now-mobile/conscious casualty from a stale click.
+if !([_patient] call ACME_fnc_chestSealCanPhysicalRoll) exitWith {
+    uiNamespace setVariable ["ACME_CS_Side",_side];
+    uiNamespace setVariable ["ACME_CS_FlipTarget",""];
+    uiNamespace setVariable ["ACME_CS_VirtualFlip",true];
+    [] call ACME_fnc_chestSealRender;
+    call _finish;
+};
+
+private _pose = _provider getVariable ["ACME_treatmentPoseState",[]];
+if (_epoch < 0 || {_rollToken == ""}
+    || {!local _provider}
+    || {_provider getVariable ["ACE_isUnconscious",false]}
+    || {!isNull objectParent _provider}
+    || {(_provider distance _patient) > 5}
+    || {(_pose param [0,-2]) != _epoch}
+    || {(_pose param [1,""]) != "roll"}
+    || {(_provider getVariable ["ACME_rollProviderToken",""]) != _rollToken}
+    || {diag_tickTime >= _deadline}) exitWith {call _finish;};
+
+// Exactly the same chest-flip provider state used by auscultation and entry normalization.
+private _work = toLowerANSI (_pose param [2,""]);
+if ((_pose param [3,-2]) >= 1
+    && {_work == "ainvpknlmstpsnonwnondnon_medic4"}
+    && {(toLowerANSI animationState _provider) == _work}) then {
+    _args set [9,diag_tickTime];
+    uiNamespace setVariable ["ACME_CS_Side",_side];
+    uiNamespace setVariable ["ACME_CS_FlipTarget",_side];
+    uiNamespace setVariable ["ACME_CS_FlipLockedUntil",diag_tickTime + _rollTime];
+
+    // Once medic4 is actually on screen, use the immediate patient lease so another casualty animation cannot
+    // delay the requested physical flip. This does not alter the provider's normal medic4 move-graph path.
+    [_patient,_side,false,_provider,false,true] call ACME_fnc_chestSealRoll;
+    [] call ACME_fnc_chestSealRender;
+};
