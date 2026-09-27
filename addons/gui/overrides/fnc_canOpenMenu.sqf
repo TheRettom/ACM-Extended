@@ -6,7 +6,6 @@ if (!isNull findDisplay 312) exitWith {
     && {ace_medical_gui_enableMedicalMenu > 0}
 };
 (_player call ace_common_fnc_isAwake) && {!isNull _target}
-&& {([_player, _target] call ACME_fnc_patientInteractionDistance) < ace_medical_gui_maxDistance
-    || {vehicle _player == vehicle _target}}
+&& {[_player, _target] call ACME_fnc_patientInteractionReachable}
 && {ace_medical_gui_enableMedicalMenu == 1
     || {ace_medical_gui_enableMedicalMenu == 2 && {!isNull objectParent _player || {!isNull objectParent _target}}}}
