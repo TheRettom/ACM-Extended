@@ -72,15 +72,17 @@ def test_clinical_launch_is_native_and_generation_scoped():
     assert "ACM_core_fnc_beginContinuousAction" not in block
     assert 'missionNamespace setVariable ["ACM_core_ContinuousAction_Active"' not in block
 
-def test_chest_seal_workspace_hands_directly_to_immediate_flip_and_back():
+def test_chest_seal_workspace_hands_directly_to_standard_medic4_flip_and_back():
     flip = read("addons/acm_extended/functions/fn_chestSealFlip.sqf")
     tick = read("addons/acm_extended/functions/fn_chestSealFlipTick.sqf")
     close = read("addons/acm_extended/functions/fn_chestSealClose.sqf")
     assert '"ACME_CS_providerHoldEpoch", -1' in flip
     assert '[_provider, _oldMode, _oldEpoch, true] call ACME_fnc_treatmentPoseStop;' in flip
-    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in flip
-    assert '[_patient, _newSide, false, _provider, false, true] call ACME_fnc_chestSealRoll' in flip
-    assert '[_provider,"roll",_epoch,_current] call ACME_fnc_treatmentPoseStop;' in tick
+    assert '[_provider, "chestSealFlip", _patient] call ACME_fnc_rollProviderStart' in flip
+    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' not in flip
+    assert 'call ACME_fnc_chestSealRoll' not in flip
+    assert '[_patient,_side,false,_provider,false,true] call ACME_fnc_chestSealRoll;' in tick
+    assert '[_provider,"roll",_epoch,true] call ACME_fnc_treatmentPoseStop;' in tick
     assert "ACME_fnc_chestSealProviderHoldStart" in tick
     assert "_providerCompleted" in tick
     assert "_providerDone" in tick

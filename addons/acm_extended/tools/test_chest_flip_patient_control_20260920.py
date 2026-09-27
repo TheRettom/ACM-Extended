@@ -28,13 +28,16 @@ def test_flip_button_uses_only_authoritative_roll_eligibility():
     assert 'ACME_CS_ProcedureGrounded' not in src
     assert 'ACME_CS_VirtualFlip", true' in src
 
-def test_flip_dispatches_immediately_but_patient_owner_rechecks_authority():
+def test_flip_waits_for_exact_medic4_then_patient_owner_rechecks_authority():
     click = read("fn_chestSealFlip.sqf")
     tick = read("fn_chestSealFlipTick.sqf")
     roll = read("fn_chestSealRoll.sqf")
-    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in click
-    assert '[_patient, _newSide, false, _provider, false, true] call ACME_fnc_chestSealRoll' in click
-    assert 'call ACME_fnc_chestSealRoll' not in tick
+    assert '[_provider, "chestSealFlip", _patient] call ACME_fnc_rollProviderStart' in click
+    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' not in click
+    assert 'call ACME_fnc_chestSealRoll' not in click
+    dispatch = tick.index('call ACME_fnc_chestSealRoll')
+    assert '_work == "ainvpknlmstpsnonwnondnon_medic4"' in tick[:dispatch]
+    assert '(toLowerANSI animationState _provider) == _work' in tick[:dispatch]
     gate = roll.index('if !([_patient] call ACME_fnc_chestSealCanPhysicalRoll) exitWith {};')
     anim = roll.index('call ACME_fnc_patientAnimRequest')
     assert gate < anim

@@ -1,5 +1,5 @@
-// Chest-seal Flip is a procedure-critical animation handoff.
-// A physical Flip immediately pre-empts any current provider chest animation and immediately starts the casualty roll.
+// Chest-seal Flip uses the same provider medic4 theatre as every other chest flip.
+// It immediately retires the current chest pose, then enters the normal empty-hands roll animation path.
 private _patient = uiNamespace getVariable ["ACME_CS_Patient", objNull];
 private _now = diag_tickTime;
 private _lockedUntil = uiNamespace getVariable ["ACME_CS_FlipLockedUntil", 0];
@@ -62,8 +62,8 @@ uiNamespace setVariable ["ACME_CS_ApplyPFH", -1];
 uiNamespace setVariable ["ACME_CS_ApplyAnimSerial", (uiNamespace getVariable ["ACME_CS_ApplyAnimSerial", 0]) + 1];
 uiNamespace setVariable ["ACME_CS_ApplyGestureUntil", 0];
 
-// Retire ANY ACME-owned provider pose as a handoff. This includes seal medic3 and NCD medic1. The immediate
-// roll entry below then uses priority 2, deliberately overwriting the visible RTM on this same interaction.
+// Retire ANY ACME-owned provider pose as a handoff. This includes seal medic3 and NCD medic1. Keep the old
+// visible chest pose in place for the handoff; do not play an intermediate neutral/weapon-restoring exit.
 private _oldPose = _provider getVariable ["ACME_treatmentPoseState", []];
 private _oldMode = _oldPose param [1, ""];
 private _oldEpoch = _oldPose param [0, -1];
@@ -77,9 +77,12 @@ private _rollTime = missionNamespace getVariable ["ACME_CS_rollTime", 1.85 / (ca
 if !(_rollTime isEqualType 0 && {finite _rollTime}) then {_rollTime = 1.85 / (call ACME_fnc_choreographyRate);};
 _rollTime = (_rollTime max 0.1) min 5;
 
-// The Flip button is the one intentional hard-preemption path: provider medic4 begins now, without another
-// weapon/crouch preflight, and the casualty roll is dispatched on this click rather than waiting for a PFH sample.
-private _started = [_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart;
+// The workspace/medic3/medic1 states are already visibly Wnon/Snon. Clear only the logical selected weapon
+// so medicAnimationPrep sees the real empty-hands handoff instead of asking Arma to play another holster/draw chain.
+// Then use the SAME rollProviderStart call used by the other chest flip sequences.
+if (currentWeapon _provider != "") then {_provider selectWeapon "";};
+_provider setVariable ["ACME_medicAnimationPrep", ["empty_hands_ready", CBA_missionTime, ""], false];
+private _started = [_provider, "chestSealFlip", _patient] call ACME_fnc_rollProviderStart;
 private _pose = _provider getVariable ["ACME_treatmentPoseState", []];
 private _epoch = if (_started) then {_pose param [0, -1]} else {-1};
 private _rollToken = if (_started) then {_provider getVariable ["ACME_rollProviderToken", ""]} else {""};
@@ -97,7 +100,7 @@ if (!_started) exitWith {
     };
 
     if (!isNull _provider && {local _provider}) then {
-        private _holdEpoch = [_provider, _patient, true] call ACME_fnc_chestSealProviderHoldStart;
+        private _holdEpoch = [_provider, _patient] call ACME_fnc_chestSealProviderHoldStart;
         _provider setVariable ["ACME_CS_providerHoldEpoch", _holdEpoch, false];
         uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch", _holdEpoch];
 
@@ -110,20 +113,15 @@ if (!_started) exitWith {
     };
 };
 
-// The diagram and casualty move together immediately. chestSealRoll revalidates owner-side eligibility and uses
-// an immediate priority-2 patient animation lease for this button path.
-uiNamespace setVariable ["ACME_CS_Side", _newSide];
-uiNamespace setVariable ["ACME_CS_FlipTarget", _newSide];
-uiNamespace setVariable ["ACME_CS_FlipLockedUntil", _now + _rollTime];
-[_patient, _newSide, false, _provider, false, true] call ACME_fnc_chestSealRoll;
-[] call ACME_fnc_chestSealRender;
-
+// Patient motion is dispatched by chestSealFlipTick on the first frame the exact medic4 work state is observed.
+// That is the same sequencing used by auscultation and chest-entry flips, but because the old pose is already
+// handed off and logical weapon selection is cleared above there is no extra holster or crouch delay.
 private _providerNative = missionNamespace getVariable ["ACME_rollProviderDuration", 2.2];
 if !(_providerNative isEqualType 0 && {finite _providerNative} && {_providerNative > 0}) then {_providerNative = 2.2;};
 private _providerWall = (_providerNative / (call ACME_fnc_choreographyRate)) + 0.55;
 private _deadline = _now + ((_providerWall max (_rollTime + 0.35)) min 3.0);
 
 private _args = [_patient, _provider, _display, _session, _token, _epoch, _rollToken,
-    _newSide, _rollTime, _now, _deadline];
+    _newSide, _rollTime, -1, _deadline];
 private _flipPFH = [{_this call ACME_fnc_chestSealFlipTick;}, 0, _args] call CBA_fnc_addPerFrameHandler;
 uiNamespace setVariable ["ACME_CS_FlipPFH", _flipPFH];

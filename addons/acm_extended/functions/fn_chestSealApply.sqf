@@ -43,9 +43,12 @@ if (!isNull _medic && {local _medic}) then {
     _medic setVariable ["ACME_CS_providerHoldEpoch", -1, false];
     uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch", -1];
 
-    // Immediate=true is intentional here. We are already inside the chest procedure; no second weapon/crouch
-    // preflight is allowed to delay the seal-placement theatre or let a stale prior chest/NCD animation continue underneath it.
-    private _placeEpoch = [_medic, "chestSeal", _duration, _patient, true] call ACME_fnc_treatmentPoseStart;
+    // The chest workspace is already visibly empty-handed. Clear only Arma's logical weapon selection before
+    // handing into medic3, then use the SAME normal priority-1 pose path as the rest of the chest choreography.
+    // This avoids the priority-2/switchMove fallback which can visibly pull the selected weapon back into the hands.
+    if (currentWeapon _medic != "") then {_medic selectWeapon "";};
+    _medic setVariable ["ACME_medicAnimationPrep", ["empty_hands_ready", CBA_missionTime, ""], false];
+    private _placeEpoch = [_medic, "chestSeal", _duration, _patient] call ACME_fnc_treatmentPoseStart;
 
     if (_placeEpoch >= 0) then {
         private _applyPFH = [{
@@ -123,7 +126,7 @@ if (!isNull _medic && {local _medic}) then {
                 || {!((uiNamespace getVariable ["ACME_CS_Medic", objNull]) isEqualTo _m)}
                 || {!((uiNamespace getVariable ["ACME_CS_Patient", objNull]) isEqualTo _p)}) exitWith {};
 
-            private _holdEpoch = [_m, _p, true] call ACME_fnc_chestSealProviderHoldStart;
+            private _holdEpoch = [_m, _p] call ACME_fnc_chestSealProviderHoldStart;
             _m setVariable ["ACME_CS_providerHoldEpoch", _holdEpoch, false];
             uiNamespace setVariable ["ACME_CS_ProviderHoldEpoch", _holdEpoch];
         }, [_medic, _patient, _placeEpoch, _serial], _duration] call CBA_fnc_waitAndExecute;
