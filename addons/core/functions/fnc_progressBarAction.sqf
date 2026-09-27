@@ -48,8 +48,7 @@ if (!_inVehicle && stance _medic in ["STAND","CROUCH"]) then {
 
     private _patientCondition = (_patient isNotEqualTo objNull);
     private _medicCondition = ((alive _medic) && !(IS_UNCONSCIOUS(_medic)) && (_medic isNotEqualTo objNull));
-    private _vehicleCondition = (objectParent _medic isEqualTo objectParent _patient);
-    private _distanceCondition = (_patient distance2D _medic <= ACEGVAR(medical_gui,maxDistance));
+    private _reachable = [_medic, _patient] call ACME_fnc_patientInteractionReachable;
 
-    (_patientCondition && _medicCondition && ((_inVehicle && _vehicleCondition) || (!_inVehicle && _distanceCondition)));
+    (_patientCondition && _medicCondition && _reachable);
 }, {true}] select _condition), ["isNotInside", "isNotSwimming", "isNotInZeus"]] call ACEFUNC(common,progressBar);
