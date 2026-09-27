@@ -108,7 +108,7 @@ if (_classname in ["ACME_ApplyChestSeal", "ACME_PerformNARSPEAR", "ACME_VentOpen
     if (isNull _medic || {isNull _patient} || {!local _medic}) exitWith {false};
     if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
     if !([_medic, _patient, ["isNotInside", "isNotSwimming", "isNotInZeus"]] call ace_common_fnc_canInteractWith) exitWith {false};
-    if ((_medic distance _patient) > ace_medical_gui_maxDistance) exitWith {false};
+    if (([_medic, _patient] call ACME_fnc_patientInteractionDistance) > ace_medical_gui_maxDistance) exitWith {false};
     ace_medical_gui_pendingReopen = false;
     if (_classname == "ACME_VentOpenPatient") then {
         [_patient] call ACME_fnc_ventPanelOpen;
@@ -191,7 +191,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
         && {local _medic} && {!isNull _medic} && {alive _medic}) exitWith {
         if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
         if !([_medic, _patient, ["isNotInside", "isNotSwimming", "isNotInZeus"]] call ace_common_fnc_canInteractWith) exitWith {false};
-        if ((_medic distance _patient) > ace_medical_gui_maxDistance) exitWith {false};
+        if (([_medic, _patient] call ACME_fnc_patientInteractionDistance) > ace_medical_gui_maxDistance) exitWith {false};
         // One accepted click owns this preparation generation. A closed menu plus this flag makes repeated clicks no-ops.
         if (_medic getVariable ["ACME_chestAccessPreflightActive", false]) exitWith {false};
 
@@ -295,7 +295,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
                 || {!alive _m}
                 || {_classKey == "checkbreathing" && {!alive _p}}
                 || {_m getVariable ["ACE_isUnconscious", false]}
-                || {(_m distance _p) > ace_medical_gui_maxDistance}
+                || {([_m, _p] call ACME_fnc_patientInteractionDistance) > ace_medical_gui_maxDistance}
                 || {objectParent _m isNotEqualTo objectParent _p};
             if (_cancelled) exitWith {
                 [_m,_p,_leaseId,_classKey,_tok,_finish,true] call _abort;
@@ -306,7 +306,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
             // into a delayed treatment start.
             private _stillTreatable = _args call ace_medical_treatment_fnc_canTreat;
             private _stillInteractive = [_m, _p, ["isNotInside", "isNotSwimming", "isNotInZeus"]] call ace_common_fnc_canInteractWith;
-            if (!_stillTreatable || {!_stillInteractive} || {(_m distance _p) > ace_medical_gui_maxDistance}
+            if (!_stillTreatable || {!_stillInteractive} || {([_m, _p] call ACME_fnc_patientInteractionDistance) > ace_medical_gui_maxDistance}
                 || {objectParent _m isNotEqualTo objectParent _p}) exitWith {
                 _m setVariable ["ACME_chestAccessPreflightCancel", true, false];
                 [_m,_p,_leaseId,_classKey,_tok,_finish,true] call _abort;
@@ -380,7 +380,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
                 || {!alive _m}
                 || {_classKey == "checkbreathing" && {!alive _p}}
                 || {_m getVariable ["ACE_isUnconscious", false]}
-                || {(_m distance _p) > ace_medical_gui_maxDistance}
+                || {([_m, _p] call ACME_fnc_patientInteractionDistance) > ace_medical_gui_maxDistance}
                 || {objectParent _m isNotEqualTo objectParent _p}
                 || {!([_m, _p, ["isNotInside", "isNotSwimming", "isNotInZeus"]] call ace_common_fnc_canInteractWith)};
             if (_invalid) exitWith {
