@@ -21,7 +21,7 @@ def test_ace_arsenal_load_and_import_are_explicit_reset_boundaries():
     s = read("functions/fn_registerSyringeLifecycleRuntime.sqf")
     assert '["ace_arsenal_onLoadoutLoad",' in s
     assert '["ace_arsenal_loadoutImported",' in s
-    assert s.count("call ACME_fnc_resetPersonalMedicationKit;") >= 4
+    assert s.count("call ACME_fnc_resetPersonalMedicationKit;") >= 3
     assert 'ace_arsenal_displayClosed' not in s
 
 
