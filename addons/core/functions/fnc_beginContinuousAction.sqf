@@ -123,6 +123,7 @@ if (!_suppressProviderAnim) then {
 };
 
 private _notInVehicle = isNull objectParent _medic;
+private _medicVehicleAtStart = vehicle _medic;
 
 private _medicStance = stance _medic;
 private _isProne = (_medicStance == "PRONE") && _allowProne;
@@ -170,7 +171,7 @@ if (currentWeapon _medic != "") then {
 
 private _pfh = [{
     params ["_args", "_idPFH"];
-    _args params ["_medic", "_patient", "_bodyPart", "_extraArgs", "_notInVehicle", "_isProne", "_perFrame", "_onCancel", "_dialogID", "_epoch", "_keyID", "_isDialog", "_dialogStartupUntil", "_playerBound", "_suppressProviderAnim", "_reopenOnEnd"];
+    _args params ["_medic", "_patient", "_bodyPart", "_extraArgs", "_notInVehicle", "_medicVehicleAtStart", "_isProne", "_perFrame", "_onCancel", "_dialogID", "_epoch", "_keyID", "_isDialog", "_dialogStartupUntil", "_playerBound", "_suppressProviderAnim", "_reopenOnEnd"];
 
     // Superseded action. Retire only this PFH and its own key id. Never run the old cancellation/reopen path against
     // the newer generation.
@@ -182,9 +183,10 @@ private _pfh = [{
     private _patientCondition = (isNull _patient);
     private _identityChanged = _playerBound && {!(_medic isEqualTo ACE_player)};
     private _medicCondition = (isNull _medic || {!local _medic} || {!(alive _medic)} || {IS_UNCONSCIOUS(_medic)});
-    private _vehicleCondition = (objectParent _medic isNotEqualTo objectParent _patient);
-    private _enteredVehicle = _notInVehicle && {!isNull objectParent _medic};
-    private _distanceCondition = (!isNull _patient) && {(_patient distance2D _medic) > ACEGVAR(medical_gui,maxDistance)};
+    // A provider changing vehicles ends the current hands-on episode, but the patient's vehicle itself is not
+    // a treatment blocker. Reachability follows the same rule as the medical menu.
+    private _medicVehicleChanged = (vehicle _medic) isNotEqualTo _medicVehicleAtStart;
+    private _reachLost = !_patientCondition && {!([_medic, _patient] call ACME_fnc_patientInteractionReachable)};
 
     private _dialogCondition = false;
     if (_isDialog) then {
@@ -207,7 +209,7 @@ private _pfh = [{
         };
     };
 
-    if (_patientCondition || _medicCondition || _identityChanged || _enteredVehicle || !GVAR(ContinuousAction_Active) || _dialogCondition || {(!_notInVehicle && _vehicleCondition) || {(_notInVehicle && _distanceCondition)}}) exitWith {
+    if (_patientCondition || _medicCondition || _identityChanged || _medicVehicleChanged || _reachLost || !GVAR(ContinuousAction_Active) || _dialogCondition) exitWith {
         [_idPFH] call CBA_fnc_removePerFrameHandler;
 
         // Release the shared ownership state before touching CBA handler cleanup. CBA currently returns string key-handler
@@ -280,7 +282,7 @@ private _pfh = [{
         && {CBA_missionTime - (_medic getVariable [QGVAR(ContinuousAction_LastSeen), -100]) >= 2}) then {
         _medic setVariable [QGVAR(ContinuousAction_LastSeen), CBA_missionTime, true];
     };
-}, 0, [_medic, _patient, _bodyPart, _extraArgs, _notInVehicle, _isProne, _perFrame, _onCancel, _dialogID, _epoch, _keyID, _isDialog, _dialogStartupUntil, _playerBound, _suppressProviderAnim, _reopenOnEnd]] call CBA_fnc_addPerFrameHandler;
+}, 0, [_medic, _patient, _bodyPart, _extraArgs, _notInVehicle, _medicVehicleAtStart, _isProne, _perFrame, _onCancel, _dialogID, _epoch, _keyID, _isDialog, _dialogStartupUntil, _playerBound, _suppressProviderAnim, _reopenOnEnd]] call CBA_fnc_addPerFrameHandler;
 
 GVAR(ContinuousAction_PFH) = _pfh;
 _args call _onStart;
