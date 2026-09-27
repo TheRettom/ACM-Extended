@@ -12,13 +12,13 @@ def test_seal_placement_is_exact_unarmed_medic3_for_265_seconds():
     apply = read("fn_chestSealApply.sqf")
     assert "ACME_CS_applyAnimSeconds = 2.65;" in init
     assert 'case "chestSeal": {"AinvPknlMstpSnonWnonDnon_medic3"};' in pose
-    assert '[_medic, "chestSeal", _duration, _patient, true] call ACME_fnc_treatmentPoseStart' in apply
+    assert '[_medic, "chestSeal", _duration, _patient] call ACME_fnc_treatmentPoseStart' in apply
     assert 'private _endsAt = diag_tickTime + _duration;' in apply
     assert '[_m, "AinvPknlMstpSnonWnonDnon_medic3", 1] call ACME_fnc_doAnim;' in apply
     assert '_asserts < 3' in apply
     assert '[_m, "chestSeal", _epoch, true] call ACME_fnc_treatmentPoseStop;' in apply
     assert '}, [_medic, _patient, _placeEpoch, _serial], _duration] call CBA_fnc_waitAndExecute;' in apply
-    assert '[_m, _p, true] call ACME_fnc_chestSealProviderHoldStart' in apply
+    assert '[_m, _p] call ACME_fnc_chestSealProviderHoldStart' in apply
 
 def test_medic1_is_ncd_only_not_chest_seal_apply():
     pose = read("fn_treatmentPoseStart.sqf")
@@ -30,40 +30,45 @@ def test_medic1_is_ncd_only_not_chest_seal_apply():
     assert '[_medic,"ncdSeat"' not in apply
     assert '[_medic, "ncdSeat"' not in apply
     assert '"ncdSeat"' in apply  # cancellation-only: an old NCD pose must be retired before medic3 starts
-    assert apply.index('call ACME_fnc_treatmentPoseStop') < apply.index('"chestSeal", _duration, _patient, true] call ACME_fnc_treatmentPoseStart')
+    assert apply.index('call ACME_fnc_treatmentPoseStop') < apply.index('"chestSeal", _duration, _patient] call ACME_fnc_treatmentPoseStart')
 
-def test_flip_preempts_apply_and_provider_pose_on_the_click():
+def test_flip_preempts_apply_then_uses_standard_medic4_provider_path():
     flip = read("fn_chestSealFlip.sqf")
+    tick = read("fn_chestSealFlipTick.sqf")
     assert 'if ((uiNamespace getVariable ["ACME_CS_ApplyGestureUntil",0]) > _now) exitWith {};' not in flip
-    assert 'ACME_CS_ApplyPFH' in flip
-    assert 'ACME_CS_ApplyAnimSerial' in flip
+    assert 'ACME_CS_ApplyPFH' in flip and 'ACME_CS_ApplyAnimSerial' in flip
     assert '[_provider, _oldMode, _oldEpoch, true] call ACME_fnc_treatmentPoseStop;' in flip
-    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' in flip
-    assert '[_patient, _newSide, false, _provider, false, true] call ACME_fnc_chestSealRoll' in flip
+    assert 'if (currentWeapon _provider != "") then {_provider selectWeapon "";};' in flip
+    assert '[_provider, "chestSealFlip", _patient] call ACME_fnc_rollProviderStart' in flip
+    assert '[_provider, "chestSealFlip", _patient, true] call ACME_fnc_rollProviderStart' not in flip
+    assert 'call ACME_fnc_chestSealRoll' not in flip
     assert flip.index("ACME_CS_ApplyAnimSerial") < flip.index("call ACME_fnc_rollProviderStart")
     assert flip.index("call ACME_fnc_treatmentPoseStop") < flip.index("call ACME_fnc_rollProviderStart")
-    assert flip.index("call ACME_fnc_rollProviderStart") < flip.index("call ACME_fnc_chestSealRoll")
+    assert '[_patient,_side,false,_provider,false,true] call ACME_fnc_chestSealRoll;' in tick
 
-def test_flip_has_no_animation_wait_gate_after_click():
+def test_flip_waits_only_for_exact_medic4_state_before_patient_roll():
     tick = read("fn_chestSealFlipTick.sqf")
-    assert "call ACME_fnc_chestSealRoll" not in tick
-    assert "animationState _provider" not in tick
-    assert 'if (_rollStarted < 0) exitWith {call _finish;};' in tick
+    assert tick.count("call ACME_fnc_chestSealRoll") == 1
+    dispatch = tick.index("call ACME_fnc_chestSealRoll")
+    assert '_work == "ainvpknlmstpsnonwnondnon_medic4"' in tick[:dispatch]
+    assert '(toLowerANSI animationState _provider) == _work' in tick[:dispatch]
+    assert '(_pose param [3,-2]) >= 1' in tick[:dispatch]
+    assert '_args set [9,diag_tickTime]' in tick[:dispatch]
     assert "_providerDone" in tick
     assert "min 3.0" in read("fn_chestSealFlip.sqf")
 
-def test_immediate_flip_uses_hard_provider_and_patient_precedence_only_on_explicit_path():
+def test_provider_uses_normal_medic4_path_while_patient_flip_keeps_absolute_precedence():
     pose = read("fn_treatmentPoseStart.sqf")
     provider = read("fn_rollProviderStart.sqf")
     patient = read("fn_chestSealRoll.sqf")
-    assert '["_forceImmediate", false, [false]]' in pose
-    assert 'if (currentWeapon _medic != "") then {_medic selectWeapon "";};' in pose
-    assert 'private _hardOverride = (_state param [18, false]) && {(_state param [1, ""]) == "roll"};' in pose
-    assert '[_medic, _main, [1, 2] select _hardOverride] call ACME_fnc_doAnim;' in pose
+    flip = read("fn_chestSealFlip.sqf")
+    tick = read("fn_chestSealFlipTick.sqf")
+    assert 'case "roll": {"AinvPknlMstpSnonWnonDnon_medic4"};' in pose
     assert '[_medic, "roll", _duration, _patient, _forceImmediate] call ACME_fnc_treatmentPoseStart' in provider
+    assert '[_provider, "chestSealFlip", _patient] call ACME_fnc_rollProviderStart' in flip
+    assert '[_patient,_side,false,_provider,false,true] call ACME_fnc_chestSealRoll;' in tick
     assert 'private _animPriority = [1, 2] select _immediate;' in patient
     assert 'private _lockPriority = [3, 100] select _immediate;' in patient
-    assert 'if (!_immediate) then {' in patient
 
 def test_apply_generation_is_retired_on_flip_close_and_reopen():
     flip = read("fn_chestSealFlip.sqf")
