@@ -331,7 +331,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
             // cached menu result from the original click. A casualty/provider state or range change may never turn
             // into a delayed treatment start.
             private _stillTreatable = _args call ace_medical_treatment_fnc_canTreat;
-            private _stillInteractive = [_m, _p, [["isNotInside","isNotSwimming","isNotInZeus"],["isNotSwimming","isNotInZeus"]] select (!isNull objectParent _m && {objectParent _m isEqualTo objectParent _p})] call ace_common_fnc_canInteractWith;
+            private _stillInteractive = [_m, _p, [["isNotInside","isNotSwimming","isNotInZeus"],["isNotSwimming","isNotInZeus"]] select ((vehicle _m) isNotEqualTo _m && {(vehicle _m) isEqualTo (vehicle _p)})] call ace_common_fnc_canInteractWith;
             if (!_stillTreatable || {!_stillInteractive}
                 || {!([_m, _p] call ACME_fnc_patientInteractionReachable)}) exitWith {
                 _m setVariable ["ACME_chestAccessPreflightCancel", true, false];
