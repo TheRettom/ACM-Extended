@@ -27,9 +27,7 @@ private _leaseLive = !isNull _leaseMedic && {alive _leaseMedic} && {_leaseToken 
 private _reachable = {
     if (isNull _medic || {!alive _medic}) exitWith {false};
     if (_holder isKindOf "CAManBase") exitWith {
-        private _mv = objectParent _medic;
-        private _hv = objectParent _holder;
-        (!isNull _mv && {_mv isEqualTo _hv}) || {(_medic distance _holder) <= 5}
+        [_medic, _holder, 5] call ACME_fnc_patientInteractionReachable
     };
     (objectParent _medic) isEqualTo _holder
 };
