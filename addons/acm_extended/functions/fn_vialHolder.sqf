@@ -22,8 +22,7 @@ private _holder = switch (_selection) do {
 // A selected patient remains a valid source after death, but not after the provider walks away. Do not use alive as
 // an inventory gate: that would both destroy corpse interaction and leak the patient's death state through the UI.
 if (_selection == 1 && {!isNull _holder} && {_holder isNotEqualTo _medic}) then {
-    private _sameVehicle = !isNull (objectParent _medic) && {(objectParent _medic) isEqualTo (objectParent _holder)};
-    if (!_sameVehicle && {_medic distance _holder > 5}) then {_holder = objNull;};
+    if !([_medic, _holder, 5] call ACME_fnc_patientInteractionReachable) then {_holder = objNull;};
     if (!isNull _holder && {!(_holder in ([_medic,_holder] call ACME_fnc_treatmentSupplyOrder))}) then {_holder = objNull;};
 };
 
