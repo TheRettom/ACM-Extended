@@ -51,8 +51,8 @@ private _open = {
     if ((uiNamespace getVariable ["ACME_CS_SessionToken", ""]) != _tok) exitWith {};
     if (isNull _p || {isNull _m} || {!alive _m} || {!local _m}
         || {_m getVariable ["ACE_isUnconscious", false]}
-        || {!isNull objectParent _m} || {!isNull objectParent _p}
-        || {_m distance _p > (missionNamespace getVariable ["ace_medical_gui_maxDistance", 3])}) exitWith {
+        || {objectParent _m isNotEqualTo objectParent _p}
+        || {([_m, _p] call ACME_fnc_patientInteractionDistance) > (missionNamespace getVariable ["ace_medical_gui_maxDistance", 3])}) exitWith {
         [] call ACME_fnc_chestSealClose;
     };
 
@@ -89,8 +89,8 @@ private _entryPFH = [{
     private _member = _tok in (_p getVariable ["ACME_CS_ProcedureTokens", []]);
     if (isNull _p || {isNull _m} || {!alive _m} || {!local _m} || {_m isNotEqualTo ACE_player}
         || {_m getVariable ["ACE_isUnconscious", false]}
-        || {!isNull objectParent _m} || {!isNull objectParent _p}
-        || {_m distance _p > (missionNamespace getVariable ["ace_medical_gui_maxDistance", 3])}
+        || {objectParent _m isNotEqualTo objectParent _p}
+        || {([_m, _p] call ACME_fnc_patientInteractionDistance) > (missionNamespace getVariable ["ace_medical_gui_maxDistance", 3])}
         || {owner _p != _patientOwner}
         || {_joined && {!_member}}
         || {(uiNamespace getVariable ["ACME_CS_EntryCancelToken", ""]) == _tok}) exitWith {
