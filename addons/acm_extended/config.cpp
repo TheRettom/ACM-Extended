@@ -1834,6 +1834,7 @@ class CfgFunctions {
             class initMinigameInteractionRuntime {};
             class registerMedicationDeliveryRuntime {};
             class registerEcgJostleRuntime {};
+            class resetPersonalMedicationKit {};
             class registerSyringeLifecycleRuntime {};
             class initForkStartupRuntime {};
 
