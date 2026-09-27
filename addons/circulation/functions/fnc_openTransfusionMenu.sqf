@@ -202,16 +202,12 @@ private _pfh = [{
     private _dialogCondition = isNull _display;
     private _patientCondition = isNull _patient;
     private _medicCondition = isNull _medic || {!alive _medic} || {IS_UNCONSCIOUS(_medic)};
-    private _vehicleCondition = false;
-    private _distanceCondition = false;
+    private _reachLost = false;
     if (!_patientCondition && {!_medicCondition}) then {
-        _vehicleCondition = objectParent _medic isNotEqualTo objectParent _patient;
-        _distanceCondition = (_patient distance2D _medic) > ACEGVAR(medical_gui,maxDistance);
+        _reachLost = !([_medic, _patient] call ACME_fnc_patientInteractionReachable);
     };
 
-    if (_medicCondition || _patientCondition || _dialogCondition
-        || {_inVehicle && {_vehicleCondition}}
-        || {!_inVehicle && {_distanceCondition}}) exitWith {
+    if (_medicCondition || _patientCondition || _dialogCondition || {_reachLost}) exitWith {
 
         if (GVAR(TransfusionMenu_Move_Active) && {!GVAR(TransfusionMenu_Move_Active_Moving)}
             && {!_patientCondition}) then {
