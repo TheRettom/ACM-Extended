@@ -11,7 +11,7 @@ if (isNull _unit) exitWith {false};
 [_unit, createHashMap] call ACME_fnc_openVialStoreCommit;
 _unit setVariable ["ACME_narcStoreSerial", 0, false];
 
-if (_unit isEqualTo ACE_player) then {
+if (hasInterface && {_unit isEqualTo ACE_player}) then {
     [_unit] call ACME_fnc_vialLeaseRelease;
 
     uiNamespace setVariable ["ACME_SK_SelectedSyringeId", ""];
