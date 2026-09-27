@@ -253,38 +253,22 @@ private _PFH = [{
 
 _patient setVariable [QGVAR(AED_PFH), _PFH];
 
-if (_inVehicle) then {
-    [{
-        params ["_patient", "_medic"];
+// AED leads follow the same clinical reach rule as the medical menu. Same-vehicle occupants remain connected
+// regardless of model-origin spacing; treating a casualty through a vehicle doorway remains valid while within
+// the configured AED leash.
+[{
+    params ["_patient", "_medic"];
+    isNull _patient || {isNull _medic}
+        || {!([_medic, _patient, GVAR(AEDDistanceLimit)] call ACME_fnc_patientInteractionReachable)}
+}, {
+    params ["_patient", "_medic"];
 
-        (objectParent _medic) isNotEqualTo (objectParent _patient);
-    }, {
-        params ["_patient", "_medic"];
-
-        if !(isNull _patient) then {
-            [_medic, _patient, "body", 0, false, true] call FUNC(setAED);
-            [_medic, _patient, "body", 1, false, true] call FUNC(setAED);
-            [_medic, _patient, "body", 2, false, true] call FUNC(setAED);
-            [_medic, _patient, "body", 3, false, true] call FUNC(setAED);
-            [_patient, "activity", LLSTRING(AED_%1_Disconnected), [[_medic, false, true] call ACEFUNC(common,getName)]] call ACEFUNC(medical_treatment,addToLog);
-            [QACEGVAR(common,displayTextStructured), [LLSTRING(AED_PatientDisconnected), 1.5, _medic], _medic] call CBA_fnc_targetEvent;
-        };
-    }, [_patient, _medic], 3600] call CBA_fnc_waitUntilAndExecute;
-} else {
-    [{
-        params ["_patient", "_medic"];
-
-        (((objectParent _medic) isNotEqualTo (objectParent _patient)) || ((_patient distance _medic) > GVAR(AEDDistanceLimit)));
-    }, {
-        params ["_patient", "_medic"];
-
-        if !(isNull _patient) then {
-            [_medic, _patient, "body", 0, false, true] call FUNC(setAED);
-            [_medic, _patient, "body", 1, false, true] call FUNC(setAED);
-            [_medic, _patient, "body", 2, false, true] call FUNC(setAED);
-            [_medic, _patient, "body", 3, false, true] call FUNC(setAED);
-            [_patient, "activity", LLSTRING(AED_%1_Disconnected), [[_medic, false, true] call ACEFUNC(common,getName)]] call ACEFUNC(medical_treatment,addToLog);
-            [QACEGVAR(common,displayTextStructured), [LLSTRING(AED_PatientDisconnected), 1.5, _medic], _medic] call CBA_fnc_targetEvent;
-        };
-    }, [_patient, _medic], 3600] call CBA_fnc_waitUntilAndExecute;
-};
+    if !(isNull _patient) then {
+        [_medic, _patient, "body", 0, false, true] call FUNC(setAED);
+        [_medic, _patient, "body", 1, false, true] call FUNC(setAED);
+        [_medic, _patient, "body", 2, false, true] call FUNC(setAED);
+        [_medic, _patient, "body", 3, false, true] call FUNC(setAED);
+        [_patient, "activity", LLSTRING(AED_%1_Disconnected), [[_medic, false, true] call ACEFUNC(common,getName)]] call ACEFUNC(medical_treatment,addToLog);
+        [QACEGVAR(common,displayTextStructured), [LLSTRING(AED_PatientDisconnected), 1.5, _medic], _medic] call CBA_fnc_targetEvent;
+    };
+}, [_patient, _medic], 3600] call CBA_fnc_waitUntilAndExecute;
