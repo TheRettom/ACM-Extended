@@ -6655,11 +6655,10 @@ class CfgSFX {
     };
 };
 
-// self-interaction radial. the saline-flush into push-dose prep sits next to ACM's own "Syringes" entry, under
-// CAManBase > ACE_SelfActions > ACM_Equipment. ACM compiles the self menu purely from ACE_SelfActions config,
-// and treatment-action data does not appear in the self menu automatically. that is why the flush was
-// invisible. the statements call ACME_fnc_salineFlush directly, and _patient is unused for a self prep.
-// the curator, or zeus, category is what the spawn megacode kelly module is filed under in the modules list.
+// Self-interaction medical equipment is defined under CAManBase > ACE_SelfActions > ACM_Equipment.
+// The obsolete ACM "Syringes" radial and the legacy ACME saline-flush/push-dose branch have been removed;
+// Narc Box is the supported medication-preparation entry point. The curator, or zeus, category below is what
+// the spawn megacode kelly module is filed under in the modules list.
 class CfgFactionClasses {
     class NO_CATEGORY;
     class ACME_Curator_Category: NO_CATEGORY {
