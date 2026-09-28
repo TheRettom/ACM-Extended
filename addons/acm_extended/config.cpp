@@ -6917,32 +6917,7 @@ class CfgVehicles {
                 statement = "[_player, true] call ACM_core_fnc_getUp";
             };
             class ACM_Equipment {
-                class ACME_FlushMenu {
-                    displayName = "Saline Flush / Push-Dose Epi";
-                    icon = "\acm_extended\ui\items\salineFlush_ca.paa";
-                    condition = "(missionNamespace getVariable ['ACME_sys_sk', true]) && {((([_player, 'ACM_SalineFlush_10'] call ace_common_fnc_getCountOfItem) > 0) || {(_player getVariable ['ACME_flush_State', []]) isNotEqualTo []})}";
-                    statement = "";
-                    exceptions[] = {"isNotInside", "isNotSitting"};
-                    showDisabled = 0;
-                    class ACME_Flush_Prep {
-                        displayName = "Saline Flush / Push-Dose (Syringe)";
-                        icon = "\acm_extended\ui\items\salineFlush_ca.paa";
-                        condition = "([_player, 'ACM_SalineFlush_10'] call ace_common_fnc_getCountOfItem) > 0";
-                        statement = "uiNamespace setVariable ['ACME_SK_AutoSaline', true]; call ACME_fnc_syringeKitOpen";
-                        exceptions[] = {"isNotInside", "isNotSitting"};
-                        showDisabled = 0;
-                    };
-                    // pull a push-dose from a prepared, un-hung, dirty-epi bag in your kit.
-                    class ACME_Flush_DrawDirtyPrep {
-                        displayName = "Draw Push-Dose from Prepped Epi (10mcg)";
-                        icon = "\acm_extended\ui\items\salineFlush_ca.paa";
-                        condition = "false";  // B13: retired unmetered bag-charge route
-                        statement = "playSound 'ACME_SyringeDraw'; [4.946, [_player], {(_this select 0) params ['_medic']; [_medic, _medic, '', ['drawDirtyPrep']] call ACME_fnc_salineFlush}, {}, 'Drawing from prepared epi bag...', {true}, ['isNotInside','isNotSwimming','isNotInZeus']] call ace_common_fnc_progressBar";
-                        exceptions[] = {"isNotInside", "isNotSitting"};
-                        showDisabled = 0;
-                    };
-                };
-                // custom syringe kit. it is always accessible. it draws any medication through ACM's own syringe-draw dialog,
+                                // custom syringe kit. it is always accessible. it draws any medication through ACM's own syringe-draw dialog,
                 // with the same drug list as "Use Syringe", plus a one-tap push-dose epi at 10 mcg/ml. the self side draws
                 // into your own syringe with no patient inject.
                 class ACME_SyringeKit {
