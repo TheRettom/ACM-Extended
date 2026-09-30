@@ -8,6 +8,7 @@
 // Any ACE interaction menu replaces pulse palpation as the active interaction surface. Retire the pulse layer
 // immediately so it can never remain underlaid behind another action/menu.
 ["ace_interactMenuOpened", {
+    [false, false] call ACME_fnc_respirationStop;
     if (uiNamespace getVariable ["ACME_PulseCheckActive", false]) then {
         uiNamespace setVariable ["ACME_PulseCheckCancel", true];
         "ACM_FeelPulse" cutText ["","PLAIN",0,false];
@@ -17,6 +18,7 @@
 // the medical menu opened.
 ["ace_medicalMenuOpened", {
     params ["_medic", "_target", "_display"];
+    [false, false] call ACME_fnc_respirationStop;
 
     // B169 renderer ownership: do not rely on ACE's single global menuPFH lifetime. The stock onLoad/onUnload pair
     // is final in this runtime and rapid medical-menu replacement can let an older display's unload retire the PFH

@@ -11,4 +11,6 @@ if (!finite _speed || {_speed == 0}) exitWith {
     0
 };
 private _duration = if (_speed < 0) then {-_speed} else {1 / _speed};
-ceil ((1.375 + _duration) / 1.5)
+// B213: allow the initial airway inspection another 0.25 real seconds at 1.5x.
+// Keep the native source cutoff aligned with assessmentTick and assessmentAdvance.
+ceil ((1.75 + _duration) / 1.5)

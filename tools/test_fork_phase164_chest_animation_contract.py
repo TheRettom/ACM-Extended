@@ -73,7 +73,7 @@ def test_chest_seal_workspace_hold_and_flip_handoff():
 def test_workspace_close_uses_semifowler_provider_exit():
     s = read("addons/acm_extended/functions/fn_chestSealClose.sqf")
     assert '[_flipMedic,_poseMode,_poseEpoch,true] call ACME_fnc_treatmentPoseStop' in s
-    assert '[_flipMedic,"lower"] call ACME_fnc_headElevMedicSeq' in s
+    assert '[_flipMedic,"chestsealexit",uiNamespace getVariable ["ACME_CS_SessionToken", ""]] call ACME_fnc_headElevMedicSeq' in s
 
 def test_semi_fowler_waits_for_reverse_carrier_restore():
     s = read("addons/acm_extended/functions/fn_headElevTryResume.sqf")

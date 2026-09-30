@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stable B212 build: B180 clot-only reopening plus B199 physical-dressing invariants remain enforced."""
+"""Stable B213 build: B180 clot-only reopening plus B199 physical-dressing invariants remain enforced."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -113,7 +113,7 @@ def test_build_identity_is_b203_stable():
     startup = read("addons/acm_extended/functions/fn_initForkStartupRuntime.sqf")
     cfg = read("addons/acm_extended/config.cpp")
     assert 'version = "1.2.4.1";' in cfg
-    assert 'ACME_buildBatch = "B212";' in startup
+    assert 'ACME_buildBatch = "B213";' in startup
     assert 'ACME_debugRevision = "";' in startup
 
 
@@ -121,4 +121,4 @@ if __name__ == "__main__":
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
             fn()
-    print("stable B212 bandage/clot invariant regression: PASS")
+    print("stable B213 bandage/clot invariant regression: PASS")

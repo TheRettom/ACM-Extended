@@ -5,8 +5,12 @@
 // animation reapplies on the next eligible tick after the provider stops moving and faces the patient.
 params ["_medic", "_patient"];
 if (isNull _medic || {!local _medic}) exitWith {};
+private _exit = _medic getVariable ["ACME_DP_Exit", []];
+if (_exit isNotEqualTo [] && {(_exit param [2, -1]) != (_medic getVariable ["ACME_providerLocalityEpoch", 0])
+    || {(CBA_missionTime - (_exit param [4, -99])) > ((_exit param [6, 0]) + 2)}}) then {
+    _medic setVariable ["ACME_DP_Exit", [], false];
+};
 private _inPose = _medic getVariable ["ACME_DP_InPose", false];
-private _poseToken = _medic getVariable ["ACME_DP_PoseToken", 0];
 private _heldPose = _medic getVariable ["ACME_DP_Pose", "ACME_DirectPressureHold"];
 private _heldProne = _medic getVariable ["ACME_DP_PoseProne", false];
 // A provider may choose prone while this persistent hold is running. Update both the
@@ -17,38 +21,13 @@ if (!_heldProne && {([_medic, "ACME_DirectPressureHold"] call ACME_fnc_providerA
     _medic setVariable ["ACME_DP_Pose", _heldPose];
     _medic setVariable ["ACME_DP_PoseProne", true];
 };
-private _localityEpoch = _medic getVariable ["ACME_providerLocalityEpoch", 0];
-
-// ACE can still be finishing the treatment callback for a fraction of a second after Direct Pressure starts.
-// During that entry grace, do not interpret ACE's own end-animation bookkeeping as a competing treatment or it
-// immediately tears down the hold we just requested.
-private _entryGrace = CBA_missionTime < (_medic getVariable ["ACME_DP_PoseGraceUntil", 0]);
-
-// A plain open medical menu is NOT a competing treatment. Stop Direct Pressure has to remain usable while the
-// provider visibly keeps pressure on the wound. Yield only when another treatment actually owns the provider pose.
-private _treating = !_entryGrace && {
-    (_medic getVariable ["ACME_DP_TreatmentBusy", false])
-    || {(_medic getVariable ["ACME_treatmentPreflightActive", false])}
-    || {(_medic getVariable ["ACME_chestAccessPreflightActive", false])}
-    || {(_medic getVariable ["ACME_chestAccessProvider", []]) isNotEqualTo []}
-    || {_medic getVariable ["ACME_headElev_seqActive", false]}
-    || {(_medic getVariable ["ace_medical_treatment_endInAnim", ""]) != ""}
-    || {missionNamespace getVariable ["ACM_core_ContinuousAction_Active", false]}
-    || {[_patient] call ACM_core_fnc_cprActive}
-    || {[_patient] call ACM_core_fnc_bvmActive}
-};
-if (_treating) exitWith {
-    // Kill ACME_fnc_doAnimHeld's reassert generation before the tourniquet/bandage/other treatment takes over.
-    // Do not force an unarmed crouch here. The incoming treatment owns the next pose and forcing Wnon first is what
-    // produced the visible weapon-out/weapon-away flicker between back-to-back actions.
-    _medic setVariable ["ACME_dah_gen", (_medic getVariable ["ACME_dah_gen", 0]) + 1, false];
-    _medic setVariable ["ACME_DP_InPose", false];
-    _medic setVariable ["ACME_DP_IdleStart", CBA_missionTime];
+if ([_medic, _patient] call ACME_fnc_directPressurePoseBusy) exitWith {
+    [_medic] call ACME_fnc_directPressurePoseRetire;
 };
 
 // there is no pose in a vehicle.
 if (!isNull objectParent _medic) exitWith {
-    _medic setVariable ["ACME_dah_gen", (_medic getVariable ["ACME_dah_gen", 0]) + 1, false];
+    [_medic] call ACME_fnc_directPressurePoseRetire;
     if (_inPose) then {
         _medic setVariable ["ACME_DP_InPose", false];
     };
@@ -78,67 +57,25 @@ private _looking = if (_dv2 isEqualTo [0,0,0] || {_lk2 isEqualTo [0,0,0]}) then 
 };
 
 if (_moving || {!_looking}) then {
-    // Movement/look-away is an absolute POSE escape, not a Direct Pressure cancellation. Retire every pending held
-    // reassert first. When actual movement exists, do not inject an intermediate unarmed animation at all: the
-    // player's own movement state gets first chance to supersede the hold, preserving the selected weapon state.
-    _medic setVariable ["ACME_dah_gen", (_medic getVariable ["ACME_dah_gen", 0]) + 1, false];
     private _actual = toLower animationState _medic;
     private _ownsVisibleHold = _inPose || {_actual == toLower _heldPose};
-    if (_ownsVisibleHold && {!([_medic] call ACME_fnc_animBlocked)}) then {
-        _medic setUnitPos "AUTO";
-
-        if (!_moving) then {
-            // Looking away while stationary has no movement state to take over, so use the normal neutral exit.
-            [_medic, [_medic, "AmovPknlMstpSnonWnonDnon", _heldProne] call ACME_fnc_providerAnimation, 1] call ACME_fnc_doAnim;
-        };
-
-        // Narrow engine-state repair. A movement command must never be swallowed by a stale looping DP state. If the
-        // engine is STILL physically in the DP hold after movement/treatment has had a chance to win, use priority 2
-        // once to break only that stale state. B127 token-checks the callback so an exit scheduled by an old hold can
-        // never break a newer Direct Pressure episode or a treatment which replaced it.
-        [{
-            params ["_m", "_tok", "_localityEpoch", "_heldPose", "_heldProne"];
-            if (isNull _m || {!local _m} || {!alive _m} || {!isNull objectParent _m}) exitWith {};
-            if ((_m getVariable ["ACME_providerLocalityEpoch", 0]) != _localityEpoch) exitWith {};
-            if ((_m getVariable ["ACME_DP_PoseToken", -1]) != _tok) exitWith {};
-            if !(_m getVariable ["ACME_DP_Active", false]) exitWith {};
-            // A brief reposition can finish before this callback runs. The resumed pose owns the next frame.
-            if (_m getVariable ["ACME_DP_InPose", false]) exitWith {};
-            // CPR/BVM preserve the pressure episode while borrowing its provider. The old DP frame may still be
-            // visible during that transition; it does not authorize this delayed repair to override the new owner.
-            // The pause also spans the short transfer gap before the successor publishes its live role.
-            if (_m getVariable ["ACME_DP_Paused", false]) exitWith {};
-            if ([_m] call ACME_fnc_providerStanceOwned) exitWith {};
-            if ((toLower animationState _m) != toLower _heldPose) exitWith {};
-            _m setUnitPos "AUTO";
-            [_m, [_m, "AmovPknlMstpSnonWnonDnon", _heldProne] call ACME_fnc_providerAnimation, 2] call ACME_fnc_doAnim;
-        }, [_medic, _poseToken, _localityEpoch, _heldPose, _heldProne], 0.08] call CBA_fnc_waitAndExecute;
-    };
-    _medic setVariable ["ACME_DP_InPose", false];
+    [_medic] call ACME_fnc_directPressurePoseRetire;
+    if (_ownsVisibleHold) then {[_medic, _heldProne] call ACME_fnc_directPressurePoseExit;};
     _medic setVariable ["ACME_DP_IdleStart", _now];
 } else {
+    if ((_medic getVariable ["ACME_DP_Exit", []]) isNotEqualTo []) exitWith {};
     if (!_inPose) then {
         private _idleStart = _medic getVariable ["ACME_DP_IdleStart", _now];
         if ((_now - _idleStart) >= (missionNamespace getVariable ["ACME_DP_idleToPose", 0])) then {
-            // Resume the ACME-owned pose directly. No weapon preflight, holster request, or weapon restore is issued.
-            private _prone = stance _medic == "PRONE";
-            _heldPose = [_medic, "ACME_DirectPressureHold", _prone] call ACME_fnc_providerAnimation;
-            _prone = _prone || {_heldPose == "ACM_ProneContinuous"};
-            _medic setVariable ["ACME_DP_Pose", _heldPose];
-            _medic setVariable ["ACME_DP_PoseProne", _prone];
-            [_medic, _heldPose, 1.1, 1, true] call ACME_fnc_doAnimHeld;
-            _medic setVariable ["ACME_DP_InPose", true];
-            _medic setVariable ["ACME_DP_LastPoseAssert", _now];
+            [_medic, _patient] call ACME_fnc_directPressurePoseEnter;
         };
     } else {
-        // ACE or another animation layer can replace a looping hold after our initial request. ACME_DP_InPose is
-        // intent, not proof that the engine is still showing the pose, so reassert it at a low rate while the medic
-        // remains stationary, facing the patient, and no real competing treatment owns the animation.
-        private _actual = toLower (animationState _medic);
+        private _actual = toLower animationState _medic;
         private _lastAssert = _medic getVariable ["ACME_DP_LastPoseAssert", 0];
         if (_actual != toLower _heldPose && {(_now - _lastAssert) >= 0.6} && {!([_medic] call ACME_fnc_animBlocked)}) then {
-            [_medic, _heldPose, 1.1, 1, true] call ACME_fnc_doAnimHeld;
-            _medic setVariable ["ACME_DP_LastPoseAssert", _now];
+            // Recheck real empty hands before recovering a replaced hold, never mask a selected weapon with Wnon.
+            [_medic] call ACME_fnc_directPressurePoseRetire;
+            [_medic, _patient] call ACME_fnc_directPressurePoseEnter;
         };
     };
 };

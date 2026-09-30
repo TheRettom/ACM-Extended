@@ -27,7 +27,7 @@ def test_prone_pressure_resumes_without_raising_provider_then_right_click_releas
         _animation="acm_pronecontinuous"; _inputActions=["{movement}"];
         CBA_missionTime=CBA_missionTime+0.2; call _pressTick;
         [_medic getVariable ["ACME_DP_Active",false],"prone movement cancelled clinical pressure"] call _check;
-        _inputActions=[]; _animation="prone-moving";
+        _inputActions=[]; _animation="amovppnemrunsnonwnondf";
         CBA_missionTime=CBA_missionTime+0.016; call _pressTick;
         [_medic getVariable ["ACME_DP_InPose",false],"prone pressure did not resume immediately"] call _check;
         _moves=[]; (count _handlers-1) call _tick;
@@ -47,7 +47,7 @@ def test_prone_pressure_resumes_without_raising_provider_then_right_click_releas
 def test_pressure_can_adopt_prone_during_an_existing_kneeling_hold():
     execute(pressure_setup() + '''
         ["leftarm"] call _start;
-        _providerStance="PRONE"; _animation="prone-idle"; _moves=[];
+        _providerStance="PRONE"; _animation="amovppnemstpsnonwnondnon"; _moves=[];
         CBA_missionTime=CBA_missionTime+1; call _pressTick;
         [(_medic getVariable ["ACME_DP_Pose",""])=="ACM_ProneContinuous","live prone stance did not replace kneeling target"] call _check;
         (count _handlers-1) call _tick;

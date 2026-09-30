@@ -26,20 +26,10 @@ _medic setVariable ["ACME_DP_ClinicalYield", false];
 _medic setVariable ["ACME_DP_ClinicalYieldStart", 0];
 _medic setVariable ["ACME_DP_OwnsContinuous", false];
 
-// Enter the connected two-handed pressure hold directly. No scripted weapon draw/holster cycle is introduced.
-if (isNull objectParent _medic) then {
-    private _prone = stance _medic == "PRONE";
-    private _pose = [_medic, "ACME_DirectPressureHold", _prone] call ACME_fnc_providerAnimation;
-    _prone = _prone || {_pose == "ACM_ProneContinuous"};
-    _medic setVariable ["ACME_DP_Pose", _pose];
-    _medic setVariable ["ACME_DP_PoseProne", _prone];
-    _medic setUnitPos (["MIDDLE", "DOWN"] select _prone);
-    _medic setVariable ["ACME_DP_PoseToken", (_medic getVariable ["ACME_DP_PoseToken", 0]) + 1];
-    _medic setVariable ["ACME_DP_PoseGraceUntil", CBA_missionTime + 0.15];
-    [_medic, _pose, 1.1, 1, true] call ACME_fnc_doAnimHeld;
-    _medic setVariable ["ACME_DP_InPose", true];
-    _medic setVariable ["ACME_DP_LastPoseAssert", CBA_missionTime];
-};
+// Capture the episode before the first delayed empty-hands request. Weapons remain holstered after movement.
+_medic setVariable ["ACME_DP_PoseToken", (_medic getVariable ["ACME_DP_PoseToken", 0]) + 1];
+_medic setVariable ["ACME_DP_PoseGraceUntil", CBA_missionTime + 0.15];
+if (isNull objectParent _medic) then {[_medic, _patient] call ACME_fnc_directPressurePose;};
 
 // Keep the menu available and show RMB cancellation. MMB remains accepted for existing users.
 ["", "Stop Direct Pressure", ""] call ace_interaction_fnc_showMouseHint;

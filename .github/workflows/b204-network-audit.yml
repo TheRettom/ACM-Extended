@@ -99,6 +99,7 @@ jobs:
             addons/acm_extended/tools/test_b210*py \
             addons/acm_extended/tools/test_b211*py \
             addons/acm_extended/tools/test_b212*py \
+            addons/acm_extended/tools/test_b213*py \
             addons/acm_extended/tools/test_debug_single_overlay.py \
             addons/acm_extended/tools/test_native_bvm_dp.py \
             addons/acm_extended/tools/test_bounded_pressure_contracts.py \
@@ -157,9 +158,9 @@ jobs:
       # The historical full suite is not green. This comparison preserves and
       # reports identical baseline failures/errors, while every new case must
       # pass and no existing test occurrence may disappear or regress.
-      - name: Compare full regression outcomes to B204 baseline
+      - name: Compare full regression outcomes to B212 baseline
         env:
-          BASE: 133d8bdd2ddefb92990c505ff19af7643d36e694
+          BASE: 4788b9029c3e2ee221d085e831040dc19cbc957a
           SQFVM: /tmp/acme-tools/sqfvm_linux_x64_gcc/sqfvm
         run: |
           set -euo pipefail

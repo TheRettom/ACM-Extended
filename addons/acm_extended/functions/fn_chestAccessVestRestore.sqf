@@ -20,6 +20,55 @@ private _busyVar = ["ACME_chestAccess_vestBusy","ACME_CS_vestBusy"] select (_con
 private _readyVar = ["ACME_chestAccess_readyServer","ACME_CS_vestReadyServer"] select (_context == "chestseal");
 private _pfhVar = ["ACME_chestAccess_vestPFH","ACME_CS_vestPFH"] select (_context == "chestseal");
 
+// A provider can start CPR/BVM or another chest treatment while chest-seal medicEnd is finishing. The carrier
+// remains in CS custody, so ACCESS sees an already bare chest. Never return that carrier under the newer care,
+// including when _force merely means a foreign patient-animation lease prevented the usual reverse lift.
+private _sharedRestoreBlocked = false;
+if (_context == "chestseal" && {alive _patient} && {isNull objectParent _patient}) then {
+    private _sharedBusy = {
+        params ["_p"];
+        private _handoff = _p getVariable ["ACME_chestAccess_maneuverHandoffUntil", -1];
+        (count (_p getVariable ["ACME_chestAccess_leases", createHashMap])) > 0
+            || {[_p] call ACME_fnc_chestAccessManeuverActive}
+            || {(_handoff isEqualType 0) && {serverTime < _handoff}}
+    };
+    if ([_patient] call _sharedBusy) then {
+        _sharedRestoreBlocked = true;
+        private _generation = _patient getVariable ["ACME_CS_ProcedureGeneration", 0];
+        private _pending = _patient getVariable ["ACME_CS_SharedRestorePending", []];
+        if ((_pending param [1, -1]) != _generation) then {
+            private _serial = (_patient getVariable ["ACME_CS_SharedRestoreSerial", 0]) + 1;
+            _patient setVariable ["ACME_CS_SharedRestoreSerial", _serial, false];
+            _patient setVariable ["ACME_CS_SharedRestorePending", [_serial, _generation], false];
+            private _resume = {
+                params ["_p", "_force", "_medic", "_ctx", "_frontNormalized", "_generation", "_serial"];
+                if (isNull _p
+                    || {(_p getVariable ["ACME_CS_SharedRestorePending", []]) isNotEqualTo [_serial, _generation]}) exitWith {};
+                // Pending is receiver-local bookkeeping. Retire our own record even after losing locality,
+                // otherwise returning ownership would inherit a false "retry already scheduled" marker.
+                _p setVariable ["ACME_CS_SharedRestorePending", [], false];
+                if (!local _p) exitWith {
+                    [_p, "chestSealPatientEnd", [_p, "", _medic, [], _generation]] call ACME_fnc_ownerDispatch;
+                };
+                if ((_p getVariable ["ACME_CS_ProcedureGeneration", -1]) != _generation
+                    || {!((_p getVariable ["ACME_CS_ProcedureTokens", []]) isEqualTo [])}) exitWith {};
+                [_p, _force, _medic, _ctx, _frontNormalized] call ACME_fnc_chestAccessVestRestore;
+            };
+            [{
+                params ["_p", "", "", "", "", "_generation", "_serial", "_sharedBusy"];
+                isNull _p || {!local _p} || {!alive _p} || {!isNull objectParent _p}
+                    || {(_p getVariable ["ACME_CS_ProcedureGeneration", -1]) != _generation}
+                    || {!((_p getVariable ["ACME_CS_ProcedureTokens", []]) isEqualTo [])}
+                    || {(_p getVariable ["ACME_CS_SharedRestorePending", []]) isNotEqualTo [_serial, _generation]}
+                    || {!([_p] call _sharedBusy)}
+            }, _resume, [_patient, _force, _medic, _context, _frontNormalized, _generation, _serial, _sharedBusy],
+                900, _resume] call CBA_fnc_waitUntilAndExecute;
+        };
+        // A finite retry preserves an ongoing legitimate maneuver even beyond the ordinary 15-minute budget.
+    };
+};
+if (_sharedRestoreBlocked) exitWith {false};
+
 private _restoreBlocked = false;
 if (!_force) then {
     if (_context == "access") then {

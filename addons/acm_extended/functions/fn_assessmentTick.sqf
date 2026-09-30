@@ -65,18 +65,18 @@ if (_phase == 2) exitWith {
 if (_phase != 1) exitWith {};
 private _main = "AinvPknlMstpSnonWnonDr_medic5";
 if ((toLowerANSI animationState _medic) != toLowerANSI _main) exitWith {
-    // A sparse owner frame may miss the 1.375 sample and the entire first RTM. Seek that known sample
+    // A sparse owner frame may miss the 1.75 sample and the entire first RTM. Seek that known sample
     // once only if the configured first RTM could have completed. Earlier departure is interruption.
     private _speed = getNumber (configFile >> "CfgMovesMaleSdr" >> "States" >> _main >> "speed");
     private _duration = if (_speed < 0) then {-_speed} else {if (_speed > 0) then {1 / _speed} else {0}};
-    if (_duration >= 1.375 && {CBA_missionTime - (_record select 4) >= _duration / 1.5}) then {
+    if (_duration >= 1.75 && {CBA_missionTime - (_record select 4) >= _duration / 1.5}) then {
         [_medic, _pose, _record, _duration] call ACME_fnc_assessmentAdvance;
     } else {
         [_medic, _epoch] call ACME_fnc_assessmentStop;
     };
 };
 private _elapsed = _medic getUnitMovesInfo 1;
-if !(_elapsed isEqualType 0 && {finite _elapsed} && {_elapsed >= 1.375}) exitWith {};
+if !(_elapsed isEqualType 0 && {finite _elapsed} && {_elapsed >= 1.75}) exitWith {};
 private _duration = _medic getUnitMovesInfo 2;
-if !(_duration isEqualType 0 && {finite _duration} && {_duration >= 1.375}) exitWith {};
+if !(_duration isEqualType 0 && {finite _duration} && {_duration >= 1.75}) exitWith {};
 [_medic, _pose, _record, _duration] call ACME_fnc_assessmentAdvance;

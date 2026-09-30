@@ -21,7 +21,7 @@ def weapon_contract(prep=None,seq=None):
     tokens=lex(seq)
     assert sum(t.value=='ACME_fnc_medicAnimationPrep' for t in tokens)==1
     selections=[tokens[i+1] for i,t in enumerate(tokens[:-1]) if t.value=='selectWeapon']
-    assert len(selections)==2 and all(t.kind=='string' and t.value=='' for t in selections)
+    assert len(selections)==3 and all(t.kind=='string' and t.value=='' for t in selections)
     assert contains(seq,'if (currentWeapon _u != "" && {_now < _prepUntil}) exitWith {};')
     assert contains(seq,'if (currentWeapon _u != "") then {_u selectWeapon "";};')
 
@@ -74,8 +74,9 @@ def test_real_preflight_is_once_then_provider_fallback_never_redraws_weapon(mode
 
 @pytest.mark.parametrize('where,old,new',[
     ('prep','if (_elapsed >= 0 && {_elapsed < 3.2}) exitWith {','if (false) exitWith {'),
-    ('seq','private _prepDelay = [_medic] call ACME_fnc_medicAnimationPrep;',
-     'private _prepDelay = [_medic] call ACME_fnc_medicAnimationPrep; [_medic] call ACME_fnc_medicAnimationPrep;'),
+    pytest.param('seq','} else {[_medic] call ACME_fnc_medicAnimationPrep};',
+     '} else {[_medic] call ACME_fnc_medicAnimationPrep; [_medic] call ACME_fnc_medicAnimationPrep};',
+     id='seq-private _prepDelay = [_medic] call ACME_fnc_medicAnimationPrep;-private _prepDelay = [_medic] call ACME_fnc_medicAnimationPrep; [_medic] call ACME_fnc_medicAnimationPrep;'),
     ('seq','_u selectWeapon "";','_u selectWeapon "rifle";'),
 ])
 def test_weapon_contract_rejects_restart_or_redraw_despite_comment_decoys(where,old,new):

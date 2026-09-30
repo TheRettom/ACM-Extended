@@ -20,8 +20,8 @@ def provider_contract(text=None):
         'private _forcePose = _rest;',
         'private _first = [_medic, "'+FIRST+'", _prone] call ACME_fnc_providerAnimation;',
         'private _second = if (_prone) then {_rest} else {"'+SECOND+'"};',
-        'if !(_mode in ["elevate", "lower", "contactexit"]) exitWith {};',
-        'private _prepDelay = [_medic] call ACME_fnc_medicAnimationPrep;',
+        'if !(_mode in ["elevate", "lower", "contactexit", "chestsealexit"]) exitWith {};',
+        '} else {[_medic] call ACME_fnc_medicAnimationPrep};',
         'if ((_u getVariable ["ACME_headElev_medicAnimToken", -1]) != _token) exitWith {',
         'private _nextAlreadyRunning = _state == _secondLC && {!_prone || {_seen && {_now - _stageAt >= _proneWorkTime}}};',
         'if (!_nextAlreadyRunning) then {[_u, _second, 2] call ACME_fnc_doAnim;};',
@@ -57,11 +57,16 @@ def setup():
         s=s.replace(name+' setUnitPos "MIDDLE";', '_stances pushBack "MIDDLE";')
         s=s.replace(name+' setUnitPos "AUTO";', '_stances pushBack "AUTO";')
     s=s.replace('hasInterface', '_interfacePresent').replace('inputAction _x', '(_input getVariable [_x,0])')
+    # Native RTM time/config are engine boundaries even when this fixture exercises an ordinary Putdown mode.
+    s=s.replace('_u getUnitMovesInfo 1','_nativeElapsed').replace('_u getUnitMovesInfo 2','_nativeDuration')
+    s=s.replace('getNumber (configFile >> "CfgMovesMaleSdr" >> "States" >> _end >> "speed")','_endSpeed')
+    s=s.replace('finite _nativeElapsed','true').replace('finite _nativeDuration','true')
     return r'''
         private _interfacePresent=true; private _input=missionNamespace;
         private _local=true; private _parent=objNull; private _blocked=false;
         private _weapon="rifle"; private _anim="idle"; private _stances=[]; private _providerStance="CROUCH";
         private _jobs=[]; private _prep=0; private _stanceOwned=false;
+        private _nativeElapsed=0; private _nativeDuration=2; private _endSpeed=-2;
         ACME_fnc_treatmentPoseStop={};
         ACME_fnc_menuPoseStop={};
         ACME_fnc_animBlocked={_blocked};

@@ -96,7 +96,7 @@ def test_chestseal_and_stethoscope_use_semifowler_putdown_exit():
     restore = read("addons/acm_extended/functions/fn_chestAccessVestRestore.sqf")
     head = read("addons/acm_extended/functions/fn_headElevMedicSeq.sqf")
 
-    assert '[_flipMedic,"lower"] call ACME_fnc_headElevMedicSeq' in chest
+    assert '[_flipMedic,"chestsealexit",uiNamespace getVariable ["ACME_CS_SessionToken", ""]] call ACME_fnc_headElevMedicSeq' in chest
     assert '[_medic,"lower"] call ACME_fnc_headElevMedicSeq' in steth
     assert '[_flipMedic,_poseMode,_poseEpoch,true] call ACME_fnc_treatmentPoseStop' in chest
     assert '[_medic,"stethoscope",_poseEpoch,true] call ACME_fnc_treatmentPoseStop' in steth

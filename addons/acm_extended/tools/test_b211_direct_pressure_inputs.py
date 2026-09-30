@@ -74,6 +74,13 @@ def setup():
             [_medic getVariable ["ACME_DP_Active",false],"claim handshake did not activate DP"] call _check;
         };
         private _pressTick={(_medic getVariable ["ACME_DP_PFH",-1]) call _tick;};
+        private _finishPressureExit={
+            if ((_medic getVariable ["ACME_DP_Exit",[]]) isNotEqualTo []) then {
+                private _exitId=count _handlers-1;
+                _animation="ainvpknlmstpsnonwnondnon_medicend"; _exitId call _tick;
+                CBA_missionTime=CBA_missionTime+1.21; _exitId call _tick;
+            };
+        };
         private _runCancel={private _work=_cancelQueue deleteAt 0; (_work select 1) call (_work select 0);};
     '''
 
@@ -103,7 +110,7 @@ def test_movement_keeps_exact_pressure_claim_and_resumes_pose_next_tick(action, 
         _moves=[]; (_id-1) call _tick;
         [count _moves==0,"old held worker fought movement"] call _check;
     ''' if not self_pressure else '') + '''
-        _inputActions=[]; _animation="walking";
+        _inputActions=[]; call _finishPressureExit; _animation="amovpknlmwlksnonwnondf";
         CBA_missionTime=CBA_missionTime+0.016;
         call _pressTick;
         [_medic getVariable ["ACME_DP_Active",false],"released movement did not preserve DP"] call _check;
@@ -126,7 +133,8 @@ def test_actual_displacement_yields_pose_and_old_exit_cannot_break_immediate_res
         call _pressTick;
         [_medic getVariable ["ACME_DP_Active",false],"displacement cancelled pressure"] call _check;
         [!(_medic getVariable ["ACME_DP_InPose",true]),"displacement did not yield pose"] call _check;
-        [count _waits==1,"delayed physical-state repair was not reached"] call _check;
+        [(_medic getVariable ["ACME_DP_Exit",[]]) isNotEqualTo [],"finite movement exit was not reached"] call _check;
+        call _finishPressureExit; _animation="amovpknlmstpsnonwnondnon";
         CBA_missionTime=CBA_missionTime+0.016; call _pressTick;
         [_medic getVariable ["ACME_DP_InPose",false],"pose did not resume immediately"] call _check;
         private _before=count _moves;

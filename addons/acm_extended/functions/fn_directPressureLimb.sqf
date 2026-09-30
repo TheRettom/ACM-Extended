@@ -25,21 +25,10 @@ if ([_patient, _bodyPart] call ACME_fnc_directPressureHasFracture) then {
     ["ACME_DP_fracturePain", [_patient, _bodyPart, _medic], _patient] call CBA_fnc_targetEvent;
 };
 
-// Enter the held pressure pose directly. Direct Pressure deliberately does not call medicAnimationPrep or issue
-// weapon-selection commands; another treatment or movement may supersede this pose normally.
-if (isNull objectParent _medic) then {
-    private _prone = stance _medic == "PRONE";
-    private _pose = [_medic, "ACME_DirectPressureHold", _prone] call ACME_fnc_providerAnimation;
-    _prone = _prone || {_pose == "ACM_ProneContinuous"};
-    _medic setVariable ["ACME_DP_Pose", _pose];
-    _medic setVariable ["ACME_DP_PoseProne", _prone];
-    _medic setUnitPos (["MIDDLE", "DOWN"] select _prone);
-    _medic setVariable ["ACME_DP_PoseToken", (_medic getVariable ["ACME_DP_PoseToken", 0]) + 1];
-    _medic setVariable ["ACME_DP_PoseGraceUntil", CBA_missionTime + 0.15];
-    [_medic, _pose, 1.1, 1, true] call ACME_fnc_doAnimHeld;
-    _medic setVariable ["ACME_DP_InPose", true];
-    _medic setVariable ["ACME_DP_LastPoseAssert", CBA_missionTime];
-};
+// Capture the episode before the first delayed empty-hands request. Weapons remain holstered after movement.
+_medic setVariable ["ACME_DP_PoseToken", (_medic getVariable ["ACME_DP_PoseToken", 0]) + 1];
+_medic setVariable ["ACME_DP_PoseGraceUntil", CBA_missionTime + 0.15];
+if (isNull objectParent _medic) then {[_medic, _patient] call ACME_fnc_directPressurePose;};
 
 // Direct Pressure has no keyboard cancellation binding. RMB/MMB use the display guard; the explicit
 // Stop Direct Pressure menu action is the deliberate UI fallback. Escape/H remain available to the player.

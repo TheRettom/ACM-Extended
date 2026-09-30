@@ -135,7 +135,7 @@ private _yieldedClinical = _medic getVariable ["ACME_DP_ClinicalYield", false];
 
 if (_mustYieldClinical) exitWith {
     // Kill only DP's own visual generation. Never inject a neutral pose; the incoming intervention owns animation.
-    _medic setVariable ["ACME_dah_gen", (_medic getVariable ["ACME_dah_gen", 0]) + 1, false];
+    [_medic] call ACME_fnc_directPressurePoseRetire;
     _medic setVariable ["ACME_DP_InPose", false, false];
     _medic setVariable ["ACME_DP_IdleStart", CBA_missionTime, false];
     _medic setVariable ["ACME_DP_LastPoseAssert", 0, false];

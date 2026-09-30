@@ -40,11 +40,15 @@ REVIEWED_B212_UPDATES = {
     'addons/acm_extended/functions/fn_stethoscopeEntryFlipTick.sqf': '870cae13caadc0bc947b6c8093d7b4e9a5492c1203f1cbf0c0696030408063d3',
     'tools/test_fork_phase164_chest_access_animation_flow.py': 'cc222cced22f64fdece8b7699e42bdd3a3a93dcbfb8db3ffcfd62d3774298b13',
 }
+# B213 reviewed contract update: chest-seal close now inserts medicEnd before the existing carrier reach.
+REVIEWED_B213_UPDATES = {
+    'tools/test_fork_phase164_chest_animation_contract.py': '70e52fbd3e10fcdd0ef3c7847ba86d01a7f139a6a0eb1c7a1c6da0cae1bf9a79',
+}
 @pytest.mark.parametrize("path,expected", sorted(PROTECTED.items()))
 def test_prior_fix_restored_without_rewrite(path, expected):
     # Keep the historical parameter identity stable; reviewed bounded updates replace only
     # the assertion target so CI does not manufacture a new test identity for a known change.
-    expected = REVIEWED_B212_UPDATES.get(path, REVIEWED_AW_UPDATES.get(path, expected))
+    expected = REVIEWED_B213_UPDATES.get(path, REVIEWED_B212_UPDATES.get(path, REVIEWED_AW_UPDATES.get(path, expected)))
     data = (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
     assert hashlib.sha256(data).hexdigest() == expected, path
 

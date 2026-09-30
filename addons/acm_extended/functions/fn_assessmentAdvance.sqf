@@ -4,9 +4,9 @@ if (!local _medic || {(_record select 2) != 1} || {_pose param [20, false]}
     || {(_pose select 0) != (_record select 0)}
     || {!((_medic getVariable ["ACME_assessment", []]) isEqualTo _record)}
     || {!((_medic getVariable ["ACME_treatmentPoseState", []]) isEqualTo _pose)}) exitWith {};
-// At 1.5x, source time 1.375 occurs after 0.916667 wall seconds. No persistent freeze event is sent:
+// At 1.5x, source time 1.75 occurs after 1.166667 wall seconds. No persistent freeze event is sent:
 // a reordered hold packet could otherwise freeze a peer after the finite medic4 continuation has started.
-_medic switchMove ["AinvPknlMstpSnonWnonDr_medic5", 1.375 / _duration, 1, false];
+_medic switchMove ["AinvPknlMstpSnonWnonDr_medic5", 1.75 / _duration, 1, false];
 _medic setAnimSpeedCoef 0;
 private _next = "AinvPknlMstpSnonWnonDr_medic4";
 _pose set [2, _next];

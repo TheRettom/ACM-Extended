@@ -31,7 +31,14 @@ if (!_wasActive && {_pending isEqualTo []} && {_otherManeuver}) exitWith {};
 // Retire every delayed Direct Pressure pose request first. ACME_DP_PoseToken belongs to the DP layer itself;
 // ACME_dah_gen owns ACME_fnc_doAnimHeld's short reassert worker.
 _medic setVariable ["ACME_DP_PoseToken", (_medic getVariable ["ACME_DP_PoseToken", 0]) + 1];
-_medic setVariable ["ACME_dah_gen", (_medic getVariable ["ACME_dah_gen", 0]) + 1, false];
+[_medic] call ACME_fnc_directPressurePoseRetire;
+// A deliberate stop during the already-running movement exit finishes that same RTM without restarting it.
+private _pendingExit = _medic getVariable ["ACME_DP_Exit", []];
+if (_wasActive && {count _pendingExit >= 10}
+    && {(_pendingExit select 2) == (_medic getVariable ["ACME_providerLocalityEpoch", 0])}
+    && {(_pendingExit select 3) == (_medic getVariable ["ACME_treatmentPoseEpoch", 0])}) then {
+    _pendingExit set [1, _medic getVariable ["ACME_DP_PoseToken", 0]];
+};
 
 private _pfh = _medic getVariable ["ACME_DP_PFH", -1];
 if (_pfh >= 0) then {[_pfh] call CBA_fnc_removePerFrameHandler;};
@@ -49,14 +56,9 @@ if (!isNull _patient && {_part != ""}) then {
     };
 };
 
-// Break only our decorative hold. Priority 2 remains a narrow safety fallback when the engine is physically still
-// inside ACME_DirectPressureHold, preventing the provider from being stranded in the looping state.
+// A successor owns its pose even if the last observed frame still resembles pressure.
 private _ownsHold = _wasInPose || {_stateBefore == _heldPose};
-if (!_otherManeuver && {local _medic} && {alive _medic} && {isNull objectParent _medic} && {_ownsHold}) then {
-    _medic setUnitPos "AUTO";
-    private _exitPriority = [1, 2] select (_stateBefore == _heldPose);
-    [_medic, [_medic, "AmovPknlMstpSnonWnonDnon", _heldProne] call ACME_fnc_providerAnimation, _exitPriority] call ACME_fnc_doAnim;
-};
+private _mayExit = !_otherManeuver && {_ownsHold} && {!([_medic, _patient] call ACME_fnc_directPressurePoseBusy)};
 
 {
     _x params ["_name", "_value", ["_public", false]];
@@ -78,6 +80,8 @@ if (!_otherManeuver && {local _medic} && {alive _medic} && {isNull objectParent 
     ["ACME_DP_KeyIDs", []],
     ["ACME_DP_Draw3D", -1],
     ["ACME_DP_PoseGraceUntil", 0],
+    ["ACME_DP_PosePrep", []],
+    ["ACME_DP_HeldGeneration", -1],
     ["ACME_DP_LastPoseAssert", 0],
     ["ACME_DP_ClinicalYield", false],
     ["ACME_DP_ClinicalYieldStart", 0],
@@ -90,6 +94,8 @@ if (!_otherManeuver && {local _medic} && {alive _medic} && {isNull objectParent 
     ["ACME_DP_ClaimToken", "", true],
     ["ACME_DP_ClaimEpoch", -1, true]
 ];
+
+if (_mayExit) then {[_medic, _heldProne] call ACME_fnc_directPressurePoseExit;};
 
 if (_wasActive) then {
     if (!_silent) then {["Released direct pressure.", 1.5, _medic] call ace_common_fnc_displayTextStructured;};

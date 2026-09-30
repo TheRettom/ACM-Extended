@@ -15,14 +15,27 @@ def has(source, fragment):
     assert any(tokens[i:i + len(wanted)] == wanted for i in range(len(tokens))), fragment
 
 
-def assert_entry_exit_contract(start, stop):
-    has(start, 'private _pose = [_medic, "ACME_DirectPressureHold", _prone] call ACME_fnc_providerAnimation;')
-    has(start, '_medic setVariable ["ACME_DP_Pose", _pose];')
-    has(start, '[_medic,_pose,1.1,1,true] call ACME_fnc_doAnimHeld;')
+def assert_entry_exit_contract(start, stop, enter=None):
+    # Follow the actual region -> pose -> entry chain; B213 moved the true-holster boundary into its own helper.
+    pose = read('directPressurePose')
+    enter = read('directPressurePoseEnter') if enter is None else enter
+    exit_source = read('directPressurePoseExit')
+    has(start, '[_medic, _patient] call ACME_fnc_directPressurePose;')
+    has(pose, '[_medic, _patient] call ACME_fnc_directPressurePoseEnter;')
+    has(enter, 'private _pose = [_medic, "ACME_DirectPressureHold"] call ACME_fnc_providerAnimation;')
+    has(enter, '_medic setVariable ["ACME_DP_Pose", _pose, false];')
+    has(enter, '[_medic,_pose,1.1,1,true] call ACME_fnc_doAnimHeld;')
+    has(enter, '[_medic] call ACME_fnc_medicAnimationPrep;')
+    has(enter, 'if (currentWeapon _medic != "" || {!_empty}) exitWith')
     has(stop, 'private _heldPose = toLower (_medic getVariable ["ACME_DP_Pose", "ACME_DirectPressureHold"]);')
-    has(stop, 'private _exitPriority = [1,2] select (_stateBefore == _heldPose);')
-    has(stop, '[_medic,[_medic,"AmovPknlMstpSnonWnonDnon",_heldProne] call ACME_fnc_providerAnimation,_exitPriority] call ACME_fnc_doAnim;')
-    has(stop, 'if (!_otherManeuver && {local _medic} && {alive _medic} && {isNull objectParent _medic} && {_ownsHold}) then')
+    has(stop, 'private _mayExit = !_otherManeuver && {_ownsHold} && {!([_medic, _patient] call ACME_fnc_directPressurePoseBusy)};')
+    has(stop, 'if (_mayExit) then {[_medic, _heldProne] call ACME_fnc_directPressurePoseExit;};')
+    has(exit_source, 'private _anim = "AinvPknlMstpSnonWnonDnon_medicEnd";')
+    has(exit_source, '[_medic, _anim, 1] call ACME_fnc_doAnim;')
+    has(exit_source, '_medic setAnimSpeedCoef 1.5;')
+    has(exit_source, '!local _medic')
+    has(exit_source, '!alive _medic')
+    has(exit_source, '[_medic] call ACME_fnc_animBlocked')
 
 
 def assert_nonexclusive_contract(start, regions):
@@ -132,7 +145,7 @@ def test_exit_fallback_is_limited_to_the_visible_hold_and_never_steals_a_maneuve
         [true,_medic] call ACME_fnc_directPressureStop;
         [count _animCalls == {int(expected != 0)},"incorrect exit request count"] call _check;
         [ACM_core_ContinuousAction_Active isEqualTo {str(other).lower()},"pressure stop changed another controller"] call _check;
-    ''' + (f'[(_animCalls select 0) isEqualTo [_medic,"AmovPknlMstpSnonWnonDnon",{expected}],"wrong exit priority"] call _check;' if expected else ''))
+    ''' + ('[(_animCalls select 0) isEqualTo [_medic,"AinvPknlMstpSnonWnonDnon_medicEnd",1],"exit must interpolate into medicEnd"] call _check;' if expected else ''))
 
 
 @pytest.mark.parametrize('stethoscope',[False,True])
@@ -157,4 +170,4 @@ def test_bp_wrapper_delivers_native_callback_without_cancelling_pressure(stethos
 ])
 def test_entry_contract_rejects_wrong_priority_and_comment_only_decoys(change):
     with pytest.raises(AssertionError):
-        assert_entry_exit_contract(change(read('directPressureTorso')),read('directPressureStop'))
+        assert_entry_exit_contract(read('directPressureTorso'),read('directPressureStop'),change(read('directPressurePoseEnter')))

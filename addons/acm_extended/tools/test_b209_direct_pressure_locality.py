@@ -14,6 +14,9 @@ from test_menu_death_lifecycle import execute, read
 
 def source(name, text=None):
     text = read(name) if text is None else text
+    text = text.replace('currentWeapon _medic', '_dpWeapon')
+    text = text.replace('_m getUnitMovesInfo 1', '_dpNativeElapsed').replace('_m getUnitMovesInfo 2', '_dpNativeDuration')
+    text = text.replace('getNumber (configFile >> "CfgMovesMaleSdr" >> "States" >> _anim >> "speed")', '_dpExitNativeSpeed')
     for command, value in {
         'animationState _medic': '_animation', 'animationState _m': '_animation',
         'animationState _u': '_animation', 'objectParent _unit': 'objNull',
@@ -35,10 +38,13 @@ def source(name, text=None):
 
 def setup():
     text = network_setup() + '''
-        private _animation="other_pose"; private _stanceCalls=0; private _stances=[]; private _providerStance="CROUCH"; private _look=[0,1,0];
+        private _animation="amovpknlmstpsnonwnondnon"; private _dpWeapon=""; private _dpExitNativeSpeed=-1.8; private _dpPrepDelay=0; private _dpPrepCalls=0; private _dpNativeElapsed=-1; private _dpNativeDuration=-1; private _stanceCalls=0; private _stances=[]; private _providerStance="CROUCH"; private _look=[0,1,0];
         private _inputCalls=0; private _input={_inputCalls=_inputCalls+1; 0};
         private _removedDraw=[]; private _logs=[]; private _clots=0; private _hints=0;
         CBA_fnc_removePerFrameHandler={_removed pushBack (_this select 0);(_handlers select (_this select 0)) set [2,false];};
+        ace_common_fnc_isAwake={!((_this select 0) getVariable ["ACE_isUnconscious",false])};
+        ACME_fnc_medicAnimationPrep={_dpPrepCalls=_dpPrepCalls+1; _dpPrepDelay};
+        ACME_fnc_providerAnimSpeedOwned={(_medic getVariable ["TEST_speedOwner",false])};
         ACME_fnc_animBlocked={false}; ACME_fnc_doAnim={_moves pushBack _this;};
         ACME_fnc_bodyPartName={_this select 0}; ACME_fnc_medLog={_logs pushBack _this;};
         ACME_fnc_directPressureHasFracture={false}; ACME_fnc_patientInteractionDistance={1};
@@ -46,7 +52,7 @@ def setup():
         ace_interaction_fnc_hideMouseHint={_hints=_hints-1;};
         ACM_damage_fnc_clotWoundsOnBodyPart={_clots=_clots+1;};
     '''
-    for name in ('providerAnimation', 'doAnimHeld', 'directPressureStop', 'directPressurePose', 'directPressureTick',
+    for name in ('providerAnimation', 'directPressurePoseBusy', 'directPressurePoseRetire', 'directPressurePoseEnter', 'directPressurePoseExit', 'doAnimHeld', 'directPressureStop', 'directPressurePose', 'directPressureTick',
                  'directPressureLimb', 'directPressureTorso', 'directPressureSelf', 'directPressureRetire'):
         text += f'ACME_fnc_{name}={{' + source(name) + '};'
     # Execute the real Local event's generation/registry prefix. The following unrelated
@@ -186,11 +192,12 @@ def test_delayed_pressure_pose_repair_cannot_revive_after_away_and_back_transfer
         call _deliver; call _deliver;
         _animation="acme_directpressurehold"; _look=[0,-1,0];
         [_medic,_patient] call ACME_fnc_directPressurePose;
-        [count _waits==1,"pose repair callback was not reached"] call _check;
+        [(_medic getVariable ["ACME_DP_Exit",[]]) isNotEqualTo [],"pose exit callback was not reached"] call _check;
+        private _exitId=count _handlers-1;
         _medic setVariable ["TEST_owner",8]; [_medic,false] call _localEvent;
         _medic setVariable ["TEST_owner",7]; [_medic,true] call _localEvent;
         _moves=[];_stanceCalls=0;
-        ((_waits select 0) select 1) call ((_waits select 0) select 0);
+        _exitId call _tick;
         [count _moves==0 && {_stanceCalls==0},"old delayed repair changed returned provider"] call _check;
     ''')
 

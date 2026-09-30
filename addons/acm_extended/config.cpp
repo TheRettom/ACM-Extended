@@ -73,6 +73,11 @@ class CfgMovesMaleSdr: CfgMovesBasic {
         // medic3 is reserved exclusively for the moment a chest seal is actually applied. The CPR stop pose is
         // already a stable hands-planted-on-chest state, so the panel can remain open without replaying a treatment.
         class ACM_CPR_Stop;
+        // B213: keep BI's normal medicEnd exits and add the carrier-restoration reach.
+        class AinvPknlMstpSnonWnonDnon_medicEnd {
+            connectTo[] += {"AmovPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_Putdown", 0.08};
+            interpolateTo[] += {"AmovPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_Putdown", 0.08};
+        };
         class ACME_ChestSealWorkspace: ACM_CPR_Stop {
             looped = 1;
             disableWeapons = 1;
@@ -88,7 +93,8 @@ class CfgMovesMaleSdr: CfgMovesBasic {
             };
             connectTo[] = {
                 "AmovPknlMstpSnonWnonDnon", 0.12,
-                "AinvPknlMstpSnonWnonDnon_medic4", 0.08
+                "AinvPknlMstpSnonWnonDnon_medic4", 0.08,
+                "AinvPknlMstpSnonWnonDnon_medicEnd", 0.08
             };
             interpolateFrom[] = {
                 "AmovPknlMstpSnonWnonDnon", 0.12,
@@ -97,6 +103,7 @@ class CfgMovesMaleSdr: CfgMovesBasic {
             interpolateTo[] = {
                 "AmovPknlMstpSnonWnonDnon", 0.12,
                 "AinvPknlMstpSnonWnonDnon_medic4", 0.08,
+                "AinvPknlMstpSnonWnonDnon_medicEnd", 0.08,
                 "Unconscious", 0.02
             };
         };
@@ -208,9 +215,9 @@ class CfgMovesMaleSdr: CfgMovesBasic {
             connectFrom[] = {"AmovPknlMstpSnonWnonDnon", 0.15};
             // B128: chest-seal Flip can take ownership directly from the pressure hold instead of waiting for a
             // neutral crouch round-trip. This is the literal medic4 Flip/Inspect-Chest motion requested by ACME.
-            connectTo[] = {"AmovPknlMstpSnonWnonDnon", 0.15, "AinvPknlMstpSnonWnonDnon_medic4", 0.08};
+            connectTo[] = {"AmovPknlMstpSnonWnonDnon", 0.15, "AinvPknlMstpSnonWnonDnon_medic4", 0.08, "AinvPknlMstpSnonWnonDnon_medicEnd", 0.08, "AinvPknlMstpSnonWnonDr_medic4", 0.08, "ACME_StethoscopeWork", 0.08};
             interpolateFrom[] = {"AmovPknlMstpSnonWnonDnon", 0.15, "AinvPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_medic", 0.10};
-            interpolateTo[] = {"AmovPknlMstpSnonWnonDnon", 0.15, "AinvPknlMstpSnonWnonDnon_medic4", 0.08, "Unconscious", 0.02};
+            interpolateTo[] = {"AmovPknlMstpSnonWnonDnon", 0.15, "AinvPknlMstpSnonWnonDnon_medic4", 0.08, "AinvPknlMstpSnonWnonDnon_medicEnd", 0.08, "AinvPknlMstpSnonWnonDr_medic4", 0.08, "ACME_StethoscopeWork", 0.08, "Unconscious", 0.02};
         };
         class UnconsciousReviveMedic_B;
         class ACME_StethoscopeWork: UnconsciousReviveMedic_B {
@@ -2069,6 +2076,11 @@ class CfgFunctions {
             class assessmentCompletion {};
             class assessmentAdvance {};
             class assessmentProgressBar {};
+            class respirationStart {};
+            class respirationStep {};
+            class respirationTick {};
+            class respirationStop {};
+            class respirationRate {};
             class airwayInjuryRelabel {};
             class animQueue {};
             class headElevMedicSeq {};
@@ -2383,6 +2395,11 @@ class CfgFunctions {
             class wrapSfxServer {};
             class markImportantSfx {};
             class directPressurePose {};
+            class directPressurePoseEnter {};
+            class directPressurePoseRetire {};
+            class directPressurePoseExit {};
+            class directPressurePoseExitSync {};
+            class directPressurePoseBusy {};
             class patientAnimRequest {};
             class patientAnimRelease {};
             class treatmentPatientSettle {};
@@ -7654,7 +7671,7 @@ class ace_medical_treatment_actions {
     // a lot more than these. quietly giving every descendant an animation is how you end up with a medic doing a
     // gear check while they cannulate.
     class CheckAirway {
-        // B212: medic5 to source time 1.375 s, then interpolate through the complete medic4 RTM at 1.5x.
+        // B213: medic5 to source time 1.75 s, then interpolate through the complete medic4 RTM at 1.5x.
         // Provider preparation is outside this duration; inherited descendants do not acquire this sequence.
         treatmentTime = "['CheckAirway'] call ACME_fnc_assessmentTime";
         animationMedic = "";
@@ -8281,6 +8298,29 @@ class ace_medical_treatment_actions {
         callbackProgress = "";
         ACM_menuIcon = "CPR";
         items[] = {};
+    };
+    class ACME_MeasureRespirations: CheckPulse {
+        displayName = "Measure Respirations";
+        displayNameProgress = "";
+        category = "examine";
+        allowedSelections[] = {"Head", "Body"};
+        treatmentLocations[] = {"All"};
+        medicRequired = 0;
+        allowSelfTreatment = 0;
+        treatmentTime = 0.001;
+        condition = "true";
+        items[] = {};
+        consumeItem = 0;
+        callbackStart = "";
+        callbackProgress = "true";
+        callbackSuccess = "ACME_fnc_respirationStart";
+        callbackFailure = "";
+        animationMedic = "";
+        animationMedicProne = "";
+        animationMedicSelf = "";
+        animationMedicSelfProne = "";
+        ACM_rollToBack = 0;
+        ACME_neverRollToBack = 1;
     };
     class ACME_AssessPupils: CheckPulse {
         displayName = "Assess Pupils";
@@ -10101,6 +10141,7 @@ class ACM_Medication {
 // and updates it. fn_emmabuilddisplay builds every control at runtime, in onload, so their geometry can be
 // computed from the safezone and tuned live through the acme_emma_* globals.
 class RscTitles {
+    #include "Respirations.hpp"
     class ACME_EMMA_Display {
         idd = 71500;
         movingEnable = 0;

@@ -51,7 +51,7 @@ def test_measurement_uses_wrapped_content_height_without_changing_font(metric_he
 def test_common_base_font_is_safezone_relative_and_uniform_across_resolutions():
     source = read("debugMenuClinical")
     assert 'private _baseFontH = safeZoneH * 0.0092;' in source
-    assert 'private _totalW = (safeZoneH * 0.255)' in source
+    assert 'private _totalW = (safeZoneH * 0.40)' in source
     assert 'private _measureNaturalWidth = {' in source
     assert '_fontH = _fontH * ((_totalW / _naturalW) min 1);' in source
     assert '_fontH = _fontH * ((_availableH / _neededH) * 0.992);' in source
@@ -192,7 +192,7 @@ def test_normal_readings_stay_complete_on_one_row_with_fixed_label_positions(val
 def test_extended_device_values_expand_field_and_never_wrap():
     source=''.join(definition(n) for n in ('_safe','_padRight','_alignValue','_wrapValue','_pair','_one','_formatRow','_renderAll'))
     execute('''
-        private _cLabel="label";private _valueW=11;private _baseFontH=0.018;private _fontH=0.018;
+        private _cLabel="label";private _cMute="muted";private _valueW=11;private _baseFontH=0.018;private _fontH=0.018;
         private _gapFactor=0.26;private _gap=_fontH*_gapFactor;private _totalW=0.21;
         private _panelBottom=0.84;private _y=-0.16;
         private _ctrlH="head";private _ctrlL="body";
@@ -213,7 +213,7 @@ def test_extended_device_values_expand_field_and_never_wrap():
         [_valueW==count "Z3+Ing-left+AxL+AxR+additional device","value field did not grow to longest current value"] call _check;
         private _rows=(_renders select 1) select 1;
         [count _rows==4,"logical sections were lost while serializing the single column"] call _check;
-        private _long=_rows select 2;
+        private _long=_rows select 3;
         [(_long find "<br/>")==-1,"long device value wrapped despite dynamic field width"] call _check;
         [(_long find "Z3+Ing-left+AxL+AxR+additional device")>=0,"long device value was truncated"] call _check;
     ''')
@@ -223,14 +223,14 @@ def test_extended_device_values_expand_field_and_never_wrap():
 def test_revision_full_width_row_cannot_widen_paired_values_or_move_their_left_edge():
     source=''.join(definition(n) for n in ('_safe','_padRight','_alignValue','_wrapValue','_pair','_one','_formatRow','_renderAll'))
     execute('''
-        private _cLabel="label";private _valueW=11;private _baseFontH=0.018;private _fontH=0.018;
+        private _cLabel="label";private _cMute="muted";private _valueW=11;private _baseFontH=0.018;private _fontH=0.018;
         private _gapFactor=0.26;private _gap=0;private _totalW=0.21;
         private _panelBottom=0.84;private _y=-0.16;private _ctrlH="head";private _ctrlL="body";
         private _renders=[];private _applyFont={};private _measureNaturalWidth={0.20};
         private _measureRows={0.20};private _layout={};private _renderBlock={_renders pushBack _this;};
     '''+source+'''
         private _header=["ACME DEBUG"];
-        private _top=[["Role","client","good","MP","yes","good"] call _pair];
+        private _top=[["MachineRole","client","good","MP","yes","good"] call _pair];
         private _left=[["Ext","1067 mL/min","good","Auto","0.27 / 0.00","good"] call _pair];
         private _right=[["Airway","NARROWED","good","CO","0.0 L/min","good"] call _pair];
         private _network=[];
@@ -242,7 +242,7 @@ def test_revision_full_width_row_cannot_widen_paired_values_or_move_their_left_e
         call _renderAll;
         private _after=(_renders select 1) select 1;
         [_valueW==11,"full-width revision inflated paired fields"] call _check;
-        [(_after select [0,3]) isEqualTo _before,"revision moved another section's readings"] call _check;
+        [[_after select 0,_after select 2,_after select 3] isEqualTo _before,"revision moved another section's readings"] call _check;
         private _valueStart=-1;
         {
             private _row=_x;
@@ -251,5 +251,5 @@ def test_revision_full_width_row_cannot_widen_paired_values_or_move_their_left_e
             if (_valueStart<0) then {_valueStart=_start;};
             [_start==_valueStart,"word, number or unit reading has a different left edge"] call _check;
         } forEach _after;
-        [((_after select 3) find _revision)>=0,"revision was truncated to paired-field width"] call _check;
+        [((_after select 1) find _revision)>=0,"revision was truncated to paired-field width"] call _check;
     ''')

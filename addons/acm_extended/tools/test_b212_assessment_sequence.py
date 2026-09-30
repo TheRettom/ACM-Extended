@@ -72,7 +72,8 @@ def setup():
     ''' + ''.join(function(name) for name in ['assessmentTime','assessmentStop','assessmentStart','assessmentTick','assessmentFinish','assessmentProgress','assessmentAdvance','assessmentCompletion'])
 
 
-@pytest.mark.parametrize('speed,expected',[(-4,4),(-6.125,5),(0.25,4),(0,0)])
+# Retain the B212 case identity while testing the longer B213 first-stage duration.
+@pytest.mark.parametrize('speed,expected',[(-4,4),(-4.25,4),(-4.251,5),pytest.param(-6.125,6,id='-6.125-5'),(0.25,4),(0,0)])
 def test_airway_time_uses_runtime_full_medic4_duration_and_ceil(speed,expected):
     execute(setup()+f'_configuredSpeed={speed};'+f'[["CheckAirway"] call ACME_fnc_assessmentTime == {expected},"wrong timer"] call _check;'+'''
         [["CheckBreathing"] call ACME_fnc_assessmentTime == 2,"breathing not exactly two seconds"] call _check;
@@ -95,14 +96,14 @@ def test_preparation_waits_for_actual_work_entry_and_native_timer_starts_once(ac
     ''')
 
 
-@pytest.mark.parametrize('elapsed',[0,1.374,1.375,1.49,3.8])
+@pytest.mark.parametrize('elapsed',[0,1.374,1.375,1.49,1.749,1.75,3.8])
 def test_airway_freezes_exact_source_sample_then_interpolates_once(elapsed):
     execute(setup()+r'''
         _request call ACME_fnc_assessmentStart; call _ready;
     '''+f'_nativeElapsed={elapsed}; call _frame;'+(r'''
         [count _seeks==0 && {count _moves==0},"airway transitioned too early"] call _check;
-    ''' if elapsed < 1.375 else r'''
-        [count _seeks==1 && {abs (((_seeks select 0) select 1)-1.375/4)<0.00001},"not exact native sample"] call _check;
+    ''' if elapsed < 1.75 else r'''
+        [count _seeks==1 && {abs (((_seeks select 0) select 1)-1.75/4)<0.00001},"not exact native sample"] call _check;
         [(_moves select 0) isEqualTo [_medic,"AinvPknlMstpSnonWnonDr_medic4",1],"not interpolated medic4"] call _check;
         [_testAnimationSpeed==1.5,"second animation not 1.5x"] call _check;
         call _frame;
@@ -175,7 +176,7 @@ def test_cancel_key_uses_direct_local_provider_even_without_network_identity():
 def test_active_final_rtm_never_completes_at_nominal_deadline(elapsed,expected):
     execute(setup()+r'''
         _request call ACME_fnc_assessmentStart; call _ready;
-        _nativeElapsed=1.375; call _frame;
+        _nativeElapsed=1.75; call _frame;
     '''+f'''private _result=[_nativeArgs,{elapsed},4,4] call ACME_fnc_assessmentCompletion;
         [_result=={expected},"final RTM clipped or deadline not rounded/bounded"] call _check;
     ''')
@@ -185,7 +186,7 @@ def test_active_final_rtm_never_completes_at_nominal_deadline(elapsed,expected):
 def test_final_animation_must_run_all_native_seconds_before_completion(natural_exit):
     execute(setup()+r'''
         _request call ACME_fnc_assessmentStart; call _ready;
-        _nativeElapsed=1.375; call _frame;
+        _nativeElapsed=1.75; call _frame;
         _animation="ainvpknlmstpsnonwnondr_medic4";
         CBA_missionTime=11.5; _nativeElapsed=0; _nativeDuration=4; call _frame;
         CBA_missionTime=13; _nativeElapsed=2.25; call _frame;
@@ -204,7 +205,7 @@ def test_sparse_frame_past_full_medic5_recovers_exact_sample_but_early_interrupt
         _request call ACME_fnc_assessmentStart; call _ready;
         _animation="amovpknlmstpsnonwnondnon";
     '''+f'CBA_missionTime=10+{gap}; call _frame;'+(r'''
-        [count _seeks==1 && {abs (((_seeks select 0) select 1)-1.375/4)<0.00001},"sparse frame lost exact first sample"] call _check;
+        [count _seeks==1 && {abs (((_seeks select 0) select 1)-1.75/4)<0.00001},"sparse frame lost exact first sample"] call _check;
         [count _moves==1,"sparse frame did not interpolate once"] call _check;
     ''' if advance else r'''
         [count _seeks==0 && {count _moves==0},"interrupt replayed first animation"] call _check;
@@ -226,7 +227,7 @@ def progress_worker():
 def test_real_progress_worker_retains_same_display_until_completed_rounded_deadline():
     execute(setup()+r'''
         _request call ACME_fnc_assessmentStart; call _ready;
-        _nativeElapsed=1.375; call _frame;
+        _nativeElapsed=1.75; call _frame;
         private _finished=0; private _failed=0;
         uiNamespace setVariable ["ace_common_ctrlProgressBar",profileNamespace];
         ace_common_settingProgressBarLocation=0; ace_common_progressBarInfo=0;
@@ -248,7 +249,7 @@ def test_real_progress_worker_retains_same_display_until_completed_rounded_deadl
 def test_missing_final_rtm_times_out_through_native_failure_and_no_success():
     execute(setup()+r'''
         _request call ACME_fnc_assessmentStart; call _ready;
-        _nativeElapsed=1.375; call _frame;
+        _nativeElapsed=1.75; call _frame;
         private _finished=0; private _failed=0;
         uiNamespace setVariable ["ace_common_ctrlProgressBar",profileNamespace];
         ace_common_progressBarInfo=0;
@@ -286,7 +287,7 @@ def test_genuine_seated_assessment_uses_no_pose_but_keeps_native_duration(action
 def test_observed_final_rtm_interruption_fails_immediately_and_cannot_become_natural_exit():
     execute(setup()+r'''
         _request call ACME_fnc_assessmentStart; call _ready;
-        _nativeElapsed=1.375; call _frame;
+        _nativeElapsed=1.75; call _frame;
         _animation="ainvpknlmstpsnonwnondr_medic4";
         CBA_missionTime=11; _nativeElapsed=0; _nativeDuration=4; call _frame;
         _animation="amovpknlmstpsnonwnondnon";
@@ -314,11 +315,11 @@ def test_actual_shared_pose_controller_and_assessment_worker_complete_one_owned_
         [_poseId] call _poseTick; call _frame;
         [count _nativeCalls==1 && {(_pose select 3)==2},"actual shared controller never launched clinical work"] call _check;
     '''+(r'''
-        CBA_missionTime=12.916667; _nativeElapsed=1.375; _nativeDuration=4; call _frame;
+        CBA_missionTime=13.166667; _nativeElapsed=1.75; _nativeDuration=4; call _frame;
         [(_pose select 2)=="AinvPknlMstpSnonWnonDr_medic4" && {(_pose select 3)==1},"handoff did not update shared pose"] call _check;
         _animation="ainvpknlmstpsnonwnondr_medic4"; _nativeElapsed=0;
         [_poseId] call _poseTick; call _frame;
-        CBA_missionTime=15.6; _nativeElapsed=4; call _frame;
+        CBA_missionTime=15.85; _nativeElapsed=4; call _frame;
         [(_medic getVariable ["ACME_assessment",[]]) select 2==3,"shared second RTM failed full completion"] call _check;
     ''' if stance!='PRONE' else r'''
         [(_pose select 20) && {(_positions find "MIDDLE")==-1},"actual prone work crouched"] call _check;

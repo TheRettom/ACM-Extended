@@ -130,6 +130,7 @@ def test_direct_pressure_yields_before_pose_for_native_cpr_bvm_and_chest_prep():
     stop = acme("functions/fn_directPressureStop.sqf")
     tick = acme("functions/fn_directPressureTick.sqf")
     pose = acme("functions/fn_directPressurePose.sqf")
+    busy = acme("functions/fn_directPressurePoseBusy.sqf")
     stance = acme("functions/fn_registerProviderStanceReleaseRuntime.sqf")
     for source in (start, stop):
         assert 'ACM_circulation_isPerformingCPR' in source
@@ -140,8 +141,11 @@ def test_direct_pressure_yields_before_pose_for_native_cpr_bvm_and_chest_prep():
     assert 'private _nativeBvm = [_patient] call ACM_core_fnc_bvmActive;' in tick
     assert 'ACME_chestAccessPreflightActive' in tick
     assert tick.index('if (_mustYieldClinical) exitWith {') < tick.index('call ACME_fnc_directPressurePose')
-    assert '[_patient] call ACM_core_fnc_cprActive' in pose
-    assert '[_patient] call ACM_core_fnc_bvmActive' in pose
+    assert 'if ([_medic, _patient] call ACME_fnc_directPressurePoseBusy) exitWith {' in pose
+    assert '[_medic] call ACME_fnc_directPressurePoseRetire;' in pose
+    assert pose.index('call ACME_fnc_directPressurePoseBusy') < pose.index('call ACME_fnc_directPressurePoseEnter')
+    assert '[_patient] call ACM_core_fnc_cprActive' in busy
+    assert '[_patient] call ACM_core_fnc_bvmActive' in busy
     assert '[_patient] call ACM_core_fnc_cprActive' in stance
     assert '[_patient] call ACM_core_fnc_bvmActive' in stance
 
