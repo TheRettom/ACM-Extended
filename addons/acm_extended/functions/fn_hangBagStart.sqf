@@ -19,7 +19,7 @@ _medic setVariable ["ACME_hang_Claimed", false, false];
 _medic setVariable ["ACME_hang_ClaimRequestedAt", serverTime, false];
 _medic setVariable ["ACME_hang_ClaimAckAt", serverTime, false];
 _medic setVariable ["ACME_hang_ClaimEpoch", [_patient] call ACME_fnc_clinicalEpoch, false];
-_medic setVariable ["ACME_hang_ClaimOwner", owner _medic, false];
+_medic setVariable ["ACME_hang_ClaimOwner", clientOwner, false];
 _medic setVariable ["ACME_hang_PlayerBound", hasInterface && {_medic isEqualTo ACE_player}, false];
 _medic setVariable ["ACME_hang_Patient", _patient, true];
 _medic setVariable ["ACME_hang_Part", _bodyPart];
@@ -42,4 +42,4 @@ private _pfh = [ACME_fnc_hangBagTick, 0.05, [_medic, _patient]] call CBA_fnc_add
 _medic setVariable ["ACME_hang_PFH", _pfh];
 [_patient, "hangBagClaim", [_medic, _episode,
     missionNamespace getVariable ["ACME_hang_flowMult", 1.75],
-    _medic getVariable ["ACME_hang_ClaimEpoch", -1], owner _medic]] call ACME_fnc_ownerDispatch;
+    _medic getVariable ["ACME_hang_ClaimEpoch", -1], clientOwner]] call ACME_fnc_ownerDispatch;

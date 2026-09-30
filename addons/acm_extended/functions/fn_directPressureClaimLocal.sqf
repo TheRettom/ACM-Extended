@@ -54,7 +54,10 @@ private _currentActive = !isNull _currentMedic
 private _currentPending = !isNull _currentMedic
     && {_currentAt >= 0}
     && {(serverTime - _currentAt) <= 3}
-    && {_currentOwner == owner _currentMedic};
+    && {_currentOwner > 0}
+    && {if (isServer) then {_currentOwner == owner _currentMedic} else {
+        !local _currentMedic || {_currentOwner == clientOwner}
+    }};
 private _currentValid = !isNull _currentMedic
     && {alive _currentMedic}
     && {!(_currentMedic getVariable ["ACE_isUnconscious",false])}
@@ -74,7 +77,12 @@ if (!_currentValid && {!isNull _currentMedic || {!(_claim isEqualTo [])}}) then 
 
 private _validRequest = alive _medic
     && {!(_medic getVariable ["ACE_isUnconscious",false])}
-    && {_providerOwner == owner _medic}
+    && {_providerOwner > 0}
+    // Only the server can query a remote object's owner. A player/HC casualty owner must not compare
+    // the provider's real client ID with the 0 returned by owner on clients.
+    && {if (isServer) then {_providerOwner == owner _medic} else {
+        !local _medic || {_providerOwner == clientOwner}
+    }}
     && {_epoch == ([_patient] call ACME_fnc_clinicalEpoch)}
     && {(_medic distance _patient) <= ((missionNamespace getVariable ["ACME_DP_torsoLeashDist",3.2]) max (missionNamespace getVariable ["ACME_DP_leashDist",2.7]))}
     && {missionNamespace getVariable ["ACME_sys_dp",true]};
@@ -94,4 +102,6 @@ if (_accepted) then {
     };
 };
 
-["ACME_directPressureClaimAck",[_patient,_medic,_part,_token,_accepted,_epoch,_providerOwner],_providerOwner] call CBA_fnc_ownerEvent;
+// Address the provider object, including after a locality change. The local reply handler checks the original
+// requesting machine and episode before activation, releasing only this token if the request has gone stale.
+["ACME_directPressureClaimAck",[_patient,_medic,_part,_token,_accepted,_epoch,_providerOwner],_medic] call CBA_fnc_targetEvent;

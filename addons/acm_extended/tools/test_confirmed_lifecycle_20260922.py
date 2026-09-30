@@ -86,6 +86,7 @@ def hang_source(name):
     # SQF-VM has no finite command; these tests supply finite numeric values.
     s=s.replace('finite _episode','(_episode isEqualType 0)').replace('finite _flow','(_flow isEqualType 0)')
     s=s.replace('serverTime','CBA_missionTime').replace('alive _holder','_alive')
+    s=s.replace('clientOwner','_ownerNum')
     s=s.replace('getPosASL _medic','[0,0,0]')
     return adapt(s)
 
@@ -227,7 +228,7 @@ def test_existing_tick_renews_at_two_seconds_not_twenty_hz():
 def test_owner_reconciliation_respects_grant_grace_then_releases_lost_provider():
     src=(F/'fn_transientStateReconcile.sqf').read_text()
     header=src.split('// BVM reservation.',1)[0]
-    block=src.split('// Hang Bag claim.',1)[1].split('// Direct Pressure markers.',1)[0]
+    block=src.split('// Hang Bag claim.',1)[1].split('// Direct Pressure claims and clinical markers.',1)[0]
     source=adapt((header+block+'count _repairs').replace('alive _hangMedic','_alive').replace('serverTime','CBA_missionTime'))
     # Namespace stand-ins retain nil slots; -1 represents the engine's deleted timer.
     source=source.replace('[_key, nil]', '[_key, -1]').replace('finite _at', 'true')

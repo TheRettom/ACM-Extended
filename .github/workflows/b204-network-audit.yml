@@ -62,6 +62,9 @@ jobs:
         run: |
           python -m pytest \
             addons/acm_extended/tools/test_b205*py \
+            addons/acm_extended/tools/test_b206*py \
+            addons/acm_extended/tools/test_native_bvm_dp.py \
+            addons/acm_extended/tools/test_bounded_pressure_contracts.py \
             addons/acm_extended/tools/test_network_medication_iv_execution.py \
             addons/acm_extended/tools/test_ventilator_audio_registry_20260930.py \
             addons/acm_extended/tools/test_treatment_pose_sync.py \
@@ -169,7 +172,7 @@ jobs:
           assert not missing2, f"missing root tests: {missing2[:30]}"
           assert not regressions2, f"root regressions: {regressions2[:30]}"
 
-          print("B205 baseline comparison PASS")
+          print("Stable network baseline comparison PASS")
           print("addon before:", dict(cb), "after:", dict(ca), "improvements:", len(improvements))
           print("root before:", dict(cb2), "after:", dict(ca2))
           PY

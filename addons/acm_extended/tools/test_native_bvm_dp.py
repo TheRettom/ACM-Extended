@@ -26,6 +26,8 @@ def pressure_source(name):
         "getPosVisual _patient": "[0,1,0]",
         "eyeDirection _medic": "_look",
         "serverTime": "_serverTime",
+        "netId _medic": '"provider"',
+        "diag_frameNo": "100",
         '_medic setUnitPos "MIDDLE";': "",
         '_m setUnitPos "AUTO";': "_stanceFreed = true;",
         'removeMissionEventHandler ["Draw3D", _d3];': "_removedDraw pushBack _d3;",
@@ -50,6 +52,7 @@ def setup():
         ACME_fnc_bodyPartName = {_this select 0};
         ACME_fnc_medLog = {_pressureLogs pushBack _this;};
         ACME_fnc_directPressureHasFracture = {false};
+        ACME_fnc_patientInteractionDistance = {_distance};
         ACME_fnc_clinicalEpoch = {0};
         ACM_damage_fnc_clotWoundsOnBodyPart = {};
         ace_medical_status_fnc_updateWoundBloodLoss = {};

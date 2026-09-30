@@ -23,7 +23,7 @@ private _stillValid = _accepted
     && {!isNull _patient}
     && {alive _medic}
     && {!(_medic getVariable ["ACE_isUnconscious",false])}
-    && {_providerOwner == owner _medic}
+    && {_providerOwner == clientOwner}
     && {_epoch == ([_patient] call ACME_fnc_clinicalEpoch)}
     && {!(missionNamespace getVariable ["ACM_core_ContinuousAction_Active",false])}
     && {!(_medic getVariable ["ACM_circulation_isPerformingCPR",false])}

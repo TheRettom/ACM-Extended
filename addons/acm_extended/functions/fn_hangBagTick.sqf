@@ -43,7 +43,7 @@ if (_stop) exitWith {
 };
 
 // The owner reply, not replicated holder writes from another client, determines acceptance.
-if ((_medic getVariable ["ACME_hang_ClaimOwner", -1]) != owner _medic
+if ((_medic getVariable ["ACME_hang_ClaimOwner", -1]) != clientOwner
     || {(_medic getVariable ["ACME_hang_ClaimEpoch", -1]) != ([_patient] call ACME_fnc_clinicalEpoch)}
     || {(_medic getVariable ["ACME_hang_PlayerBound", false]) && {!(_medic isEqualTo ACE_player)}}) exitWith {
     [true, _medic] call ACME_fnc_hangBagStop;
@@ -61,7 +61,7 @@ if (serverTime - (_medic getVariable ["ACME_hang_ClaimRequestedAt", 0]) >= 2) th
     _medic setVariable ["ACME_hang_ClaimRequestedAt", serverTime, false];
     [_patient, "hangBagRenew", [_medic, _medic getVariable ["ACME_hang_Start", -1],
         missionNamespace getVariable ["ACME_hang_flowMult", 1.75],
-        _medic getVariable ["ACME_hang_ClaimEpoch", -1], owner _medic]] call ACME_fnc_ownerDispatch;
+        _medic getVariable ["ACME_hang_ClaimEpoch", -1], clientOwner]] call ACME_fnc_ownerDispatch;
 };
 
 // A local owner can reject the renewal synchronously and stop this episode.

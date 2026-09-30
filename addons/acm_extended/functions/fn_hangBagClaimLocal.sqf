@@ -19,7 +19,9 @@ if (_operation == "release") exitWith {
 if !(_operation in ["claim", "renew"]) exitWith {false};
 private _now = serverTime;
 private _valid = !isNull _medic && {alive _medic} && {finite _episode} && {_episode >= 0}
-    && {finite _flow} && {_providerOwner == owner _medic}
+    && {finite _flow} && {_providerOwner > 0}
+    // owner returns 0 off-server. The server resolves remote ownership; a client can verify only its own medic.
+    && {if (isServer) then {_providerOwner == owner _medic} else {!local _medic || {_providerOwner == clientOwner}}}
     && {!(_medic getVariable ["ACE_isUnconscious", false])}
     && {isNull objectParent _medic}
     && {_medic distance _patient <= (missionNamespace getVariable ["ACME_hang_leash", 3])}

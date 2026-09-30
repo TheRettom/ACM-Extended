@@ -1,7 +1,10 @@
 // Stage 1 of the HPMK. Inventory is taken on the provider owner, while the casualty owner serializes the reusable
 // kit reservation. If two providers finish Prep HPMK at nearly the same time, only the first owner-side commit wins;
 // every losing provider gets the item back instead of consuming a second kit or overwriting ACME_hpmk_provider.
-params [
+// ACE supplies bodyPart/classname after the two actors. Internal owner calls instead carry the reservation
+// flag and receipt there; do not parse the ACE strings as that private transaction payload.
+private _entryArgs = if ((_this param [2, false]) isEqualType "") then {_this select [0, 2]} else {_this};
+_entryArgs params [
     ["_medic", objNull, [objNull]],
     ["_patient", objNull, [objNull]],
     ["_inventoryTaken", false, [false]],

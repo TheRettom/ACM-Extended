@@ -1,5 +1,15 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B206
+
+Updated 30 September 2026.
+
+- Fixed Direct Pressure failing to start on dedicated servers: provider requests now carry the originating client's ID, and acknowledgements target the provider object. Pending reservations remain protected on player and headless-client casualty owners.
+- Fixed the same client ownership mismatch in Hang Bag claims and seizure gesture validation.
+- Fixed HPMK preparation/removal callbacks interpreting ACE treatment arguments as internal transaction flags.
+- Fixed facility and evacuation modules parsing numeric position coordinates as strings.
+- Includes the B205 network snapshot, infusion queue, procedural handoff and cleanup fixes. Public version remains 1.2.4.1; runtime marker is B206 / NA6-B206-1.2.4.1-stable.
+
 ## 1.2.4
 
 Updated 27 September 2026.

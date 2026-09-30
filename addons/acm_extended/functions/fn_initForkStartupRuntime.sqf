@@ -1,8 +1,8 @@
 ACME_infusion_version = getText (configFile >> "CfgPatches" >> "ACM_Extended" >> "version");
 if (ACME_infusion_version == "") then { ACME_infusion_version = "1.2.4.1"; };
-ACME_buildBatch = "B205";
+ACME_buildBatch = "B206";
 ACME_debugRevision = "";
-ACME_networkAuditRevision = "NA5-B205-1.2.4.1-stable";
+ACME_networkAuditRevision = "NA6-B206-1.2.4.1-stable";
 
 /*
  * B199 physical-dressing invariant.

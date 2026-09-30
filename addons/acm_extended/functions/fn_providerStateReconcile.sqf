@@ -101,7 +101,7 @@ if (_dpPending isEqualType [] && {count _dpPending >= 4}) then {
     if (!(_requestedAt isEqualType 0 && {finite _requestedAt}) || {_requestedAt < 0} || {(diag_tickTime - _requestedAt) > 4}) then {
         _dpPending params ["_patient", "_part", "_token", "_epoch"];
         if (!isNull _patient && {_token != ""}) then {
-            [_patient, "directPressureClaim", ["release", [_medic, _part, _token, _epoch, owner _medic]]] call ACME_fnc_ownerDispatch;
+            [_patient, "directPressureClaim", ["release", [_medic, _part, _token, _epoch, clientOwner]]] call ACME_fnc_ownerDispatch;
         };
         _medic setVariable ["ACME_DP_ClaimPending", [], false];
         _medic setVariable ["ACME_DP_ClaimRequestedAt", -1, false];

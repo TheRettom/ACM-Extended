@@ -40,7 +40,7 @@ if (!_otherManeuver) then {[] call ace_interaction_fnc_hideMouseHint;};
 
 if (!isNull _patient && {_part != ""}) then {
     if (_claimToken != "") then {
-        [_patient, "directPressureClaim", ["release", [_medic, _part, _claimToken, _claimEpoch, owner _medic]]] call ACME_fnc_ownerDispatch;
+        [_patient, "directPressureClaim", ["release", [_medic, _part, _claimToken, _claimEpoch, clientOwner]]] call ACME_fnc_ownerDispatch;
     } else {
         // Compatibility cleanup for an episode created before atomic claims existed.
         [_patient, "directPressureMarker", [_medic, _part, false]] call ACME_fnc_ownerDispatch;

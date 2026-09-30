@@ -7,7 +7,7 @@ if (!_same || {!(_medic getVariable ["ACME_hang_Active", false])}) exitWith {
     if (_accepted) then {[_patient, "hangBagRelease", [_medic, _episode]] call ACME_fnc_ownerDispatch;};
 };
 if (!_accepted || {_leaseUntil <= serverTime} || {!alive _medic} || {_medic getVariable ["ACE_isUnconscious", false]}
-    || {_providerOwner != owner _medic}
+    || {_providerOwner != clientOwner}
     || {_epoch != ([_patient] call ACME_fnc_clinicalEpoch)}
     || {_epoch != (_medic getVariable ["ACME_hang_ClaimEpoch", -1])}
     || {_patient getVariable ["ACME_clinicalRestoring", false]}

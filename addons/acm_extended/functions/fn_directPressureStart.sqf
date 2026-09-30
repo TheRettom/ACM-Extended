@@ -3,7 +3,7 @@
 // temporarily suspend it and movement yields the provider pose. The same action can then release the hold.
 params ["_medic", "_patient", ["_bodyPart", ""]];
 _bodyPart = toLower _bodyPart;
-if (isNull _medic || {isNull _patient}) exitWith {};
+if (isNull _medic || {isNull _patient} || {!local _medic}) exitWith {};
 
 // Every region needs this provider's hands. Reject before cleanup can touch the input hints or animation of
 // BVM, CPR or another continuous maneuver. CPR is native and does not use ContinuousAction_Active.
@@ -27,7 +27,10 @@ if !((_medic getVariable ["ACME_DP_ClaimPending", []]) isEqualTo []) exitWith {
 // body part on the casualty owner. No pressure pose or clinical effect begins until that owner accepts the claim.
 [true, _medic] call ACME_fnc_directPressureStop;
 private _epoch = [_patient] call ACME_fnc_clinicalEpoch;
-private _token = format ["%1:%2:%3:%4", owner _medic, netId _medic, diag_frameNo, serverTime];
+// owner returns 0 on clients. This request originates on the provider's machine, so clientOwner is the
+// reply/ownership identity on dedicated clients as well as hosted servers and headless clients.
+private _providerOwner = clientOwner;
+private _token = format ["%1:%2:%3:%4", _providerOwner, netId _medic, diag_frameNo, serverTime];
 _medic setVariable ["ACME_DP_ClaimPending", [_patient, _bodyPart, _token, _epoch], false];
 _medic setVariable ["ACME_DP_ClaimRequestedAt", diag_tickTime, false];
-[_patient, "directPressureClaim", ["claim", [_medic, _bodyPart, _token, _epoch, owner _medic]]] call ACME_fnc_ownerDispatch;
+[_patient, "directPressureClaim", ["claim", [_medic, _bodyPart, _token, _epoch, _providerOwner]]] call ACME_fnc_ownerDispatch;
