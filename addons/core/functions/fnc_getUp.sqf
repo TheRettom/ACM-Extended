@@ -110,6 +110,7 @@ if (!(_patient getVariable ["ACE_isUnconscious", false])) then {
 // Only now consume the action. At this point the release transaction has been accepted and the engine repair below
 // is guaranteed to run on the owning machine.
 _patient setVariable ["ACM_core_Lying_State", false, true];
+if (!isNil "ACME_fnc_aiProtectionSync") then {[_patient] call ACME_fnc_aiProtectionSync;};
 
 private _roll = missionNamespace getVariable ["ACME_getUp_anim", "UnconsciousOutProne"];
 private _nativeTime = missionNamespace getVariable ["ACME_getUp_animTime", 1.6];

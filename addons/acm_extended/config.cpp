@@ -125,18 +125,30 @@ class CfgMovesMaleSdr: CfgMovesBasic {
         };
         class AinjPpneMrunSnonWnonDb_grab;
         class ACME_HeadElevPatientGrab: AinjPpneMrunSnonWnonDb_grab {
+            disableWeapons = 1;
+            disableWeaponsLong = 1;
+            disableWeaponsShort = 1;
+            canPullTrigger = 0;
             looped = 0;
             ConnectTo[] = {"ACME_HeadElevPatientHold", 0.05};
             InterpolateTo[] = {"ACME_HeadElevPatientHold", 0.05};
         };
         class AinjPpneMrunSnonWnonDb_release;
         class ACME_HeadElevPatientHold: AinjPpneMrunSnonWnonDb_release {
+            disableWeapons = 1;
+            disableWeaponsLong = 1;
+            disableWeaponsShort = 1;
+            canPullTrigger = 0;
             looped = 1;
             speed = 0;
             ConnectTo[] = {};
             InterpolateTo[] = {};
         };
         class ACME_HeadElevPatientRelease: AinjPpneMrunSnonWnonDb_release {
+            disableWeapons = 1;
+            disableWeaponsLong = 1;
+            disableWeaponsShort = 1;
+            canPullTrigger = 0;
             looped = 0;
             // Lay-flat and chest-access release must finish supine, never in BI's injured-prone idle.
             ConnectTo[] = {"ACM_LyingState", 0.1};
@@ -1973,6 +1985,10 @@ class CfgFunctions {
             class netNotice {};
             class ownerRegister {};
             class ownerInit {};
+            class aiProtectionWanted {};
+            class aiProtectionSync {};
+            class aiProtectionTick {};
+            class aiProtectionInit {};
             class transientStateReconcile {};
             class providerStateReconcile {};
             class nrbStateLocal {};

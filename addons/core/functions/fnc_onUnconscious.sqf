@@ -46,3 +46,6 @@ if !(_state) then {
         _patient setVariable [QGVAR(WasWounded), true, true];
     };
 };
+
+// Compose ACME medical lying protection with ACE's unconscious reason.
+if (!isNil "ACME_fnc_aiProtectionSync") then {[_patient] call ACME_fnc_aiProtectionSync;};

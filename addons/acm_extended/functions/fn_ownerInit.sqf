@@ -3,6 +3,13 @@ if (missionNamespace getVariable ["ACME_NA2_ownerInstalled", false]) exitWith {}
 ACME_NA2_ownerInstalled = true;
 ["ACME_ownerCommand", { isNil { _this call ACME_fnc_ownerDispatch; }; }] call CBA_fnc_addEventHandler;
 ["ACME_netNotice", { _this call ACME_fnc_netNotice; }] call CBA_fnc_addEventHandler;
+["ACME_aiProtectionRefresh", {
+    params [["_unit", objNull, [objNull]]];
+    if (isNull _unit || {!local _unit}) exitWith {};
+    [_unit] call ACME_fnc_aiProtectionSync;
+    // Re-read owner state after the corresponding replicated flag/animation notification. Never queue a wanted boolean.
+    [{_this call ACME_fnc_aiProtectionSync;}, [_unit]] call CBA_fnc_execNextFrame;
+}] call CBA_fnc_addEventHandler;
 ["ACME_worldSfx", { if (hasInterface) then {_this call ACME_fnc_remoteSay3D;}; }] call CBA_fnc_addEventHandler;
 ["ACME_seizureGestureSync", { _this call ACME_fnc_seizureGestureSync; }] call CBA_fnc_addEventHandler;
 ["ACME_transfusionRemoveResult", {_this call ACME_fnc_transfusionRemoveBagResult;}] call CBA_fnc_addEventHandler;
@@ -74,6 +81,7 @@ ACME_NA2_ownerInstalled = true;
 ["ACME_thoraOutput", { if (isServer) then { isNil { _this call ACME_fnc_thoraOutput; }; }; }] call CBA_fnc_addEventHandler;
 ["CAManBase", "Local", {
     params ["_unit", "_isLocal"];
+    [_unit, "retire"] call ACME_fnc_aiProtectionSync;
     private _ownedNow = missionNamespace getVariable ["ACME_clinical_ownedUnits", []];
     if (_isLocal && {alive _unit}) then {_ownedNow pushBackUnique _unit;} else {_ownedNow = _ownedNow - [_unit];};
     missionNamespace setVariable ["ACME_clinical_ownedUnits", _ownedNow];
@@ -193,6 +201,7 @@ ACME_NA2_ownerInstalled = true;
     [{ _this call ACME_fnc_ownerRegister; }, [_this select 0]] call CBA_fnc_execNextFrame;
 }, true, [], true] call CBA_fnc_addClassEventHandler;
 [{
+    [] call ACME_fnc_aiProtectionTick;
     // Provider stale-state repair and registry pruning stay responsive at 1 Hz. Local/init events maintain the
     // owner registry directly. The 30 s world sweep is now only a missed-event audit: it calls ownerRegister solely
     // for units absent from the registry/owner generation, so hundreds of healthy AI never get rebuilt in one spike.

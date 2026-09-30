@@ -87,6 +87,9 @@ if ("ace_dragging" call ACEFUNC(common,isModLoaded)) then {
             [{
                 ACEGVAR(medical_gui,target) setVariable [QEGVAR(core,Lying_State), true, true];
                 [QACEGVAR(common,switchMove), [ACEGVAR(medical_gui,target), "ACM_LyingState"]] call CBA_fnc_globalEvent;
+                if (!isNil "ACME_fnc_aiProtectionSync") then {
+                    ["ACME_aiProtectionRefresh", [ACEGVAR(medical_gui,target)], ACEGVAR(medical_gui,target)] call CBA_fnc_targetEvent;
+                };
                 [QEGVAR(core,getUpPrompt), [ACEGVAR(medical_gui,target)], ACEGVAR(medical_gui,target)] call CBA_fnc_targetEvent;
                 [QACEGVAR(common,displayTextStructured), [LELSTRING(core,SupinePosition_Hint), 2, ACEGVAR(medical_gui,target)], ACEGVAR(medical_gui,target)] call CBA_fnc_targetEvent;
                 [LELSTRING(core,SupinePosition_Complete), 2, ACE_player] call ACEFUNC(common,displayTextStructured);

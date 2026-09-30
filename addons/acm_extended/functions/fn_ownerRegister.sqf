@@ -10,6 +10,7 @@ _owned pushBackUnique _patient;
 missionNamespace setVariable ["ACME_clinical_ownedUnits", _owned];
 _patient setVariable ["ACME_ownerRegisterSeen", owner _patient, false];
 
+[_patient] call ACME_fnc_aiProtectionSync;
 [_patient] call ACME_fnc_transientStateReconcile;
 
 // Migrate old bilateral inguinal AAJT saves exactly once. The physical AAJT-S has one wedge, so an old
