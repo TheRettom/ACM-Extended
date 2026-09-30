@@ -1,7 +1,6 @@
 // Shared Direct Pressure per-frame worker. Direct Pressure itself never owns ACM's global continuous-action gate.
-// Deliberate movement now releases the hold entirely. Ordinary compatible treatments may replace only the provider
-// animation; true ACM maneuvers temporarily suspend the pose/clinical marker and can resume after the maneuver.
-// This keeps the menu responsive without letting a stale pressure loop swallow the provider's movement input.
+// Repositioning yields only the provider pose; the pressure episode survives within its working leash.
+// True ACM maneuvers temporarily suspend the pose/clinical marker and can resume after the maneuver.
 params ["_args", "_pfhId"];
 _args params ["_medic", "_patient", "_bodyPart", "_mode", ["_episode", []]];
 
@@ -99,20 +98,6 @@ if (_stop != "") exitWith {
     [_pfhId] call CBA_fnc_removePerFrameHandler;
 };
 
-// Movement is an explicit release request, not a temporary pressure yield. Check it before the pose controller so
-// the looping hold cannot consume the first movement frames and then quietly reapply itself when the key is released.
-// inputAction respects remapped movement keys/controllers, unlike hard-coded DIK handlers.
-private _moveInput = (inputAction "MoveForward") + (inputAction "MoveBack")
-                   + (inputAction "MoveLeft") + (inputAction "MoveRight")
-                   + (inputAction "TurnLeft") + (inputAction "TurnRight")
-                   + (inputAction "MoveFastForward") + (inputAction "MoveSlowForward")
-                   + (inputAction "Evasive");
-private _moving = _moveInput > 0.01;
-if (_moving) exitWith {
-    [true, _medic, false] call ACME_fnc_directPressureStop;
-    [_pfhId] call CBA_fnc_removePerFrameHandler;
-};
-
 // Higher-priority interventions win BEFORE Direct Pressure gets any chance to reassert its decorative hold.
 // This includes chest-access preparation and head-position/provider choreography, not just an already-active
 // continuous action. DP remains clinically alive and resumes later; it never cancels or overwrites the maneuver.
@@ -165,7 +150,7 @@ if (_mustYieldClinical) exitWith {
 if (_mode in ["torso", "limb"]) then {[_medic, _patient] call ACME_fnc_directPressurePose;};
 
 // Reapply the synchronized pressure marker once the incompatible activity ends. Shift both clot timers by the exact
-// yielded duration so time spent walking, assessing, or performing another maneuver never counts as pressure time.
+// yielded duration so time spent in an incompatible treatment or maneuver never counts as pressure time.
 if (_yieldedClinical) then {
     private _yieldStart = _medic getVariable ["ACME_DP_ClinicalYieldStart", CBA_missionTime];
     private _yieldDuration = (CBA_missionTime - _yieldStart) max 0;

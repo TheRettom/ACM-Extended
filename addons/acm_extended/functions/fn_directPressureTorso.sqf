@@ -36,11 +36,10 @@ if (isNull objectParent _medic) then {
     _medic setVariable ["ACME_DP_LastPoseAssert", CBA_missionTime];
 };
 
-// Chest pressure keeps the medical menu available, so LMB/RMB remain normal. MMB is the dedicated cancellation
-// input consumed by ACME's mission-display guard; expose that binding exactly like the BVM/CPR hints do.
+// Keep the menu available and show RMB cancellation. MMB remains accepted for existing users.
 ["", "Stop Direct Pressure", ""] call ace_interaction_fnc_showMouseHint;
 
-// Direct Pressure has no keyboard cancellation binding. MMB is handled by the mission-display guard; the explicit
+// Direct Pressure has no keyboard cancellation binding. RMB/MMB use the display guard; the explicit
 // Stop Direct Pressure menu action is the deliberate UI fallback. Escape/H remain available to the player.
 _medic setVariable ["ACME_DP_KeyIDs", []];
 

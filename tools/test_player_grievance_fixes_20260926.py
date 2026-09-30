@@ -7,9 +7,11 @@ def read(name):
     return (F / name).read_text(encoding="utf-8", errors="replace")
 
 def test_direct_pressure_uses_mmb_only_and_keeps_keyboard_free():
+    # Preserve this historical test identity; B211 restores RMB per the current user request.
     guard = read("fn_installRmbCancelGuard.sqf")
     assert "(_button isEqualTo 1) && {_hang}" in guard
-    assert "(_button isEqualTo 2) && {_dp}" in guard
+    assert "(_button in [1, 2])" in guard
+    assert "call _canCancelDP" in guard
     assert "MMB" in guard
     for name in ("fn_directPressureTorso.sqf","fn_directPressureLimb.sqf","fn_directPressureSelf.sqf"):
         src = read(name)

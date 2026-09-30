@@ -1,6 +1,6 @@
 // Limb and head direct pressure is a non-exclusive one-handed hold. The provider can continue medical care while
-// pressure remains clinically active. Movement yields the pose and pressure effect, and the hold reapplies once the
-// provider settles again. Ordinary treatment animations may replace the pose without blocking their actions.
+// pressure remains clinically active. Movement yields the pose, which resumes as soon as repositioning ends.
+// Ordinary treatment animations may replace the pose without blocking their actions.
 params ["_medic", "_patient", "_bodyPart"];
 if (isNull _medic || {isNull _patient} || {!local _medic}) exitWith {};
 
@@ -36,7 +36,7 @@ if (isNull objectParent _medic) then {
     _medic setVariable ["ACME_DP_LastPoseAssert", CBA_missionTime];
 };
 
-// Direct Pressure has no keyboard cancellation binding. MMB is handled by the mission-display guard; the explicit
+// Direct Pressure has no keyboard cancellation binding. RMB/MMB use the display guard; the explicit
 // Stop Direct Pressure menu action is the deliberate UI fallback. Escape/H remain available to the player.
 _medic setVariable ["ACME_DP_KeyIDs", []];
 ["", "Stop Direct Pressure", ""] call ace_interaction_fnc_showMouseHint;

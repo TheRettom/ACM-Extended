@@ -2,7 +2,7 @@
 // the medic can still use the medical menu and other treatments. while stationary and looking at the patient they
 // adopt the connected direct-pressure hold. any competing treatment, movement, or look-away immediately retires the
 // held-animation reassert worker. Movement only releases the pose, not the clinical Direct Pressure state, so the
-// animation can reapply after the provider stops moving and settles again.
+// animation reapplies on the next eligible tick after the provider stops moving and faces the patient.
 params ["_medic", "_patient"];
 if (isNull _medic || {!local _medic}) exitWith {};
 private _inPose = _medic getVariable ["ACME_DP_InPose", false];
@@ -50,6 +50,7 @@ private _now = CBA_missionTime;
 // keyboard/controller bindings, so the escape behavior does not depend on W/A/S/D specifically.
 private _moveInput = (inputAction "MoveForward") + (inputAction "MoveBack")
                    + (inputAction "MoveLeft") + (inputAction "MoveRight")
+                   + (inputAction "TurnLeft") + (inputAction "TurnRight")
                    + (inputAction "MoveFastForward") + (inputAction "MoveSlowForward")
                    + (inputAction "Evasive");
 private _lastPos = _medic getVariable ["ACME_DP_LastPos", getPosASL _medic];
@@ -91,6 +92,8 @@ if (_moving || {!_looking}) then {
             if ((_m getVariable ["ACME_providerLocalityEpoch", 0]) != _localityEpoch) exitWith {};
             if ((_m getVariable ["ACME_DP_PoseToken", -1]) != _tok) exitWith {};
             if !(_m getVariable ["ACME_DP_Active", false]) exitWith {};
+            // A brief reposition can finish before this callback runs. The resumed pose owns the next frame.
+            if (_m getVariable ["ACME_DP_InPose", false]) exitWith {};
             // CPR/BVM preserve the pressure episode while borrowing its provider. The old DP frame may still be
             // visible during that transition; it does not authorize this delayed repair to override the new owner.
             // The pause also spans the short transfer gap before the successor publishes its live role.
@@ -106,7 +109,7 @@ if (_moving || {!_looking}) then {
 } else {
     if (!_inPose) then {
         private _idleStart = _medic getVariable ["ACME_DP_IdleStart", _now];
-        if ((_now - _idleStart) >= (missionNamespace getVariable ["ACME_DP_idleToPose", 0.8])) then {
+        if ((_now - _idleStart) >= (missionNamespace getVariable ["ACME_DP_idleToPose", 0])) then {
             // Resume the ACME-owned pose directly. No weapon preflight, holster request, or weapon restore is issued.
             [_medic, "ACME_DirectPressureHold", 1.1, 1, true] call ACME_fnc_doAnimHeld;
             _medic setVariable ["ACME_DP_InPose", true];
