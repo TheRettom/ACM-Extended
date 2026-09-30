@@ -9,8 +9,15 @@ params [
 ];
 if (isNull _patient || {!local _patient}) exitWith {"patient-locality"};
 if (isNull _medic || {!alive _medic} || {_medic getVariable ["ACE_isUnconscious",false]}) exitWith {"provider-unavailable"};
-if (!finite _providerOwner || {_providerOwner <= 0} || {_providerOwner != floor _providerOwner}) exitWith {"provider-identity"};
-if (if (isServer) then {_providerOwner != owner _medic} else {local _medic && {_providerOwner != clientOwner}}) exitWith {"provider-locality"};
+// Single player has no network client: clientOwner/owner can both be zero. This is a valid local
+// provider identity only outside multiplayer. Never relax the zero-ID guard for network requests.
+if (!finite _providerOwner || {_providerOwner < 0} || {_providerOwner != floor _providerOwner}
+    || {_providerOwner == 0 && {isMultiplayer}}) exitWith {"provider-identity"};
+// owner is a multiplayer/server query. For a provider on this machine, clientOwner is the same
+// identity captured at request time; this also covers single player and a hosted-server provider.
+if (if (local _medic) then {_providerOwner != clientOwner} else {
+    !isMultiplayer || {isServer && {_providerOwner != owner _medic}}
+}) exitWith {"provider-locality"};
 if (!finite _epoch || {_epoch < 0} || {_epoch != ([_patient] call ACME_fnc_clinicalEpoch)}
     || {_patient getVariable ["ACME_clinicalRestoring",false]}) exitWith {"patient-epoch"};
 if (!finite _sentAt || {_sentAt < 0} || {!finite _maxAge} || {_maxAge <= 0} || {_maxAge > 5}) exitWith {"request-time"};

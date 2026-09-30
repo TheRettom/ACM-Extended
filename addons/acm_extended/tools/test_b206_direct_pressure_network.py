@@ -14,7 +14,8 @@ def network_source(name, source=None):
     # Protect these engine boundaries from the older all-local fixture adapter.
     for command, replacement in {
         'clientOwner': '_machine',
-        'isServer': '(_machine == 2)',
+        'isServer': '(_machine == 2 || {!(missionNamespace getVariable ["TEST_multiplayer",true])})',
+        'isMultiplayer': '(missionNamespace getVariable ["TEST_multiplayer",true])',
         'serverTime': '_networkTime',
         'diag_frameNo': '100',
         'netId _medic': '"medic"',

@@ -27,7 +27,8 @@ if (!local _patient) exitWith {
 // have completed the same action during our progress bar.
 private _lyingState = _patient getVariable ["ACM_core_Lying_State", false];
 private _isLying = if (_lyingState isEqualType true) then {_lyingState} else {_lyingState > 0};
-private _eligible = (_patient getVariable ["ACE_isUnconscious", false]) || {_isLying};
+// Engine death may clear ACE unconscious/lying flags; a corpse is still a valid physical recipient.
+private _eligible = !alive _patient || {_patient getVariable ["ACE_isUnconscious", false]} || {_isLying};
 private _occupied = (_patient getVariable ["ACME_hpmk_state", ""]) != "";
 if (!_eligible || {_occupied}) exitWith {
     ["ACME_supplySettle", [_supplyReceipt, true], parseNumber ((_supplyReceipt param [3, "0"]) splitString ":" select 0)] call CBA_fnc_ownerEvent;

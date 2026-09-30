@@ -94,6 +94,8 @@ jobs:
             addons/acm_extended/tools/test_b205*py \
             addons/acm_extended/tools/test_b206*py \
             addons/acm_extended/tools/test_b207*py \
+            addons/acm_extended/tools/test_b208*py \
+            addons/acm_extended/tools/test_debug_single_overlay.py \
             addons/acm_extended/tools/test_native_bvm_dp.py \
             addons/acm_extended/tools/test_bounded_pressure_contracts.py \
             addons/acm_extended/tools/test_network_medication_iv_execution.py \

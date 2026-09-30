@@ -14,6 +14,7 @@ def source(name):
         'owner _medic': '(if (_server) then {_serverProviderOwner} else {0})',
         'clientOwner': '_clientId',
         'isServer': '_server',
+        'isMultiplayer': 'true',  # This module exercises multiplayer; B208 separately covers single player.
         'local _medic': '_medicLocal',
         'local _patient': '_patientLocal',
         'serverTime': '_nowTime',

@@ -40,7 +40,7 @@ if (!isNull _medic && {local _medic} && {hasInterface} && {[_medic] call ace_com
 if (_classname == "ACME_DebugInduceSeizure") exitWith {
     if (isNull _medic || {isNull _patient} || {!local _medic}) exitWith {false};
     if !((toLowerANSI _bodyPart) == "head" && {[] call ACME_fnc_debugEnabled}) exitWith {false};
-    if !(_this call ace_medical_treatment_fnc_canTreat) exitWith {false};
+    if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
     [_patient, "debugSeizure", [_medic, _patient]] call ACME_fnc_ownerDispatch;
     true
 };
@@ -309,7 +309,6 @@ if (_classname != "ACME_ConnectETVent") exitWith {
 
             private _cancelled = (_m getVariable ["ACME_chestAccessPreflightCancel", false])
                 || {!alive _m}
-                || {_classKey == "checkbreathing" && {!alive _p}}
                 || {_m getVariable ["ACE_isUnconscious", false]}
                 || {isNull objectParent _m && {([_m, _p] call ACME_fnc_patientInteractionDistance) > ace_medical_gui_maxDistance}}
                 || {objectParent _m isNotEqualTo objectParent _p};
@@ -320,7 +319,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
             // Preparation can last several seconds. Revalidate the ACTUAL treatment and interaction now, not the
             // cached menu result from the original click. A casualty/provider state or range change may never turn
             // into a delayed treatment start.
-            private _stillTreatable = _args call ace_medical_treatment_fnc_canTreat;
+            private _stillTreatable = _args call ace_medical_treatment_fnc_canTreatCached;
             private _stillInteractive = [_m, _p, [["isNotInside","isNotSwimming","isNotInZeus"],["isNotSwimming","isNotInZeus"]] select (!isNull objectParent _m && {objectParent _m isEqualTo objectParent _p})] call ace_common_fnc_canInteractWith;
             if (!_stillTreatable || {!_stillInteractive} || {isNull objectParent _m && {([_m, _p] call ACME_fnc_patientInteractionDistance) > ace_medical_gui_maxDistance}}
                 || {objectParent _m isNotEqualTo objectParent _p}) exitWith {
@@ -395,7 +394,6 @@ if (_classname != "ACME_ConnectETVent") exitWith {
             // waitUntilAndExecute so stepping back into range cannot convert an invalidation frame into launch.
             private _invalid = (_m getVariable ["ACME_chestAccessPreflightCancel", false])
                 || {!alive _m}
-                || {_classKey == "checkbreathing" && {!alive _p}}
                 || {_m getVariable ["ACE_isUnconscious", false]}
                 || {isNull objectParent _m && {([_m, _p] call ACME_fnc_patientInteractionDistance) > ace_medical_gui_maxDistance}}
                 || {objectParent _m isNotEqualTo objectParent _p}
@@ -645,7 +643,7 @@ if (uiNamespace getVariable ["ace_interact_menu_cursorMenuOpened", false]) exitW
     [ace_medical_treatment_fnc_treatment, _this] call CBA_fnc_execNextFrame;
     true
 };
-if !(_this call ace_medical_treatment_fnc_canTreat) exitWith {false};
+if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
 if !([_medic, _patient, _interactionChecks] call ace_common_fnc_canInteractWith) exitWith {false};
 if !([_medic, _patient] call ACME_fnc_ventRecoveryNear) exitWith {false};
 [_medic, _patient] call ACME_fnc_ventConnectPatient;

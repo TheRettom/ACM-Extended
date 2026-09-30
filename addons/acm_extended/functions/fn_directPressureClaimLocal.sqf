@@ -60,9 +60,9 @@ private _currentActive = !isNull _currentMedic
 private _currentPending = !isNull _currentMedic
     && {_currentAt >= 0}
     && {(serverTime - _currentAt) <= 3}
-    && {_currentOwner > 0}
-    && {if (isServer) then {_currentOwner == owner _currentMedic} else {
-        !local _currentMedic || {_currentOwner == clientOwner}
+    && {_currentOwner > 0 || {_currentOwner == 0 && {!isMultiplayer} && {local _currentMedic}}}
+    && {if (local _currentMedic) then {_currentOwner == clientOwner} else {
+        isMultiplayer && {!isServer || {_currentOwner == owner _currentMedic}}
     }};
 private _currentValid = !isNull _currentMedic
     && {alive _currentMedic}
@@ -82,9 +82,9 @@ if (!_currentValid && {!isNull _currentMedic || {!(_claim isEqualTo [])}}) then 
 };
 
 private _reason = [_patient,_medic,_epoch,_providerOwner,_sentAt] call ACME_fnc_actionClaimValidate;
-private _validRequest = _reason == ""
-    && {(_medic distance _patient) <= ((missionNamespace getVariable ["ACME_DP_torsoLeashDist",3.2]) max (missionNamespace getVariable ["ACME_DP_leashDist",2.7]))}
-    && {missionNamespace getVariable ["ACME_sys_dp",true]};
+if (_reason == "" && {(_medic distance _patient) > ((missionNamespace getVariable ["ACME_DP_torsoLeashDist",3.2]) max (missionNamespace getVariable ["ACME_DP_leashDist",2.7]))}) then {_reason = "out-of-range";};
+if (_reason == "" && {!(missionNamespace getVariable ["ACME_sys_dp",true])}) then {_reason = "system-disabled";};
+private _validRequest = _reason == "";
 private _cached = [_patient,_scope,_medic,_token,_epoch,"lookup"] call ACME_fnc_actionClaimLedger;
 private _fresh = (_cached select 0) == "new";
 private _accepted = _validRequest && {
@@ -93,11 +93,22 @@ private _accepted = _validRequest && {
         && {_currentMedic isEqualTo _medic} && {_currentToken == _token}
     }
 };
+if (!_accepted && {_reason == ""}) then {
+    _reason = if (_fresh) then {"site-busy"} else {
+        switch (_cached select 0) do {
+            case "cancelled": {"request-cancelled"};
+            case "blocked": {"claim-capacity"};
+            case "rejected": {(_cached select 2) param [2,"request-rejected"]};
+            default {"claim-stale"};
+        }
+    };
+};
 // The first grant fixes the activation deadline. Duplicate requests cannot renew a pending reservation.
 private _grantedAt = serverTime;
 private _grantUntil = if (_fresh) then {_grantedAt + 3} else {(_cached select 2) param [1,-1]};
 if (_fresh) then {
-    private _stored = [_patient,_scope,_medic,_token,_epoch,["reject","accept"] select _accepted,0,[_accepted,_grantUntil]] call ACME_fnc_actionClaimLedger;
+    private _stored = [_patient,_scope,_medic,_token,_epoch,["reject","accept"] select _accepted,0,[_accepted,_grantUntil,_reason]] call ACME_fnc_actionClaimLedger;
+    if (_accepted && {(_stored select 0) != "accepted"}) then {_reason = "claim-capacity";};
     _accepted = _accepted && {(_stored select 0) == "accepted"};
 };
 // A duplicate claim returns the same decision without refreshing reservation age or reinstating a yielded marker.
@@ -117,4 +128,4 @@ if (_accepted && {_fresh}) then {
 
 // Address the provider object, including after a locality change. The local reply handler checks the original
 // requesting machine and episode before activation, releasing only this token if the request has gone stale.
-["ACME_directPressureClaimAck",[_patient,_medic,_part,_token,_accepted,_epoch,_providerOwner,_grantUntil],_medic] call CBA_fnc_targetEvent;
+["ACME_directPressureClaimAck",[_patient,_medic,_part,_token,_accepted,_epoch,_providerOwner,_grantUntil,_reason],_medic] call CBA_fnc_targetEvent;

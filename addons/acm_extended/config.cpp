@@ -7629,10 +7629,8 @@ class ace_medical_treatment_actions {
         animationMedicProne = "";
         animationMedicSelf = "";
         animationMedicSelfProne = "";
-        // Dead engine corpses retain intervention/inspection access where explicitly supported, but a live airway
-        // assessment is not one of those actions. Keep this gate local to Check Airway rather than globally hiding
-        // dead-patient medical actions.
-        condition = "alive _patient && {ACM_airway_enable} && {!(_patient call ace_common_fnc_isAwake)}";
+        // Inspection remains available on a corpse; the assessment reports the retained airway findings.
+        condition = "ACM_airway_enable && {!(_patient call ace_common_fnc_isAwake)}";
         callbackStart = "_this call ACME_fnc_airwayMedicPose";
         callbackSuccess = "_this call ACM_airway_fnc_checkAirway; [_medic, 'airway'] call ACME_fnc_treatmentPoseStop";
         callbackFailure = "[_medic, 'airway'] call ACME_fnc_treatmentPoseStop";
@@ -7687,7 +7685,7 @@ class ace_medical_treatment_actions {
     class CheckBreathing {
         animationMedic = "AmovPknlMstpSrasWpstDnon_AmovPknlMstpSrasWpstDnon_gear";
         animationMedicProne = "AmovPknlMstpSrasWpstDnon_AmovPknlMstpSrasWpstDnon_gear";
-        condition = "alive _patient";
+        condition = "true";
     };
     class UseStethoscope {
         // Auscultation owns a clean supine chest-access pose. Do not inherit CheckBreathing's generic roll-to-back:
@@ -8057,7 +8055,7 @@ class ace_medical_treatment_actions {
     class ACME_AdjustThoracostomy: ACME_PerformThoracostomy {
         displayName = "Adjust Thoracostomy";
         displayNameProgress = "Opening thoracostomy...";
-        condition = "([_medic, 'ACME_AdjustThoracostomy'] call ACME_fnc_procedureActionAllowed) && {!isNull _patient && {(_patient getVariable ['ACM_breathing_Thoracostomy_State', 0]) > 0} && {[_medic, _patient, true] call ACME_fnc_thoraCanOpen}}";
+        condition = "([_medic, 'ACME_AdjustThoracostomy'] call ACME_fnc_procedureActionAllowed) && {!isNull _patient && {[_medic, _patient, true] call ACME_fnc_thoraCanOpen}}";
             medicRequired = 0;
     };
 
@@ -8643,7 +8641,7 @@ class ace_medical_treatment_actions {
         // unreachable the moment it was hooked up. carrying a spare still works for a patient who has been configured
         // and not yet connected. Pre-attachment presets belong to the medic's carried device;
         // use Connect ET > Ventilator to acquire patient/vehicle equipment before editing it.
-        condition = "([_medic, 'ACME_VentOpenPatient'] call ACME_fnc_procedureActionAllowed) && {((_patient getVariable ['ACME_vent_circuit', false]) || {_patient getVariable ['ACME_vent_configured', false]}) && {(_patient getVariable ['ACME_vent_onPatient', false]) || {([_medic, 'ACME_Ventilator'] call ace_common_fnc_getCountOfItem) > 0}}}";
+        condition = "([_medic, 'ACME_VentOpenPatient'] call ACME_fnc_procedureActionAllowed) && {!(_patient getVariable ['ACME_vent_recovering', false])} && {alive _patient || {_patient getVariable ['ACME_vent_onPatient', false]}} && {((_patient getVariable ['ACME_vent_circuit', false]) || {_patient getVariable ['ACME_vent_configured', false]}) && {(_patient getVariable ['ACME_vent_onPatient', false]) || {([_medic, 'ACME_Ventilator'] call ace_common_fnc_getCountOfItem) > 0}}}";
         callbackSuccess = "[_patient, true] call ACME_fnc_ventPanelOpen";
         ACM_menuIcon = "ACME_Ventilator";
         callbackFailure = "";

@@ -133,9 +133,9 @@ if (["ACME_reconcileInvalidHangAt", _hangInvalid, 2] call _debouncedInvalid) the
         && {toLowerANSI (_claimMedic getVariable ["ACME_DP_Part", ""]) == _part};
     private _claimPending = !isNull _claimMedic && {_claimAt >= 0}
         && {(_netNow - _claimAt) <= 3}
-        && {_claimOwner > 0}
-        && {if (isServer) then {_claimOwner == owner _claimMedic} else {
-            !local _claimMedic || {_claimOwner == clientOwner}
+        && {_claimOwner > 0 || {_claimOwner == 0 && {!isMultiplayer} && {local _claimMedic}}}
+        && {if (local _claimMedic) then {_claimOwner == clientOwner} else {
+            isMultiplayer && {!isServer || {_claimOwner == owner _claimMedic}}
         }};
     private _claimInvalid = !(_claim isEqualTo []) && {
         !(_claim isEqualType [] && {count _claim >= 5})

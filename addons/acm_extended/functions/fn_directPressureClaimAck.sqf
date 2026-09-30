@@ -1,5 +1,5 @@
 /* Provider-local reply for the patient-owner Direct Pressure site claim. */
-params ["_patient","_medic","_part","_token","_accepted","_epoch","_providerOwner",["_grantUntil",-1,[0]]];
+params ["_patient","_medic","_part","_token","_accepted","_epoch","_providerOwner",["_grantUntil",-1,[0]],["_reason","request-rejected",[""]]];
 if (isNull _medic || {!local _medic}) exitWith {};
 
 // The pending slot is cleared after first activation. An identical accepted reply is then a duplicate,
@@ -47,9 +47,35 @@ if (!_stillValid) exitWith {
     if (_accepted) then {
         [_patient,"directPressureClaim",["release",[_medic,_part,_token,_epoch,_providerOwner]]] call ACME_fnc_ownerDispatch;
     };
-    if (!_accepted) then {
-        ["Direct pressure is already being maintained on this site.",2,_medic] call ace_common_fnc_displayTextStructured;
+    if (_accepted) then {
+        _reason = if (!finite _grantUntil || {serverTime >= _grantUntil}) then {"grant-expired"} else {
+            if (isNull _patient || {_epoch != ([_patient] call ACME_fnc_clinicalEpoch)}) then {"patient-epoch"} else {
+                if (_providerOwner != clientOwner) then {"provider-locality"} else {
+                    if (!alive _medic || {_medic getVariable ["ACE_isUnconscious",false]}) then {"provider-unavailable"} else {
+                        if (!(missionNamespace getVariable ["ACME_sys_dp",true])) then {"system-disabled"} else {"provider-busy"}
+                    }
+                }
+            }
+        };
     };
+    private _message = switch (_reason) do {
+        case "site-busy": {"Direct pressure is already being maintained on this site."};
+        case "out-of-range": {"Move closer to the patient to apply direct pressure."};
+        case "system-disabled": {"Direct pressure is disabled in this mission."};
+        case "provider-busy": {"Another active maneuver is already in progress."};
+        case "provider-unavailable": {"You cannot apply direct pressure in your current state."};
+        case "patient-epoch": {"The patient's state changed. Try direct pressure again."};
+        case "request-expired": {"Direct pressure request timed out. Try again."};
+        case "grant-expired": {"Direct pressure confirmation timed out. Try again."};
+        case "claim-capacity": {"Too many recent treatment requests. Wait a moment and try again."};
+        case "request-cancelled": {"Direct pressure request was cancelled. Try again."};
+        default {"Direct pressure could not start. Try again."};
+    };
+    // Retain one local diagnostic per completed request. Neither this record nor the RPT line broadcasts
+    // patient identities, and duplicate/unrelated ACKs have already exited before reaching this branch.
+    _medic setVariable ["ACME_DP_LastClaimFailure",[serverTime,_part,_reason],false];
+    diag_log format ["[ACME] DirectPressure rejected: reason=%1 part=%2 requestOwner=%3 clientOwner=%4 epoch=%5",_reason,_part,_providerOwner,clientOwner,_epoch];
+    [_message,2,_medic] call ace_common_fnc_displayTextStructured;
 };
 
 _medic setVariable ["ACME_DP_ClaimToken",_token,true];
