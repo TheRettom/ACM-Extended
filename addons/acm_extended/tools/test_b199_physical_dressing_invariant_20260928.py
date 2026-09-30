@@ -87,5 +87,5 @@ def test_b203_keeps_public_stable_version_1241():
     config = read("addons/acm_extended/config.cpp")
 
     assert 'version = "1.2.4.1";' in config
-    assert 'ACME_buildBatch = "B206";' in startup
-    assert 'ACME_networkAuditRevision = "NA6-B206-1.2.4.1-stable";' in startup
+    assert 'ACME_buildBatch = "B207";' in startup
+    assert 'ACME_networkAuditRevision = "NA7-B207-1.2.4.1-stable";' in startup

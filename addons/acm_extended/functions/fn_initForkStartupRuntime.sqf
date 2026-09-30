@@ -1,8 +1,8 @@
 ACME_infusion_version = getText (configFile >> "CfgPatches" >> "ACM_Extended" >> "version");
 if (ACME_infusion_version == "") then { ACME_infusion_version = "1.2.4.1"; };
-ACME_buildBatch = "B206";
+ACME_buildBatch = "B207";
 ACME_debugRevision = "";
-ACME_networkAuditRevision = "NA6-B206-1.2.4.1-stable";
+ACME_networkAuditRevision = "NA7-B207-1.2.4.1-stable";
 
 /*
  * B199 physical-dressing invariant.
@@ -53,3 +53,6 @@ if (isNil "ACME_dropCarryLyingEH") then {
 // ACM Extended's current config.cpp inlines its XEH declarations; the legacy standalone
 // CfgEventHandlers.hpp is not the authoritative registration surface.
 call compile preprocessFileLineNumbers "\acm_extended\functions\fn_expansionBootstrap.sqf";
+
+// Independently verify the server/client/HC build manifests after event handlers are installed.
+[] call ACME_fnc_networkCompatInit;

@@ -202,7 +202,8 @@ ACME_NA2_ownerInstalled = true;
         missionNamespace setVariable ["ACME_clinical_ownedUnits", _actualOwned];
         {[_x] call ACME_fnc_ownerRegister;} forEach _missingOwned;
     };
-    if (hasInterface && {!isNil "ACE_player"} && {!isNull ACE_player}) then {
+    if ((hasInterface && {!isNil "ACE_player"} && {!isNull ACE_player})
+        || {!((missionNamespace getVariable ["ACM_core_ContinuousAction_Controller", []]) isEqualTo [])}) then {
         [] call ACME_fnc_providerStateReconcile;
     };
     {

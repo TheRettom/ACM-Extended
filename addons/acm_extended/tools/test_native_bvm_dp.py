@@ -69,6 +69,7 @@ def setup():
                '_args params ["_op","_claimArgs"]; '
                '_claimArgs params ["_m","_part","_token","_epoch","_providerOwner"]; '
                'if (_op == "claim") then { '
+               '_patient setVariable [format ["ACME_DP_claim_%1",_part],[_m,_token,_epoch,_providerOwner,_serverTime]]; '
                '_m setVariable ["ACME_DP_ClaimPending",[]]; '
                '_m setVariable ["ACME_DP_ClaimToken",_token]; '
                '_m setVariable ["ACME_DP_ClaimEpoch",_epoch]; '

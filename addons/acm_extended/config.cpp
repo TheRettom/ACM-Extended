@@ -1,3 +1,4 @@
+#include "../main/script_build.hpp"
 // extended event handlers, matching the ACM and ACE convention. these are inlined from the former
 // cfgeventhandlers.hpp, so the build has no #include to drop in.
 // preinit registers the CBA settings. postinit starts the runtime of the addon.
@@ -336,6 +337,7 @@ class CfgMovesMaleSdr: CfgMovesBasic {
 
 class CfgPatches {
     class ACM_Extended {
+        ACME_BUILD_CONFIG("extended");
         name = "ACM Extended";
         units[] = {"ACME_ModuleMegacodeKelly", "ACME_ModuleBloodFridge", "ACME_BloodFridge_Closed", "ACME_BloodFridge_Open",
             // zeus enumerates units[]. a module that is not in this list does not exist as far as the curator is
@@ -2112,6 +2114,7 @@ class CfgFunctions {
             class ivVeinNearest {};
             class ivPalpModel {};
             class netReport {};
+            class networkDiagnostics {};
             class ivSiteDifficulty {};
             class ivStickBlows {};
             class ivVeinDist {};
@@ -2314,6 +2317,8 @@ class CfgFunctions {
             class skDiscardSelected {};
             class skFlushSite {};
             class skToggleRoute {};
+            class actionClaimValidate {};
+            class actionClaimLedger {};
             class directPressureStart {};
             class directPressureClaimLocal {};
             class directPressureClaimAck {};
@@ -2770,6 +2775,13 @@ class CfgFunctions {
             class visualFxDebugCycle {};
             class visualFxDebugClear {};
             class compatCheck {};
+            class networkCompatInit {};
+            class networkCompatManifest {};
+            class networkCompatCompare {};
+            class networkCompatReceive {};
+            class networkCompatRetry {};
+            class networkCompatPeer {};
+            class networkCompatNotice {};
             class altitudeTick {};
             class altitudeDatum {};
             class altitudeTrue {};

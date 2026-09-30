@@ -10,20 +10,24 @@ _args params [
     ["_part","",[""]],
     ["_token","",[""]],
     ["_epoch",-1,[0]],
-    ["_providerOwner",-1,[0]]
+    ["_providerOwner",-1,[0]],
+    ["_sentAt",-1,[0]]
 ];
 _part = toLowerANSI _part;
-if (_part == "" || {_token == ""}) exitWith {};
+if (!(_part in ["head","body","leftarm","rightarm","leftleg","rightleg"]) || {_token == ""}) exitWith {};
 
 private _claimKey = format ["ACME_DP_claim_%1",_part];
 private _pressKey = format ["ACME_DP_press_%1",_part];
 private _claim = _patient getVariable [_claimKey,[]];
+private _scope = "dp:" + _part;
 
 if (_op == "release") exitWith {
+    [_patient,_scope,_medic,_token,_epoch,"cancel"] call ACME_fnc_actionClaimLedger;
     private _owns = (_claim isEqualType []) && {count _claim >= 4}
         && {(_claim select 0) isEqualTo _medic}
-        && {(_claim select 1) == _token};
-    if (_owns || {_claim isEqualTo [] && {(_patient getVariable [_pressKey,objNull]) isEqualTo _medic}}) then {
+        && {(_claim select 1) == _token}
+        && {(_claim select 2) == _epoch};
+    if (_owns) then {
         _patient setVariable [_claimKey,[],true];
         if ((_patient getVariable [_pressKey,objNull]) isEqualTo _medic) then {
             _patient setVariable [_pressKey,objNull,true];
@@ -49,6 +53,8 @@ private _currentOwner = _claim param [3,-1,[0]];
 private _currentAt = _claim param [4,-1,[0]];
 private _currentActive = !isNull _currentMedic
     && {_currentMedic getVariable ["ACME_DP_Active",false]}
+    && {(_currentMedic getVariable ["ACME_DP_ClaimToken",""]) == _currentToken}
+    && {(_currentMedic getVariable ["ACME_DP_ClaimEpoch",-1]) == _currentEpoch}
     && {(_currentMedic getVariable ["ACME_DP_Patient",objNull]) isEqualTo _patient}
     && {toLowerANSI (_currentMedic getVariable ["ACME_DP_Part",""]) == _part};
 private _currentPending = !isNull _currentMedic
@@ -75,21 +81,28 @@ if (!_currentValid && {!isNull _currentMedic || {!(_claim isEqualTo [])}}) then 
     _currentToken = "";
 };
 
-private _validRequest = alive _medic
-    && {!(_medic getVariable ["ACE_isUnconscious",false])}
-    && {_providerOwner > 0}
-    // Only the server can query a remote object's owner. A player/HC casualty owner must not compare
-    // the provider's real client ID with the 0 returned by owner on clients.
-    && {if (isServer) then {_providerOwner == owner _medic} else {
-        !local _medic || {_providerOwner == clientOwner}
-    }}
-    && {_epoch == ([_patient] call ACME_fnc_clinicalEpoch)}
+private _reason = [_patient,_medic,_epoch,_providerOwner,_sentAt] call ACME_fnc_actionClaimValidate;
+private _validRequest = _reason == ""
     && {(_medic distance _patient) <= ((missionNamespace getVariable ["ACME_DP_torsoLeashDist",3.2]) max (missionNamespace getVariable ["ACME_DP_leashDist",2.7]))}
     && {missionNamespace getVariable ["ACME_sys_dp",true]};
-
-private _accepted = _validRequest && {isNull _currentMedic || {_currentMedic isEqualTo _medic}};
-if (_accepted) then {
-    _patient setVariable [_claimKey,[_medic,_token,_epoch,_providerOwner,serverTime],true];
+private _cached = [_patient,_scope,_medic,_token,_epoch,"lookup"] call ACME_fnc_actionClaimLedger;
+private _fresh = (_cached select 0) == "new";
+private _accepted = _validRequest && {
+    if (_fresh) then {isNull _currentMedic || {_currentMedic isEqualTo _medic}} else {
+        (_cached select 0) == "accepted" && {_currentValid}
+        && {_currentMedic isEqualTo _medic} && {_currentToken == _token}
+    }
+};
+// The first grant fixes the activation deadline. Duplicate requests cannot renew a pending reservation.
+private _grantedAt = serverTime;
+private _grantUntil = if (_fresh) then {_grantedAt + 3} else {(_cached select 2) param [1,-1]};
+if (_fresh) then {
+    private _stored = [_patient,_scope,_medic,_token,_epoch,["reject","accept"] select _accepted,0,[_accepted,_grantUntil]] call ACME_fnc_actionClaimLedger;
+    _accepted = _accepted && {(_stored select 0) == "accepted"};
+};
+// A duplicate claim returns the same decision without refreshing reservation age or reinstating a yielded marker.
+if (_accepted && {_fresh}) then {
+    _patient setVariable [_claimKey,[_medic,_token,_epoch,_providerOwner,_grantedAt],true];
     // Reserve the clinical slot immediately. Activation on the provider follows the ACK.
     _patient setVariable [_pressKey,_medic,true];
     if (_part == "body") then {
@@ -104,4 +117,4 @@ if (_accepted) then {
 
 // Address the provider object, including after a locality change. The local reply handler checks the original
 // requesting machine and episode before activation, releasing only this token if the request has gone stale.
-["ACME_directPressureClaimAck",[_patient,_medic,_part,_token,_accepted,_epoch,_providerOwner],_medic] call CBA_fnc_targetEvent;
+["ACME_directPressureClaimAck",[_patient,_medic,_part,_token,_accepted,_epoch,_providerOwner,_grantUntil],_medic] call CBA_fnc_targetEvent;

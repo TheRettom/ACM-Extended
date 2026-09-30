@@ -286,7 +286,7 @@ _top pushBack (["MACHINE / PATIENT OWNERSHIP"] call _sect);
 private _role = if (isDedicated) then {"dedi"} else {if (isServer) then {"host"} else {"client"}};
 _top pushBack (["Role", _role, if (isServer) then {_cGood} else {_cLabel}, "MP", if (isMultiplayer) then {"yes"} else {"no"}, if (isMultiplayer) then {_cGood} else {_cMute}] call _pair);
 _top pushBack (["Client", clientOwner, _cLabel, "Server", if (isServer) then {"local"} else {"remote"}, if (isServer) then {_cGood} else {_cLabel}] call _pair);
-private _own = if (isNull _patient) then {-1} else {owner _patient};
+private _own = if (isNull _patient) then {"-"} else {if (isServer) then {str owner _patient} else {if (local _patient) then {str clientOwner} else {"remote"}}};
 private _loc = !isNull _patient && {local _patient};
 private _netId = if (isNull _patient) then {"-"} else {netId _patient};
 _top pushBack (["Owner", _own, if (_loc) then {_cGood} else {_cWarn}, "Local", if (_loc) then {"yes"} else {"no"}, if (_loc) then {_cGood} else {_cWarn}] call _pair);
@@ -322,6 +322,11 @@ if (!(_rate isEqualType 0) || {!finite _rate}) then {_rate = 0.07;};
 _network pushBack (["Viewers", count _roster, if ((count _roster) > 0) then {_cGood} else {_cMute}, "Rate", format ["%1s", _rate toFixed 2], _cLabel] call _pair);
 
 _network pushBack (["COMPATIBILITY"] call _sect);
+private _networkStatus = missionNamespace getVariable ["ACME_networkCompatStatus", "pending"];
+private _serverBuild = missionNamespace getVariable ["ACME_networkCompatServerBuild", "unverified"];
+private _networkColor = if (_networkStatus == "ok") then {_cGood} else {if (_networkStatus == "pending") then {_cWarn} else {_cBad}};
+_network pushBack (["Network", _networkStatus, _networkColor, "Server", _serverBuild, _networkColor] call _pair);
+
 private _missing = missionNamespace getVariable ["ACME_compatMissing", []];
 if !(_missing isEqualType []) then {_missing = [];};
 _network pushBack (["Issues", count _missing, if (_missing isEqualTo []) then {_cGood} else {_cBad}, "Checked", if (missionNamespace getVariable ["ACME_compatChecked", false]) then {"yes"} else {"no"}, if (missionNamespace getVariable ["ACME_compatChecked", false]) then {_cGood} else {_cWarn}] call _pair);

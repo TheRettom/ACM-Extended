@@ -1,6 +1,16 @@
 /* Provider-local reply for the patient-owner Direct Pressure site claim. */
-params ["_patient","_medic","_part","_token","_accepted","_epoch","_providerOwner"];
+params ["_patient","_medic","_part","_token","_accepted","_epoch","_providerOwner",["_grantUntil",-1,[0]]];
 if (isNull _medic || {!local _medic}) exitWith {};
+
+// The pending slot is cleared after first activation. An identical accepted reply is then a duplicate,
+// not a cancelled request: releasing it would tear down the live owner's reservation.
+if (_accepted && {_providerOwner == clientOwner}
+    && {_epoch == ([_patient] call ACME_fnc_clinicalEpoch)}
+    && {_medic getVariable ["ACME_DP_Active",false]}
+    && {(_medic getVariable ["ACME_DP_Patient",objNull]) isEqualTo _patient}
+    && {(_medic getVariable ["ACME_DP_Part",""]) == _part}
+    && {(_medic getVariable ["ACME_DP_ClaimToken",""]) == _token}
+    && {(_medic getVariable ["ACME_DP_ClaimEpoch",-1]) == _epoch}) exitWith {};
 
 private _pending = _medic getVariable ["ACME_DP_ClaimPending",[]];
 private _same = (_pending isEqualType []) && {count _pending >= 4}
@@ -20,6 +30,9 @@ _medic setVariable ["ACME_DP_ClaimPending",[],false];
 _medic setVariable ["ACME_DP_ClaimRequestedAt",-1,false];
 
 private _stillValid = _accepted
+    // The owner can hand this site to another provider once the pending grant expires.
+    // Do not trust a replicated claim read here: the immutable owner deadline travels with the ACK.
+    && {finite _grantUntil} && {serverTime < _grantUntil}
     && {!isNull _patient}
     && {alive _medic}
     && {!(_medic getVariable ["ACE_isUnconscious",false])}
@@ -41,6 +54,7 @@ if (!_stillValid) exitWith {
 
 _medic setVariable ["ACME_DP_ClaimToken",_token,true];
 _medic setVariable ["ACME_DP_ClaimEpoch",_epoch,true];
+_medic setVariable ["ACME_DP_ClaimLostAt",-1,false];
 
 [_patient,0.85] call ACME_fnc_markImportantSfx;
 [_medic, "ACME_DirectPressure"] call ACME_fnc_worldSfxNearby;

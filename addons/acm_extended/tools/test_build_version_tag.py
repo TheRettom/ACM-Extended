@@ -23,6 +23,6 @@ def test_single_debug_renderer_uses_cfgpatches_version():
 
 def test_stable_1241_debug_identity_has_no_rc_suffix():
     startup = read("functions/fn_initForkStartupRuntime.sqf")
-    assert 'ACME_buildBatch = "B206";' in startup
+    assert 'ACME_buildBatch = "B207";' in startup
     assert 'ACME_debugRevision = "";' in startup
-    assert 'ACME_networkAuditRevision = "NA6-B206-1.2.4.1-stable";' in startup
+    assert 'ACME_networkAuditRevision = "NA7-B207-1.2.4.1-stable";' in startup

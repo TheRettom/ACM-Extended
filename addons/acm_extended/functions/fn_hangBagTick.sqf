@@ -59,9 +59,11 @@ if (serverTime - (_medic getVariable ["ACME_hang_ClaimAckAt", 0]) >= 6) exitWith
 // Reuse the existing tick, but send at most one renewal every two seconds, never at 20 Hz.
 if (serverTime - (_medic getVariable ["ACME_hang_ClaimRequestedAt", 0]) >= 2) then {
     _medic setVariable ["ACME_hang_ClaimRequestedAt", serverTime, false];
+    private _sequence = (_medic getVariable ["ACME_hang_ClaimSequence", 0]) + 1;
+    _medic setVariable ["ACME_hang_ClaimSequence", _sequence, false];
     [_patient, "hangBagRenew", [_medic, _medic getVariable ["ACME_hang_Start", -1],
         missionNamespace getVariable ["ACME_hang_flowMult", 1.75],
-        _medic getVariable ["ACME_hang_ClaimEpoch", -1], clientOwner]] call ACME_fnc_ownerDispatch;
+        _medic getVariable ["ACME_hang_ClaimEpoch", -1], clientOwner, _sequence, serverTime]] call ACME_fnc_ownerDispatch;
 };
 
 // A local owner can reject the renewal synchronously and stop this episode.

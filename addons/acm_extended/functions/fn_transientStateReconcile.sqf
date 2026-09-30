@@ -127,6 +127,8 @@ if (["ACME_reconcileInvalidHangAt", _hangInvalid, 2] call _debouncedInvalid) the
     private _claimAt = _claim param [4, -1, [0]];
     private _claimActive = !isNull _claimMedic
         && {_claimMedic getVariable ["ACME_DP_Active", false]}
+        && {(_claimMedic getVariable ["ACME_DP_ClaimToken", ""]) == (_claim param [1, ""])}
+        && {(_claimMedic getVariable ["ACME_DP_ClaimEpoch", -1]) == _claimEpoch}
         && {(_claimMedic getVariable ["ACME_DP_Patient", objNull]) isEqualTo _patient}
         && {toLowerANSI (_claimMedic getVariable ["ACME_DP_Part", ""]) == _part};
     private _claimPending = !isNull _claimMedic && {_claimAt >= 0}

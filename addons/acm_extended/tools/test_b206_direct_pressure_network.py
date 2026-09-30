@@ -24,6 +24,10 @@ def network_source(name, source=None):
     source = re.sub(r'\bowner (_\w+)', r'([\1] call _engineOwner)', source)
     source = re.sub(r'\blocal (_\w+)', r'((\1 getVariable ["TEST_owner",-1]) == _machine)', source)
     source = re.sub(r'\balive (_\w+)', r'(\1 getVariable ["TEST_alive",true])', source)
+    # Claim helper fixtures supply finite values; SQF-VM does not implement this
+    # native predicate. Preserve its numeric type boundary for those inputs.
+    source = re.sub(r'\bfinite (_\w+)', r'(\1 isEqualType 0)', source)
+    source = re.sub(r'\bfinite \((_[^()]+)\)', r'((\1) isEqualType 0)', source)
     source = source.replace('[objNull]', '[profileNamespace]')
     # VM namespace deletion keeps a nil slot instead of restoring getVariable's
     # default. The debounce's absent-value default is -1 in the actual source.
@@ -74,7 +78,7 @@ def setup():
         ACME_fnc_directPressureLimb = _activate;
         ACME_fnc_directPressureSelf = _activate;
     '''
-    for name in ('directPressureStart', 'directPressureClaimLocal', 'directPressureClaimAck'):
+    for name in ('actionClaimValidate', 'actionClaimLedger', 'directPressureStart', 'directPressureClaimLocal', 'directPressureClaimAck'):
         source += f'ACME_fnc_{name} = {{' + network_source(name) + '};'
     source += '''
         private _deliver = {
@@ -134,14 +138,14 @@ def test_competing_claim_cannot_steal_pending_or_active_site(patient_owner):
         call _deliver;
         private _other = parsingNamespace;
         _other setVariable ["TEST_owner",11];
-        [_patient,"claim",[_other,"leftarm","other",0,11]] call ACME_fnc_directPressureClaimLocal;
+        [_patient,"claim",[_other,"leftarm","other",0,11,_networkTime]] call ACME_fnc_directPressureClaimLocal;
         [!(((_wire select 1) select 1) select 4),"pending reservation stolen"] call _check;
         [((_patient getVariable "ACME_DP_claim_leftarm") select 0) isEqualTo _medic,"pending holder replaced"] call _check;
         call _deliver;
         _wire = [];
         _machine = _patient getVariable "TEST_owner";
         _networkTime = 1005;
-        [_patient,"claim",[_other,"leftarm","other-new",0,11]] call ACME_fnc_directPressureClaimLocal;
+        [_patient,"claim",[_other,"leftarm","other-new",0,11,_networkTime]] call ACME_fnc_directPressureClaimLocal;
         [!(((_wire select 0) select 1) select 4),"active reservation stolen"] call _check;
     ''')
 
@@ -164,7 +168,7 @@ def test_old_reply_release_cannot_erase_newer_token_for_same_provider():
         [_medic,_patient,"leftarm"] call ACME_fnc_directPressureStart;
         call _deliver;
         _medic setVariable ["ACME_DP_ClaimPending",[_patient,"leftarm","replacement",0]];
-        [_patient,"claim",[_medic,"leftarm","replacement",0,7]] call ACME_fnc_directPressureClaimLocal;
+        [_patient,"claim",[_medic,"leftarm","replacement",0,7,_networkTime]] call ACME_fnc_directPressureClaimLocal;
         call _deliver;
         [count _started == 0,"stale reply started replacement hold"] call _check;
         call _deliver;
@@ -201,7 +205,7 @@ def test_owner_validation_rejects_invalid_identity_when_it_can_resolve_provider(
     execute(setup() + f'''
         _patient setVariable ["TEST_owner",{patient_owner}];
         _machine = {patient_owner};
-        [_patient,"claim",[_medic,"leftarm","invalid",0,{request_owner}]] call ACME_fnc_directPressureClaimLocal;
+        [_patient,"claim",[_medic,"leftarm","invalid",0,{request_owner},_networkTime]] call ACME_fnc_directPressureClaimLocal;
     ''' + '''
         [!(((_wire select 0) select 1) select 4),"invalid provider identity accepted"] call _check;
         [(_patient getVariable ["ACME_DP_claim_leftarm",[]]) isEqualTo [],"invalid identity reserved site"] call _check;

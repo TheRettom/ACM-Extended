@@ -3,7 +3,7 @@
 // temporarily suspend it and movement yields the provider pose. The same action can then release the hold.
 params ["_medic", "_patient", ["_bodyPart", ""]];
 _bodyPart = toLower _bodyPart;
-if (isNull _medic || {isNull _patient} || {!local _medic}) exitWith {};
+if (isNull _medic || {isNull _patient} || {!local _medic}) exitWith {false};
 
 // Every region needs this provider's hands. Reject before cleanup can touch the input hints or animation of
 // BVM, CPR or another continuous maneuver. CPR is native and does not use ContinuousAction_Active.
@@ -14,13 +14,16 @@ private _providerManeuver = (missionNamespace getVariable ["ACM_core_ContinuousA
     || {[_patient] call ACM_core_fnc_bvmActive};
 if (_providerManeuver) exitWith {
     ["Another active maneuver is already in progress.", 2, _medic] call ace_common_fnc_displayTextStructured;
+    false
 };
 
 if (_medic getVariable ["ACME_DP_Active", false]) exitWith {
     ["You're already holding direct pressure.", 2, _medic] call ace_common_fnc_displayTextStructured;
+    false
 };
 if !((_medic getVariable ["ACME_DP_ClaimPending", []]) isEqualTo []) exitWith {
     ["Direct pressure is already being started.", 1.5, _medic] call ace_common_fnc_displayTextStructured;
+    false
 };
 
 // Clear stale provider-local presentation from an interrupted prior episode, then atomically reserve this patient
@@ -30,7 +33,11 @@ private _epoch = [_patient] call ACME_fnc_clinicalEpoch;
 // owner returns 0 on clients. This request originates on the provider's machine, so clientOwner is the
 // reply/ownership identity on dedicated clients as well as hosted servers and headless clients.
 private _providerOwner = clientOwner;
-private _token = format ["%1:%2:%3:%4", _providerOwner, netId _medic, diag_frameNo, serverTime];
+private _sentAt = serverTime;
+private _serial = (_medic getVariable ["ACME_DP_ClaimSerial",0]) + 1;
+_medic setVariable ["ACME_DP_ClaimSerial",_serial,false];
+private _token = format ["%1:%2:%3:%4:%5", _providerOwner, netId _medic, diag_frameNo, _sentAt, _serial];
 _medic setVariable ["ACME_DP_ClaimPending", [_patient, _bodyPart, _token, _epoch], false];
 _medic setVariable ["ACME_DP_ClaimRequestedAt", diag_tickTime, false];
-[_patient, "directPressureClaim", ["claim", [_medic, _bodyPart, _token, _epoch, _providerOwner]]] call ACME_fnc_ownerDispatch;
+[_patient, "directPressureClaim", ["claim", [_medic, _bodyPart, _token, _epoch, _providerOwner, _sentAt]]] call ACME_fnc_ownerDispatch;
+true

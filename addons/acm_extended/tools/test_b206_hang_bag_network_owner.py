@@ -3,6 +3,7 @@
 Only engine boundaries and network delivery are fixtures; production acquisition,
 renewal, acceptance, cancellation and episode validation execute unchanged.
 """
+import re
 import pytest
 from test_menu_death_lifecycle import F, adapt, execute
 
@@ -22,6 +23,9 @@ def source(name):
         'getPosASL _medic': '[0,0,0]',
     }.items():
         text = text.replace(old, new)
+    text = re.sub(r'\bfinite (_\w+)', r'(\1 isEqualType 0)', text)
+    text = re.sub(r'\bfinite \((_[^()]+)\)', r'((\1) isEqualType 0)', text)
+    text = text.replace('[objNull]', '[profileNamespace]')
     return adapt(text)
 
 
@@ -38,7 +42,7 @@ def setup():
         ACME_fnc_ownerDispatch={_requests pushBack _this;};
         CBA_fnc_targetEvent={_acks pushBack _this;};
     '''
-    for name in ("hangBagStart", "hangBagClaimLocal", "hangBagClaimAck"):
+    for name in ("actionClaimValidate", "actionClaimLedger", "hangBagStart", "hangBagClaimLocal", "hangBagClaimAck"):
         result += f"ACME_fnc_{name}={{" + source(name) + "};"
     result += "ACME_fnc_hangBagStop={" + source("hangBagStop").split("private _visualEpoch =", 1)[0] + "};"
     result += "private _tickHang={" + source("hangBagTick").split("// auto-lower when", 1)[0] + "};"

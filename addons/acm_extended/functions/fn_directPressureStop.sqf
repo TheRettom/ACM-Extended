@@ -43,7 +43,7 @@ if (!isNull _patient && {_part != ""}) then {
         [_patient, "directPressureClaim", ["release", [_medic, _part, _claimToken, _claimEpoch, clientOwner]]] call ACME_fnc_ownerDispatch;
     } else {
         // Compatibility cleanup for an episode created before atomic claims existed.
-        [_patient, "directPressureMarker", [_medic, _part, false]] call ACME_fnc_ownerDispatch;
+        [_patient, "directPressureMarker", [_medic, _part, false, _claimToken, _claimEpoch]] call ACME_fnc_ownerDispatch;
     };
 };
 
@@ -82,6 +82,7 @@ if (!_otherManeuver && {local _medic} && {alive _medic} && {isNull objectParent 
     ["ACME_DP_OwnsContinuous", false],
     ["ACME_DP_ClaimPending", []],
     ["ACME_DP_ClaimRequestedAt", -1],
+    ["ACME_DP_ClaimLostAt", -1],
     ["ACME_DP_ClaimToken", "", true],
     ["ACME_DP_ClaimEpoch", -1, true]
 ];

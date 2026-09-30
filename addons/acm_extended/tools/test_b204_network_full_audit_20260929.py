@@ -302,14 +302,31 @@ def test_hpmk_server_safety_uses_registry_not_repeated_world_scan():
     assert '"ACME_hpmkServerTrack"' in state
 
 
+def global_sound_calls(source):
+    found = []
+    for tokens in code_streams(source):
+        pairs = matching(tokens)
+        for i, token in enumerate(tokens[:-1]):
+            if token.kind != "ident" or token.value.lower() not in {"remoteexec", "remoteexeccall"}:
+                continue
+            opening = i + 1
+            if tokens[opening].value != "[" or opening not in pairs:
+                continue
+            args = split_args(tokens, opening + 1, pairs[opening], pairs)
+            if (len(args) >= 2 and len(args[0]) == 1 and len(args[1]) == 1
+                    and args[0][0].kind == "string"
+                    and args[0][0].value.lower() in {"say3d", "acme_fnc_remotesay3d"}
+                    and args[1][0].value == "0"):
+                found.append(token.line)
+    return found
+
+
 def test_no_acme_treatment_audio_broadcasts_to_every_client():
-    offenders = []
-    for path in list((ACME / "functions").glob("*.sqf")) + [ACME / "config.cpp"]:
-        text = path.read_text(encoding="utf-8-sig", errors="ignore")
-        if re.search(r'remoteExec(?:Call)?\s*\[\s*["\']say3D["\']\s*,\s*0\s*\]', text):
-            offenders.append(str(path.relative_to(ROOT)))
-        if re.search(r'remoteExec(?:Call)?\s*\[\s*["\']ACME_fnc_remoteSay3D["\']\s*,\s*0\s*\]', text):
-            offenders.append(str(path.relative_to(ROOT)))
+    # The fork's core overrides are runtime code too. Limiting this to the Extended
+    # folder previously missed a second global Direct Pressure sound in treatment.
+    paths = [p for p in (ROOT / "addons").rglob("*") if p.suffix in {".sqf", ".cpp", ".hpp"}]
+    offenders = [str(p.relative_to(ROOT)) for p in paths
+                 if global_sound_calls(p.read_text(encoding="utf-8-sig", errors="strict"))]
     assert offenders == [], offenders
 
     helper = function("worldSfxNearby")
@@ -402,5 +419,5 @@ def test_b204_network_audit_identity():
     startup = function("initForkStartupRuntime")
     config = read("addons/acm_extended/config.cpp")
     assert 'version = "1.2.4.1";' in config
-    assert 'ACME_buildBatch = "B206";' in startup
-    assert 'ACME_networkAuditRevision = "NA6-B206-1.2.4.1-stable";' in startup
+    assert 'ACME_buildBatch = "B207";' in startup
+    assert 'ACME_networkAuditRevision = "NA7-B207-1.2.4.1-stable";' in startup
