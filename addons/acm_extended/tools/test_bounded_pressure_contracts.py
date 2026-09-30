@@ -16,7 +16,7 @@ def has(source, fragment):
 
 
 def assert_entry_exit_contract(start, stop):
-    has(start, '[_medic,"ACME_DirectPressureHold",1.1,1] call ACME_fnc_doAnimHeld;')
+    has(start, '[_medic,"ACME_DirectPressureHold",1.1,1,true] call ACME_fnc_doAnimHeld;')
     has(stop, 'private _exitPriority = [1,2] select (_stateBefore == "acme_directpressurehold");')
     has(stop, '[_medic,"AmovPknlMstpSnonWnonDnon",_exitPriority] call ACME_fnc_doAnim;')
     has(stop, 'if (!_otherManeuver && {local _medic} && {alive _medic} && {isNull objectParent _medic} && {_ownsHold}) then')
@@ -149,7 +149,7 @@ def test_bp_wrapper_delivers_native_callback_without_cancelling_pressure(stethos
 
 
 @pytest.mark.parametrize('change', [
-    lambda s: s.replace('1.1, 1] call ACME_fnc_doAnimHeld', '1.1, 2] call ACME_fnc_doAnimHeld'),
+    lambda s: s.replace('1.1, 1, true] call ACME_fnc_doAnimHeld', '1.1, 2, true] call ACME_fnc_doAnimHeld'),
     lambda s: '// ' + s.replace('\n', '\n// '),
 ])
 def test_entry_contract_rejects_wrong_priority_and_comment_only_decoys(change):

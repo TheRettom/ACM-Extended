@@ -2,7 +2,7 @@
 // a stale PFH, movement, or a partially-started hold. The function intentionally clears only state owned by this
 // Direct Pressure instance. It never owns another maneuver's controller or interface.
 params [["_silent", false, [false]], ["_medic", ACE_player, [objNull]]];
-if (isNull _medic) exitWith {};
+if (isNull _medic || {!local _medic}) exitWith {};
 
 private _wasActive = _medic getVariable ["ACME_DP_Active", false];
 private _pending = _medic getVariable ["ACME_DP_ClaimPending", []];

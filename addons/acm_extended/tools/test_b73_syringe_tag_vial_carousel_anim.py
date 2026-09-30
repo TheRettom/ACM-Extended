@@ -192,7 +192,17 @@ def test_other_current_medical_transition_entries_use_priority_one():
 def test_animation_helpers_default_to_interpolated_priority_one():
     held = txt('functions/fn_doAnimHeld.sqf')
     queue = txt('functions/fn_animQueue.sqf')
-    assert 'params ["_unit", "_anim", ["_hold", 1.2], ["_prio", 1]];' in held
+    # Execute omitted options: adding an ownership opt-in must not change the default
+    # interpolated priority or silently prevent ordinary remote-patient choreography.
+    from test_b209_direct_pressure_locality import setup
+    from test_menu_death_lifecycle import execute
+    execute(setup() + '''
+        _medic setVariable ["TEST_owner",8];
+        [_medic,"test_patient_pose"] call ACME_fnc_doAnimHeld;
+        [count _handlers==1,"default held animation unexpectedly requires local ownership"] call _check;
+        0 call _tick;
+        [_moves isEqualTo [[_medic,"test_patient_pose",1]],"default held animation lost interpolated priority one"] call _check;
+    ''')
     assert '(_x param [2, 1])' in queue
     assert '[["_a", ""], ["_d", 1.4], ["_p", 1]]' in queue
     assert '["_prio", 2]' not in held

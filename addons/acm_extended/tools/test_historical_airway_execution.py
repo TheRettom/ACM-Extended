@@ -95,7 +95,9 @@ def test_manual_suction_caps_at_available_capacity_without_double_debit():
 
 
 def epi_setup():
-    return setup()+function('narcStoreCommit',extended=True)+function('epinephrinePushStored',extended=True)+'''
+    # The provider is local in this inventory fixture; engine locality is covered by the writer suite.
+    store=function('narcStoreCommit',extended=True).replace('local _owner','true')
+    return setup()+store+function('epinephrinePushStored',extended=True)+'''
         private _hasIV=true; private _hasIO=false;
         private _requests=[]; private _storeAtDispatch=[];
         ACM_circulation_fnc_hasIV={_hasIV && {count _this<4 || {(_this select 3)==3}}};

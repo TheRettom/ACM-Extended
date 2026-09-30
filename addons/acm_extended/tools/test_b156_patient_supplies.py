@@ -19,9 +19,9 @@ def execute(scenario):
     if not vm:
         pytest.skip("SQF-VM is required for supply execution checks")
     definitions = []
-    for name in ["treatmentSupplyOrder", "treatmentSupplyCount", "treatmentSupplyTake", "treatmentSupplyRefund", "treatmentSupplyTakeMany"]:
+    for name in ["itemCount", "treatmentSupplyOrder", "treatmentSupplyCount", "treatmentSupplyTake", "treatmentSupplyRefund", "treatmentSupplyTakeMany"]:
         source = (FUNCTIONS / f"fn_{name}.sqf").read_text()
-        for unit in ["_medic", "_patient", "_donor", "_vehicle", "_x"]:
+        for unit in ["_unit", "_medic", "_patient", "_donor", "_vehicle", "_x"]:
             source = source.replace(f"isNull {unit}", f'({unit} isEqualTo "")')
         source = source.replace("local _medic", "true")
         source = source.replace("_medic removeItem _x", "[_medic, _x] call _remove")

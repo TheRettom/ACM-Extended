@@ -295,6 +295,12 @@ switch (_operation) do {
         // change a successor hold. Only historical cleanup without any reservation may omit the token.
         if (!_ownsClaim && {_active || {_token != ""} || {!(_claim isEqualTo [])}}) exitWith {};
         if (_active) then {
+            private _claimOwner = _claim param [3, -1, [0]];
+            // owner is authoritative only on the server. A client can identify a local provider with clientOwner;
+            // remote clients rely on the origin worker's token-specific release after locality loss.
+            if (isNull _medic || {if (local _medic) then {_claimOwner != clientOwner} else {
+                !isMultiplayer || {isServer && {_claimOwner != owner _medic}}
+            }}) exitWith {};
             // The patient-owner claim, rather than replicated provider identity alone, authorizes this marker.
             if (!isNull _medic
                 && {_medic getVariable ["ACME_DP_Active", false]}
@@ -327,6 +333,10 @@ switch (_operation) do {
             ["_token", "", [""]], ["_epoch", -1, [0]]];
         private _part = toLower _bodyPart;
         private _claim = _patient getVariable [format ["ACME_DP_claim_%1", _part], []];
+        private _claimOwner = _claim param [3, -1, [0]];
+        if (isNull _medic || {if (local _medic) then {_claimOwner != clientOwner} else {
+            !isMultiplayer || {isServer && {_claimOwner != owner _medic}}
+        }}) exitWith {};
         if (!isNull _medic && {_part != ""}
             && {_token != ""} && {_claim isEqualType []} && {count _claim >= 5}
             && {(_claim select 0) isEqualTo _medic} && {(_claim select 1) == _token}

@@ -95,6 +95,7 @@ jobs:
             addons/acm_extended/tools/test_b206*py \
             addons/acm_extended/tools/test_b207*py \
             addons/acm_extended/tools/test_b208*py \
+            addons/acm_extended/tools/test_b209*py \
             addons/acm_extended/tools/test_debug_single_overlay.py \
             addons/acm_extended/tools/test_native_bvm_dp.py \
             addons/acm_extended/tools/test_bounded_pressure_contracts.py \
@@ -109,6 +110,43 @@ jobs:
             --report /tmp/acme-network-results/focused-network.xml \
             --exit-code "$pytest_status" --label focused-network \
             --json-report /tmp/acme-network-results/focused-network-gate.json
+
+      - name: Repaired behavioral regressions
+        env:
+          SQFVM: /tmp/acme-tools/sqfvm_linux_x64_gcc/sqfvm
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/acme-network-results
+          pytest_status=0
+          python -m pytest \
+            addons/acm_extended/tools/test_b156_patient_supplies.py \
+            addons/acm_extended/tools/test_b156_procedure_supplies.py \
+            addons/acm_extended/tools/test_b156_shared_action_gates.py \
+            addons/acm_extended/tools/test_b161_flip_and_breathing.py \
+            addons/acm_extended/tools/test_bounded_assessment_contracts.py \
+            addons/acm_extended/tools/test_bounded_draw_endpoints.py \
+            addons/acm_extended/tools/test_bounded_flush_preview_contracts.py \
+            addons/acm_extended/tools/test_bounded_head_cancel_generation.py \
+            addons/acm_extended/tools/test_bounded_head_locality_retirement.py \
+            addons/acm_extended/tools/test_bounded_head_movement_menu.py \
+            addons/acm_extended/tools/test_bounded_head_provider_consciousness.py \
+            addons/acm_extended/tools/test_bounded_head_provider_sequence.py \
+            addons/acm_extended/tools/test_bounded_head_weapon_contract.py \
+            addons/acm_extended/tools/test_bounded_stethoscope_exit_generation.py \
+            addons/acm_extended/tools/test_historical_medication_preparation.py \
+            addons/acm_extended/tools/test_historical_medication_rows.py \
+            addons/acm_extended/tools/test_historical_pose_lifecycle.py \
+            addons/acm_extended/tools/test_historical_state_cleanup.py \
+            addons/acm_extended/tools/test_historical_vial_execution.py \
+            addons/acm_extended/tools/test_cpr_lifecycle.py \
+            addons/acm_extended/tools/test_semifowler_cpr_entry.py \
+            addons/acm_extended/tools/test_historical_source.py \
+            tools/test_fork_phase87_narc_store_owner.py \
+            --junitxml=/tmp/acme-network-results/focused-behavior.xml -q || pytest_status=$?
+          python tools/compare_pytest_outcomes.py require-pass \
+            --report /tmp/acme-network-results/focused-behavior.xml \
+            --exit-code "$pytest_status" --label focused-behavior \
+            --json-report /tmp/acme-network-results/focused-behavior-gate.json
 
       - name: HEMTT static validation
         run: /tmp/acme-tools/hemtt check

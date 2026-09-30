@@ -176,7 +176,9 @@ if (_dpSamePatient) then {
 
     // Preserve the open-chest lease across the deliberate 0.1 s BVM -> CPR handoff. The bounded token lets the
     // existing lease watchdog restore the carrier if CPR fails to take ownership.
-    if (_swapToCPR && {!isNull _medic} && {!isNull _patient}) then {
+    if (_swapToCPR && {!isNull _medic} && {!isNull _patient} && {local _medic} && {alive _medic}
+        && {_medic isEqualTo ACE_player} && {[_medic] call ACEFUNC(common,isAwake)}
+        && {(missionNamespace getVariable [QGVAR(BVM_LocalSession), []]) isEqualTo [_medic, _patient, _epoch]}) then {
         // A supported Semi-Fowler BVM -> CPR swap has to lower the casualty once before compressions begin.
         // Keep the existing chest-access lease alive through that authored 1.4 s release so the carrier is not
         // restored and immediately removed again during the handoff.
@@ -203,7 +205,10 @@ if (_dpSamePatient) then {
             params ["_medic", "_patient", "_epoch"];
             if ((missionNamespace getVariable ["ACM_core_ContinuousAction_Epoch", -2]) != _epoch
                 || {missionNamespace getVariable ["ACM_core_ContinuousAction_Active", false]}
-                || {isNull _medic} || {isNull _patient}) exitWith {};
+                || {isNull _medic} || {isNull _patient} || {!local _medic} || {!alive _medic}
+                || {!(_medic isEqualTo ACE_player)} || {!([_medic] call ACEFUNC(common,isAwake))}
+                || {(objectParent _medic) isNotEqualTo (objectParent _patient)}
+                || {isNull objectParent _medic && {(_medic distance2D _patient) > ACEGVAR(medical_gui,maxDistance)}}) exitWith {};
             [LLSTRING(BVM_SwappedToCPR), 1.5, _medic] call ACEFUNC(common,displayTextStructured);
             [_medic, _patient] call EFUNC(circulation,beginCPR);
         }, [_medic, _patient, _epoch], 0.1] call CBA_fnc_waitAndExecute;

@@ -2307,6 +2307,7 @@ class CfgFunctions {
             class hardcorePushSendBatch {};
             class hardcorePushStop {};
             class hardcorePushFinalize {};
+            class hardcorePushRetire {};
             class hardcorePushAck {};
             class hardcorePushRestoreDelta {};
             class hardcorePushOverlay {};
@@ -2322,6 +2323,7 @@ class CfgFunctions {
             class directPressureStart {};
             class directPressureClaimLocal {};
             class directPressureClaimAck {};
+            class directPressureRetire {};
             class directPressureHasFracture {};
             class directPressureFracturePain {};
             class directPressureSelf {};
@@ -7890,8 +7892,10 @@ class ace_medical_treatment_actions {
 
     // intranasal esketamine. it gives battlefield analgesia with no iv access, and a medic administers it exactly
     // like the ACM naloxone spray. it inherits the head-targeted spray flow of naloxone. we point it at the
-    // esketamine atomizer and raise ACM's medicationlocal with the classname 'esketamine', so it applies the
-    // esketamine effect config: analgesia, shock-tolerant and gag-preserving. it is indicated for a
+    // esketamine atomizer. Use the native medication wrapper so the actual product is recorded in the activity
+    // log and triage card before its owner-targeted effect event. The effect class is Esketamine, with one
+    // 50mg product unit (not 50 effect units). The effect config provides shock-tolerant, gag-preserving analgesia.
+    // It is indicated for a
     // non-mission-capable casualty in moderate to severe pain, at an ace pain of 0.35 or more, when no BVM is
     // running and they are not in arrest.
     class ACME_Esketamine_IN: Naloxone {
@@ -7901,7 +7905,7 @@ class ace_medical_treatment_actions {
         treatmentTime = 4;
         medicRequired = 0;
         condition = "true";
-        callbackSuccess = "['ace_medical_treatment_medicationLocal', [_patient, _bodyPart, 'Esketamine', 1, false], _patient] call CBA_fnc_targetEvent";
+        callbackSuccess = "[_medic, _patient, _bodyPart, 'Esketamine', _itemUser, _usedItem, _createLitter, 1, false] call ace_medical_treatment_fnc_medication";
         ACM_rollToBack = "false";  // a conscious pain patient. do not force them supine.
         sounds[] = {};
         ACM_menuIcon = "ACME_Spray_Esketamine";

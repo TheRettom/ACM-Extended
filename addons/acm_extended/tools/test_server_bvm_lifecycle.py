@@ -35,6 +35,7 @@ def source(name):
         'addMissionEventHandler ["HandleDisconnect",': '_disconnectHandler = (["HandleDisconnect",',
     }.items():
         s = s.replace(a, b)
+    s = s.replace('isNull _medicVehicle', '(_medicVehicle isEqualTo objNull)')
     if name == 'registerBVMRuntime':
         s = s.replace('    }];\n    _disconnectHandler', '    }] select 1);\n    _disconnectHandler')
         s = s.replace('        false\n    }];', '        false\n    }] select 1);')

@@ -26,7 +26,7 @@ def primitives(text):
 
 def supply_setup():
     functions=''
-    for name in ('treatmentSupplyOrder','treatmentSupplyCount','treatmentSupplyTake','treatmentSupplyRefund'):
+    for name in ('itemCount','treatmentSupplyOrder','treatmentSupplyCount','treatmentSupplyTake','treatmentSupplyRefund'):
         text=source(name).replace('objectParent _x','(_x getVariable ["fixtureParent",objNull])')
         text=text.replace('itemCargo _vehicle','(_vehicle call _cargoFor)')
         text=text.replace('_vehicle addItemCargoGlobal [_item, 1]','[_vehicle,_item] call _addCargo')

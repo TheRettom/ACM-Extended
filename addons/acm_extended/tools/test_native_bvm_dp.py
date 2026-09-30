@@ -19,6 +19,9 @@ def pressure_source(name):
         "animationState _m": "_animation",
         "animationState _u": "_animation",
         "alive _u": "_alive",
+        # This fixture runs the provider and held animation on one machine; transfer is covered separately.
+        "local _unit": "true",
+        "local _u": "true",
         "objectParent _u": "objNull",
         "objectParent _m": "objNull",
         "getPosASL _medic": "[0,0,0]",

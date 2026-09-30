@@ -8,6 +8,9 @@ from test_menu_death_lifecycle import ROOT, adapt, execute
 
 
 def setup():
+    setter=(ROOT/'addons/core/functions/fnc_setContinuousActionState.sqf').read_text()
+    # Namespace stand-ins have no network-public flag; retain every state write.
+    setter=adapt(setter).replace('_value, _public]', '_value]')
     text = (ROOT / 'addons/acm_extended/functions/fn_stethoscopeClose.sqf').read_text()
     for old, new in [
         ('local _medic', '_medicLocal'),
@@ -45,7 +48,8 @@ def setup():
         ACM_core_ContinuousAction_Active = true;
         ACM_core_ContinuousAction_IsDialog = true;
         uiNamespace setVariable ["ACM_breathing_Stethoscope_DLG", _display];
-    """ + 'private _close = {' + adapt(text) + '};\n'
+    """ + 'ACM_core_fnc_setContinuousActionState={' + setter + '};\n' + \
+        'private _close = {' + adapt(text) + '};\n'
 
 
 @pytest.mark.parametrize('current', [10, 11, 0])

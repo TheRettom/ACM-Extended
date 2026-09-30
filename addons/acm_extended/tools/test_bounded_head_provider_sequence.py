@@ -66,6 +66,7 @@ def setup():
         ACME_fnc_animBlocked={_blocked};
         ACME_fnc_medicAnimationPrep={_prep=_prep+1;0.1};
         ACME_fnc_providerStanceOwned={_stanceOwned};
+        ace_common_fnc_isPlayer={(_this select 0) isEqualTo ACE_player};
         ACME_fnc_doAnim={_moves pushBack _this;};
         CBA_fnc_globalEvent={_events pushBack _this;};
         CBA_fnc_addPerFrameHandler={_jobs pushBack _this; 73};
@@ -73,7 +74,8 @@ def setup():
         CBA_fnc_waitAndExecute={_waits pushBack _this;};
         private _tick={params ["_job"]; [_job select 2,73] call (_job select 0);};
         private _deliver={params ["_job"]; (_job select 1) call (_job select 0);};
-    '''+'ACME_fnc_headElevMedicSeq={'+adapt(s)+'};\n'
+    '''+'ACME_fnc_providerAnimSpeedOwned={'+adapt(source('providerAnimSpeedOwned'))+'};\n'+\
+        'ACME_fnc_headElevMedicSeq={'+adapt(s)+'};\n'
 
 
 def begin(mode='elevate'):

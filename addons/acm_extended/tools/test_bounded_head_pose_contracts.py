@@ -100,7 +100,7 @@ def assert_startup_grace(data=None):
 def assert_dead_stop_delegates_first(data=None):
     d=sources() if data is None else data
     s=d['headElevateStop']
-    guard='if (!alive _patient) exitWith {[_patient] call ACME_fnc_headElevDeathRelease;};'
+    guard='if (!alive _patient) exitWith {[_patient] call ACME_fnc_headElevDeathRelease;'
     assert contains(s,guard)
     # Token offsets establish source ordering, not general reachability.
     ts=lex(s)
@@ -189,7 +189,12 @@ def test_lift_eligibility_blocks_local_presentation(change,events):
     (assert_no_patient_teleport,'headElevSuspend','', '_patient attachTo [objNull];'),
     (assert_legacy_helper_is_retired,'headElevApplyTilt','', 'createVehicle ["Helper",[0,0,0],[],0,"CAN_COLLIDE"];'),
     (assert_startup_grace,'headElevApplyTilt','CBA_missionTime + 2.5','CBA_missionTime + 0'),
-    (assert_dead_stop_delegates_first,'headElevateStop','if (!alive _patient) exitWith {[_patient] call ACME_fnc_headElevDeathRelease;};',''),
+    pytest.param(
+        assert_dead_stop_delegates_first, 'headElevateStop',
+        'if (!alive _patient) exitWith {[_patient] call ACME_fnc_headElevDeathRelease;', '',
+        # Retain the published case identity while mutating the current early-death guard.
+        id='assert_dead_stop_delegates_first-headElevateStop-if (!alive _patient) exitWith {[_patient] call ACME_fnc_headElevDeathRelease;};-',
+    ),
 ])
 def test_contracts_reject_regressions_even_with_original_text_in_comments(validator,filename,old,new):
     d=sources()

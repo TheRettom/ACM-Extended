@@ -2,6 +2,7 @@
 // pressure remains clinically active. Movement yields the pose and pressure effect, and the hold reapplies once the
 // provider settles again. Ordinary treatment animations may replace the pose without blocking their actions.
 params ["_medic", "_patient", "_bodyPart"];
+if (isNull _medic || {isNull _patient} || {!local _medic}) exitWith {};
 
 _medic setVariable ["ACME_DP_Active", true, true];
 _medic setVariable ["ACME_DP_Patient", _patient, true];
@@ -30,7 +31,7 @@ if (isNull objectParent _medic) then {
     _medic setUnitPos "MIDDLE";
     _medic setVariable ["ACME_DP_PoseToken", (_medic getVariable ["ACME_DP_PoseToken", 0]) + 1];
     _medic setVariable ["ACME_DP_PoseGraceUntil", CBA_missionTime + 0.15];
-    [_medic, "ACME_DirectPressureHold", 1.1, 1] call ACME_fnc_doAnimHeld;
+    [_medic, "ACME_DirectPressureHold", 1.1, 1, true] call ACME_fnc_doAnimHeld;
     _medic setVariable ["ACME_DP_InPose", true];
     _medic setVariable ["ACME_DP_LastPoseAssert", CBA_missionTime];
 };
@@ -49,5 +50,8 @@ private _partShort = [_bodyPart, "abbr"] call ACME_fnc_bodyPartName;
 // Publish the clinical pressure marker only after provider-local episode state is fully initialized.
 [_patient, "directPressureMarker", [_medic, _bodyPart, true, _medic getVariable ["ACME_DP_ClaimToken", ""], _medic getVariable ["ACME_DP_ClaimEpoch", -1]]] call ACME_fnc_ownerDispatch;
 
-private _pfh = [ACME_fnc_directPressureTick, 0, [_medic, _patient, _bodyPart, "limb"]] call CBA_fnc_addPerFrameHandler;
+private _episode = [_medic getVariable ["ACME_DP_ClaimToken", ""], _medic getVariable ["ACME_DP_ClaimEpoch", -1], clientOwner,
+    +(_medic getVariable ["ACME_DP_KeyIDs", []]), _medic getVariable ["ACME_DP_Draw3D", -1],
+    _medic getVariable ["ACME_providerLocalityEpoch", 0]];
+private _pfh = [ACME_fnc_directPressureTick, 0, [_medic, _patient, _bodyPart, "limb", _episode]] call CBA_fnc_addPerFrameHandler;
 _medic setVariable ["ACME_DP_PFH", _pfh];

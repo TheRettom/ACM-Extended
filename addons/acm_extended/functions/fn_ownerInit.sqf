@@ -82,6 +82,11 @@ ACME_NA2_ownerInstalled = true;
     _unit setVariable ["ACME_ioSyncopeToken", -1, false];
     // Also invalidates an old callback on an away-and-back locality change.
     _unit setVariable ["ACME_wakeRepairTicket", (_unit getVariable ["ACME_wakeRepairTicket", 0]) + 1, false];
+    // Provider input workers must also retire after away/back transfers between their scheduled ticks.
+    _unit setVariable ["ACME_providerLocalityEpoch", (_unit getVariable ["ACME_providerLocalityEpoch", 0]) + 1, false];
+    // Pending prone-to-Semi-Fowler normalization has no active pose yet. Retire it on BOTH local transitions,
+    // so returning to this machine cannot revive a callback from its previous ownership period.
+    _unit setVariable ["ACME_headElev_startEpoch", (_unit getVariable ["ACME_headElev_startEpoch", 0]) + 1, false];
     [_unit] call ACME_fnc_aajtDownedStop;
     private _headPFH = _unit getVariable ["ACME_headElev_pfh", -1];
     if (_headPFH >= 0) then {[_headPFH] call CBA_fnc_removePerFrameHandler;};

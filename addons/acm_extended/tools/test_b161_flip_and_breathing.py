@@ -189,7 +189,46 @@ def test_flip_cannot_reuse_old_or_incomplete_provider_completion(name,case):
         'running':'_nowTime=12;',
         'cancelled_early':'[_medic,"roll",_ep] call ACME_fnc_treatmentPoseStop; _nowTime=12;',
     }[case]
-    execute(source+change+r'''
+    # Chest Flip releases its UI once patient motion is finished and its provider pose has retired.
+    # Cancellation is a bounded teardown, not a completed medic4 signal. Auscultation retains its authored-hold
+    # completion requirement. The old shared assertion incorrectly kept an already-cancelled chest Flip locked.
+    unlocks = int(name == 'chestSealFlipTick' and case == 'cancelled_early')
+    execute(source+change+f'''
         [_flipArgs,99] call _flipTick;
-        [_unlocks==0,"incomplete/old roll unlocked current flip"] call _check;
+        [_unlocks=={unlocks},"incorrect completion/cancellation unlock"] call _check;
+        [count _rolls==0,"completion/cancellation dispatched a second patient roll"] call _check;
+    ''')
+
+
+@pytest.mark.parametrize('side',['front','back'])
+def test_cancelled_chest_flip_stays_locked_until_patient_interval_then_retires_once(side):
+    execute(flip_setup('chestSealFlipTick',side)+r'''
+        [_medic,"roll",_ep] call ACME_fnc_treatmentPoseStop;
+        [(_medic getVariable ["ACME_rollProviderCompletedEpoch",-1])!=_ep,"cancellation incorrectly claimed authored completion"] call _check;
+        _nowTime=10.5;
+        [_flipArgs,99] call _flipTick;
+        [_unlocks==0 && {_holds==0} && {!(99 in _removed)},"cancel unlocked while patient was still rolling"] call _check;
+        _nowTime=11.24;
+        [_flipArgs,99] call _flipTick;
+        [_unlocks==1 && {_holds==1} && {99 in _removed},"cancelled completed patient interval left UI stranded"] call _check;
+        [(uiNamespace getVariable ["ACME_CS_FlipPendingToken","bad"])=="","cancel retained pending click"] call _check;
+        [count _rolls==0,"cancel replayed the patient roll"] call _check;
+        [_flipArgs,99] call _flipTick;
+        [_unlocks==1 && {_holds==1},"late duplicate repeated UI/provider recovery"] call _check;
+    ''')
+
+
+@pytest.mark.parametrize('replacement_roll',[False,True])
+def test_cancelled_chest_flip_does_not_release_or_replace_a_newer_provider_pose(replacement_roll):
+    execute(flip_setup('chestSealFlipTick','back')+r'''
+        [_medic,"roll",_ep] call ACME_fnc_treatmentPoseStop;
+        private _newEpoch=[_medic,"stethoscope",-1,_patient] call ACME_fnc_treatmentPoseStart;
+        [_newEpoch>_ep,"new provider episode was not acquired"] call _check;
+    '''+('_medic setVariable ["ACME_rollProviderToken","replacement-roll"];' if replacement_roll else '')+f'''
+        _nowTime=12;
+        [_flipArgs,99] call _flipTick;
+        [_unlocks==1 && {{_holds==0}},"old flip seized newer provider pose"] call _check;
+        [((_medic getVariable ["ACME_treatmentPoseState",[]]) param [0,-1])==_newEpoch,"old flip stopped newer provider episode"] call _check;
+        [(_medic getVariable ["ACME_rollProviderToken","bad"])=="{'replacement-roll' if replacement_roll else ''}","old flip changed another roll token"] call _check;
+        [count _rolls==0,"old flip dispatched another patient roll"] call _check;
     ''')

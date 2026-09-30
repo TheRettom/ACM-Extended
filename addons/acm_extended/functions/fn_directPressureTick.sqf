@@ -3,7 +3,37 @@
 // animation; true ACM maneuvers temporarily suspend the pose/clinical marker and can resume after the maneuver.
 // This keeps the menu responsive without letting a stale pressure loop swallow the provider's movement input.
 params ["_args", "_pfhId"];
-_args params ["_medic", "_patient", "_bodyPart", "_mode"];
+_args params ["_medic", "_patient", "_bodyPart", "_mode", ["_episode", []]];
+
+// The provider's object variables can already describe a successor episode after a locality transfer.
+// Retire only handles and the patient claim captured by THIS machine's worker. Never call general Stop here:
+// its provider writes, input hints and animation cleanup belong to the current provider owner.
+if (isNull _medic || {!local _medic}
+    || {count _episode >= 6 && {(_episode select 5) != (_medic getVariable ["ACME_providerLocalityEpoch", 0])}}) exitWith {
+    [_pfhId] call CBA_fnc_removePerFrameHandler;
+    if (count _episode >= 5) then {
+        _episode params ["_token", "_epoch", "_providerOwner", "_keys", "_draw"];
+        {[_x, "keydown"] call CBA_fnc_removeKeyHandler;} forEach _keys;
+        if (_draw >= 0) then {removeMissionEventHandler ["Draw3D", _draw];};
+        // Clear only this machine's obsolete DP presentation bookkeeping. InPose/TreatmentBusy participate in
+        // stance ownership even after public Active is false; leaving them behind would lock a returning provider.
+        if (!isNull _medic && {(_medic getVariable ["ACME_DP_PFH", -1]) == _pfhId}) then {
+            _medic setVariable ["ACME_DP_PFH", -1, false];
+            _medic setVariable ["ACME_DP_KeyIDs", [], false];
+            _medic setVariable ["ACME_DP_Draw3D", -1, false];
+            _medic setVariable ["ACME_DP_InPose", false, false];
+            _medic setVariable ["ACME_DP_TreatmentBusy", false, false];
+            _medic setVariable ["ACME_DP_Paused", false, false];
+            _medic setVariable ["ACME_DP_Mode", "", false];
+        };
+        if (_token != "" && {!isNull _patient}) then {
+            [_patient, "directPressureClaim", ["release", [_medic, _bodyPart, _token, _epoch, _providerOwner]]] call ACME_fnc_ownerDispatch;
+            if (!isNull _medic) then {
+                ["ACME_directPressureRetire", [_medic, _patient, _bodyPart, _token, _epoch], _medic] call CBA_fnc_targetEvent;
+            };
+        };
+    };
+};
 
 // B127 session ownership. The PFH id stored on the provider is the Direct Pressure episode identity. A callback
 // which survived removal from an older episode must never observe a later ACME_DP_Active=true and begin operating on
@@ -13,7 +43,9 @@ if (isNull _medic
     || {(_medic getVariable ["ACME_DP_PFH", -1]) != _pfhId}
     || {!((_medic getVariable ["ACME_DP_Patient", objNull]) isEqualTo _patient)}
     || {(_medic getVariable ["ACME_DP_Part", ""]) != _bodyPart}
-    || {(_medic getVariable ["ACME_DP_Mode", ""]) != _mode}) exitWith {
+    || {(_medic getVariable ["ACME_DP_Mode", ""]) != _mode}
+    || {count _episode >= 2 && {(_episode select 0) != (_medic getVariable ["ACME_DP_ClaimToken", ""])
+        || {(_episode select 1) != (_medic getVariable ["ACME_DP_ClaimEpoch", -1])}}}) exitWith {
     [_pfhId] call CBA_fnc_removePerFrameHandler;
 };
 

@@ -29,7 +29,7 @@ CASES = {
 def setup(name):
     items, state = CASES.get(name, (['ACME_Ventilator'], '_patient setVariable ["ACME_vent_configured",true];'))
     definitions = ''
-    for helper in ('treatmentSupplyOrder', 'treatmentSupplyCount'):
+    for helper in ('itemCount', 'treatmentSupplyOrder', 'treatmentSupplyCount'):
         source = read(helper).replace('objectParent _x', 'objNull').replace('itemCargo _vehicle', '[]')
         definitions += 'ACME_fnc_' + helper + '={' + adapt(source) + '};'
     return definitions + '''

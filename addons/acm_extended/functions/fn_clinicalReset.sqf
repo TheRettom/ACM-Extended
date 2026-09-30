@@ -2,6 +2,8 @@
 params ["_patient", ["_phase", "finish"], ["_preserveJunctional", false]];
 if (isNull _patient || {!local _patient}) exitWith {};
 if (_phase == "begin") exitWith {
+    // A pre-roll placement can be pending before headElevated is set. A full heal ends that episode too.
+    _patient setVariable ["ACME_headElev_startEpoch", (_patient getVariable ["ACME_headElev_startEpoch", 0]) + 1, false];
     // B156 native treatment rate cleanup: invalidate delayed completion before patient/provider reuse.
     if ((_patient getVariable ["ACME_nativeTreatmentRate", []]) isNotEqualTo []) then {
         _patient setVariable ["ACME_nativeTreatmentRate", [], true];

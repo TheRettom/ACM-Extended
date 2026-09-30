@@ -2,6 +2,7 @@
 // issue weapon-selection commands, so the player's selected weapon state is left alone. ESC/RMB release the hold
 // without swallowing the underlying input.
 params ["_medic", "_patient", "_bodyPart"];
+if (isNull _medic || {!local _medic}) exitWith {};
 
 _medic setVariable ["ACME_DP_Active", true, true];
 _medic setVariable ["ACME_DP_Patient", _medic, true];
@@ -28,5 +29,8 @@ _medic setVariable ["ACME_DP_KeyIDs", []];
 // Publish the clinical pressure marker only after provider-local episode state is fully initialized.
 [_medic, "directPressureMarker", [_medic, _bodyPart, true, _medic getVariable ["ACME_DP_ClaimToken", ""], _medic getVariable ["ACME_DP_ClaimEpoch", -1]]] call ACME_fnc_ownerDispatch;
 
-private _pfh = [ACME_fnc_directPressureTick, 0, [_medic, _medic, _bodyPart, "self"]] call CBA_fnc_addPerFrameHandler;
+private _episode = [_medic getVariable ["ACME_DP_ClaimToken", ""], _medic getVariable ["ACME_DP_ClaimEpoch", -1], clientOwner,
+    +(_medic getVariable ["ACME_DP_KeyIDs", []]), _medic getVariable ["ACME_DP_Draw3D", -1],
+    _medic getVariable ["ACME_providerLocalityEpoch", 0]];
+private _pfh = [ACME_fnc_directPressureTick, 0, [_medic, _medic, _bodyPart, "self", _episode]] call CBA_fnc_addPerFrameHandler;
 _medic setVariable ["ACME_DP_PFH", _pfh];

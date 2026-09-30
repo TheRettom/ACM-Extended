@@ -39,11 +39,13 @@ def emma_setup():
         ace_common_fnc_getCountOfItem = {_inventory};
         BIS_fnc_rscLayer = {0};
     '''
-    for name in ('emmaAirwayKind','emmaCanAttachIGel','emmaIGelStateCommit','emmaMarkContact','emmaAttachIGel','emmaRemoveIGel'):
+    for name in ('itemCount','treatmentSupplyOrder','treatmentSupplyCount','emmaAirwayKind','emmaCanAttachIGel','emmaIGelStateCommit','emmaMarkContact','emmaAttachIGel','emmaRemoveIGel'):
         source = read(name)
         for old,new in [
             ('_patient isKindOf "CAManBase"','_isMan'),
             ('_medic isKindOf "CAManBase"','true'),
+            ('objectParent _x','objNull'),
+            ('itemCargo _vehicle','[]'),
             ('(vehicle _medic != _medic)','_aboard'),
             ('(vehicle _medic) isEqualTo (vehicle _patient)','_sameVehicleBoundary'),
             ('getPlayerUID _medic','"provider-uid"'),

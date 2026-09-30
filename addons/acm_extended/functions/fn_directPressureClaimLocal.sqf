@@ -51,7 +51,13 @@ private _currentToken = _claim param [1,"",[""]];
 private _currentEpoch = _claim param [2,-1,[0]];
 private _currentOwner = _claim param [3,-1,[0]];
 private _currentAt = _claim param [4,-1,[0]];
+private _currentOwnerValid = !isNull _currentMedic
+    && {_currentOwner > 0 || {_currentOwner == 0 && {!isMultiplayer} && {local _currentMedic}}}
+    && {if (local _currentMedic) then {_currentOwner == clientOwner} else {
+        isMultiplayer && {!isServer || {_currentOwner == owner _currentMedic}}
+    }};
 private _currentActive = !isNull _currentMedic
+    && {_currentOwnerValid}
     && {_currentMedic getVariable ["ACME_DP_Active",false]}
     && {(_currentMedic getVariable ["ACME_DP_ClaimToken",""]) == _currentToken}
     && {(_currentMedic getVariable ["ACME_DP_ClaimEpoch",-1]) == _currentEpoch}
@@ -60,10 +66,7 @@ private _currentActive = !isNull _currentMedic
 private _currentPending = !isNull _currentMedic
     && {_currentAt >= 0}
     && {(serverTime - _currentAt) <= 3}
-    && {_currentOwner > 0 || {_currentOwner == 0 && {!isMultiplayer} && {local _currentMedic}}}
-    && {if (local _currentMedic) then {_currentOwner == clientOwner} else {
-        isMultiplayer && {!isServer || {_currentOwner == owner _currentMedic}}
-    }};
+    && {_currentOwnerValid};
 private _currentValid = !isNull _currentMedic
     && {alive _currentMedic}
     && {!(_currentMedic getVariable ["ACE_isUnconscious",false])}

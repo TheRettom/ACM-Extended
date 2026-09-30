@@ -16,7 +16,10 @@ if ((toLowerANSI _classname) == "cpr"
 
 private _medicVehicle = objectParent _medic;
 private _sameVehicleTreatment = !isNull _medicVehicle && {(objectParent _patient) isEqualTo _medicVehicle};
-private _interactionChecks = [["isNotInside", "isNotSwimming", "isNotInZeus"], ["isNotSwimming", "isNotInZeus"]] select _sameVehicleTreatment;
+// Match ACE's treatment exceptions for both self and passenger treatment. ACE's general isNotInside condition
+// permits another passenger but rejects self while seated; removing its exception blocks otherwise valid self care.
+// Treatment-specific config, ownership, proximity and physical-position requirements remain authoritative.
+private _interactionChecks = ["isNotInside", "isNotSwimming", "isNotInZeus"];
 private _rangeOkay = _sameVehicleTreatment || {(_medic distance _patient) <= ace_medical_gui_maxDistance};
 
 // Head positioning is provider theatre, never a global treatment lock. Any newly accepted medical click preempts
