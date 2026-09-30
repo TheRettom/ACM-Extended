@@ -1,7 +1,13 @@
-name: B204 network audit
+name: Stable network audit
 
 on:
   push:
+    branches: [main]
+    paths:
+      - "addons/**"
+      - "tools/**"
+      - ".github/workflows/b204-network-audit.yml"
+  pull_request:
     branches: [main]
     paths:
       - "addons/**"
@@ -13,7 +19,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: b204-network-audit-main
+  group: stable-network-audit-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -36,7 +42,10 @@ jobs:
           mkdir -p /tmp/acme-tools
           curl -fLsS --retry 2 https://github.com/BrettMayson/HEMTT/releases/download/v1.22.0/linux-x64 -o /tmp/acme-tools/hemtt
           echo '58c0f2c1d88041ebce24753e920ac80efb7624d28e8af9b7960c669117695770  /tmp/acme-tools/hemtt' | sha256sum --check
-          chmod +x /tmp/acme-tools/hemtt
+          curl -fLsS --retry 2 https://github.com/SQFvm/runtime/releases/download/v2026.04.03-ed9f5f5/sqfvm_linux_x64_gcc.zip -o /tmp/acme-tools/sqfvm.zip
+          echo 'bb4e3bb415305d2ef2c4cdb75e98f442baea3a4575887c6570a11435a780615b  /tmp/acme-tools/sqfvm.zip' | sha256sum --check
+          unzip -q /tmp/acme-tools/sqfvm.zip -d /tmp/acme-tools
+          chmod +x /tmp/acme-tools/hemtt /tmp/acme-tools/sqfvm_linux_x64_gcc/sqfvm
           python -m pip install 'pytest==9.0.2' 'numpy==2.3.5' 'Pillow==12.3.0' 'soundfile==0.13.1'
 
       - name: Native-state ownership diagnostic
@@ -47,12 +56,25 @@ jobs:
           set -euo pipefail
           python -m pytest             addons/acm_extended/tools/test_b204_network_full_audit_20260929.py             addons/acm_extended/tools/test_bug_audit_batch09_network.py             addons/acm_extended/tools/test_b203_network_backpressure_20260929.py             addons/acm_extended/tools/test_owner_locality_audit_20260920.py             addons/acm_extended/tools/test_build_version_tag.py             tools/test_fork_phase23_runtime_ownership.py             tools/test_fork_phase48_native_iv_bag_owner.py             tools/test_fork_phase49_airway_state_owner.py             tools/test_fork_phase50_core_state_owner.py             tools/test_fork_phase51_breathing_state_owner.py             tools/test_fork_phase52_circulation_state_owner.py             tools/test_fork_phase67_persistent_state_owner_restore.py             tools/test_fork_phase80_ett_migration_owner.py             tools/test_fork_phase84_thora_side_state_owner.py             tools/test_fork_phase85_thora_output_state_owner.py             tools/test_fork_phase135_remoteexec_whitelist_closure.py             tools/test_fork_phase136_remoteexec_target_registration.py             -q
 
+      - name: Network execution regressions
+        env:
+          SQFVM: /tmp/acme-tools/sqfvm_linux_x64_gcc/sqfvm
+        run: |
+          python -m pytest \
+            addons/acm_extended/tools/test_b205*py \
+            addons/acm_extended/tools/test_network_medication_iv_execution.py \
+            addons/acm_extended/tools/test_ventilator_audio_registry_20260930.py \
+            addons/acm_extended/tools/test_treatment_pose_sync.py \
+            addons/acm_extended/tools/test_head_collision_restore_20260930.py \
+            addons/acm_extended/tools/test_bounded_head_completion.py \
+            addons/acm_extended/tools/test_bounded_head_pose_contracts.py -q
+
       - name: HEMTT static validation
         run: /tmp/acme-tools/hemtt check
 
-      - name: Compare full regression outcomes to pre-audit B203 baseline
+      - name: Compare full regression outcomes to B204 baseline
         env:
-          BASE: 2ab84cfcb58d1d24d76295e28db8c0b06dd127af
+          BASE: 133d8bdd2ddefb92990c505ff19af7643d36e694
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -61,8 +83,8 @@ jobs:
           from collections import Counter
 
           root = pathlib.Path.cwd()
-          before = pathlib.Path("/tmp/acme-b204-before")
-          out = pathlib.Path("/tmp/acme-b204-results")
+          before = pathlib.Path("/tmp/acme-b205-before")
+          out = pathlib.Path("/tmp/acme-b205-results")
           out.mkdir(exist_ok=True)
           base = os.environ["BASE"]
 
@@ -147,7 +169,7 @@ jobs:
           assert not missing2, f"missing root tests: {missing2[:30]}"
           assert not regressions2, f"root regressions: {regressions2[:30]}"
 
-          print("B204 baseline comparison PASS")
+          print("B205 baseline comparison PASS")
           print("addon before:", dict(cb), "after:", dict(ca), "improvements:", len(improvements))
           print("root before:", dict(cb2), "after:", dict(ca2))
           PY

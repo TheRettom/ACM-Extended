@@ -137,19 +137,23 @@ if (isServer) then {
                 };
                 };
             } else {
-                // dead. never leave a looping source attached to a corpse.
+                // Death can interrupt startup/shutdown before a source exists. Retire the state as well as the
+                // source, otherwise a source-less nonzero state pins the corpse in this 10 Hz registry forever.
                 private _src = _pat getVariable ["ACME_vent_sndSrc", objNull];
                 if (!isNull _src) then {
                     detach _src; deleteVehicle _src;
                     _pat setVariable ["ACME_vent_sndSrc", objNull];
-                    _pat setVariable ["ACME_vent_sndState", 0, true];
                 };
+                [_pat, "ACME_vent_sndState", 0] call ACME_fnc_setVarNet;
+                _pat setVariable ["ACME_vent_sndLoopAt", 0];
             };
         } forEach (+(missionNamespace getVariable ["ACME_vent_serverPatients", []]));
 
-        // Retain only attached/configured patients and patients whose shutdown/source cleanup is still in flight.
+        // Dead patients have completed source cleanup above. Old attached/configured flags must not retain them;
+        // a new living casualty is registered by ventilator custody/configuration, independently of this list.
+        // Retain only living attached/configured patients and patients whose shutdown/source cleanup is in flight.
         ACME_vent_serverPatients = (missionNamespace getVariable ["ACME_vent_serverPatients", []]) select {
-            !isNull _x && {
+            !isNull _x && {alive _x} && {
                 (_x getVariable ["ACME_vent_onPatient", false])
                     || {_x getVariable ["ACME_vent_configured", false]}
                     || {(_x getVariable ["ACME_vent_sndState", 0]) != 0}

@@ -2415,6 +2415,7 @@ class CfgFunctions {
             class thoraSealScroll {};
             class thoraSideStateCommit {};
             class thoraMouseUp {};
+            class thoraPrepFlush {};
             class thoraSelectTool {};
             class thoraClosureMode {};
             class thoraClosureArt {};
