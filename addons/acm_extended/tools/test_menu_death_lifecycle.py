@@ -179,7 +179,12 @@ def execute(code):
 
 
 def core(name):
-    return adapt((ROOT / 'addons/core/functions' / f'fnc_{name}.sqf').read_text())
+    source = (ROOT / 'addons/core/functions' / f'fnc_{name}.sqf').read_text()
+    if name == 'beginContinuousAction':
+        # Native graph state is an engine boundary; this fixture already fixes stance to CROUCH.
+        # The B212 native-provider suite supplies independent prone/UNDEFINED graph-state inputs.
+        source = source.replace('animationState _medic', '"amovpknlmstpsnonwnondnon"')
+    return adapt(source)
 
 
 def test_engine_adapter_does_not_replace_command_suffixes():

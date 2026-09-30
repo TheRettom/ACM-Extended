@@ -23,6 +23,8 @@ if !(_medic getVariable ["ACME_hang_Claimed", false]) exitWith {
         ["ACME_hangRestoreWeapons", [_medic, _episodeStart], _medic] call CBA_fnc_targetEvent;
     };
 };
+private _prone = _medic getVariable ["ACME_hang_Prone", false];
+_prone = _prone || {([_medic, "AmovPknlMstpSnonWnonDnon"] call ACME_fnc_providerAnimation) == "AmovPpneMstpSnonWnonDnon"};
 private _visualEpoch = _medic getVariable ["ACME_hang_VisualEpoch", -1];
 private _visualJip = _medic getVariable ["ACME_hang_VisualJip", ""];
 
@@ -49,7 +51,7 @@ private _anchor    = _medic getVariable ["ACME_hang_LineAnchor", objNull];
 private _bagHelper = _medic getVariable ["ACME_hang_BagHelper", objNull];
 private _bag       = _medic getVariable ["ACME_hang_Bag", objNull];
 
-private _outAnim = missionNamespace getVariable ["ACME_hang_outAnim", "ACME_Acts_JetsCrewaidFCrouchThumbup_out"];
+private _outAnim = [_medic, missionNamespace getVariable ["ACME_hang_outAnim", "ACME_Acts_JetsCrewaidFCrouchThumbup_out"], _prone] call ACME_fnc_providerAnimation;
 private _playedOut = false;
 if (local _medic && {alive _medic} && {!(_medic getVariable ["ACE_isUnconscious", false])} && {isNull objectParent _medic} && {(toLower animationState _medic) find "jetscrewaidfcrouchthumbup" >= 0}) then {
     // The loop now exposes an explicit interpolateTo edge to this state, and the out state has a ConnectTo edge
@@ -62,7 +64,7 @@ if (local _medic && {alive _medic} && {!(_medic getVariable ["ACE_isUnconscious"
 private _returnPart = _medic getVariable ["ACME_hang_Part", missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_BodyPart", ""]];
 
 private _teardown = {
-    params ["_medic", "_rope", "_anchor", "_bagHelper", "_bag", "_playedOut", "_outAnim", "_patient", "_returnPart", "_silent", "_episodeStart", "_visualEpoch", "_visualJip"];
+    params ["_medic", "_rope", "_anchor", "_bagHelper", "_bag", "_playedOut", "_outAnim", "_patient", "_returnPart", "_silent", "_episodeStart", "_visualEpoch", "_visualJip", "_prone"];
 
     // Observers keep the props throughout the authored lowering animation, then retire this exact episode.
     if ((_medic getVariable ["ACME_hang_VisualEpisode", []]) isEqualTo [_visualEpoch, true]) then {
@@ -94,17 +96,18 @@ private _teardown = {
         };
     };
 
-    if (_providerCanRestore && {local _medic} && {alive _medic} && {_medic isEqualTo ACE_player}) then {
+    if (_providerCanRestore && {local _medic} && {alive _medic} && {_medic isEqualTo ACE_player}
+        && {!([_medic] call ACME_fnc_providerStanceOwned)}) then {
         _medic enableAI "ANIM";
         // Normal path: the authored out move has already connected itself to crouch. Fallback path: if the move
         // graph never entered/left the out state within the bounded wait below, explicitly recover to crouch so
         // a provider can never remain trapped in a cinematic state.
         private _state = toLower animationState _medic;
         if (!_playedOut || {(_state find "jetscrewaidfcrouchthumbup") >= 0}) then {
-            [_medic, "AmovPknlMstpSnonWnonDnon", 1] call ACME_fnc_doAnim;
+            [_medic, [_medic, "AmovPknlMstpSnonWnonDnon", _prone] call ACME_fnc_providerAnimation, 1] call ACME_fnc_doAnim;
         };
         _medic selectWeapon "";
-        _medic setUnitPos "MIDDLE";
+        _medic setUnitPos (["MIDDLE", "DOWN"] select (_prone || {stance _medic == "PRONE"}));
 
         // MIDDLE is only the safe crouched handoff. Release the stance lock once the authored exit has settled, but
         // only if the same ended episode still owns provider cleanup.
@@ -137,7 +140,7 @@ private _teardown = {
     };
 };
 
-private _cleanupArgs = [_medic, _rope, _anchor, _bagHelper, _bag, _playedOut, _outAnim, _patient, _returnPart, _silent, _episodeStart, _visualEpoch, _visualJip];
+private _cleanupArgs = [_medic, _rope, _anchor, _bagHelper, _bag, _playedOut, _outAnim, _patient, _returnPart, _silent, _episodeStart, _visualEpoch, _visualJip, _prone];
 if (_playedOut) then {
     // First wait until playMoveNow reaches the authored out state. Then wait until the state leaves naturally via
     // its ConnectTo edge. Both waits are bounded; timeout still runs the same safe teardown/recovery path.

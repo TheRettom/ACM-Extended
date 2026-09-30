@@ -16,14 +16,18 @@ if (!local _medic) exitWith {
 };
 if ([_medic] call ACME_fnc_animBlocked) exitWith {};
 
+private _prone = stance _medic == "PRONE";
+_medic setVariable ["ACME_headElev_providerProne", _prone, false];
 // A new head-position episode supersedes any stale local provider theatre immediately.
 [_medic, "", -1, true] call ACME_fnc_treatmentPoseStop;
 [_medic, true] call ACME_fnc_menuPoseStop;
 
-private _rest = "AmovPknlMstpSnonWnonDnon";
+private _rest = [_medic, "AmovPknlMstpSnonWnonDnon", _prone] call ACME_fnc_providerAnimation;
+_prone = _prone || {_rest == "AmovPpneMstpSnonWnonDnon"};
+_medic setVariable ["ACME_headElev_providerProne", _prone, false];
 private _forcePose = _rest;
-private _first = "AmovPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_Putdown";
-private _second = "AinvPknlMstpSnonWnonDnon_Putdown_AmovPknlMstpSnonWnonDnon";
+private _first = [_medic, "AmovPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_Putdown", _prone] call ACME_fnc_providerAnimation;
+private _second = if (_prone) then {_rest} else {"AinvPknlMstpSnonWnonDnon_Putdown_AmovPknlMstpSnonWnonDnon"};
 
 private _token = (_medic getVariable ["ACME_headElev_medicAnimToken", 0]) + 1;
 _medic setVariable ["ACME_headElev_medicAnimToken", _token, false];
@@ -47,10 +51,10 @@ private _hardDeadline = CBA_missionTime + 6.0;
 private _providerPFH = [{
     params ["_args", "_pfh"];
     _args params ["_u", "_token", "_mode", "_forcePose", "_first", "_second", "_rest",
-        "_stage", "_seen", "_stageAt", "_prepUntil", "_hardDeadline"];
+        "_stage", "_seen", "_stageAt", "_prepUntil", "_hardDeadline", "_prone", "_proneWorkTime"];
 
     private _finalize = {
-        params ["_u", "_pfh", "_rest", "_token", ["_handoff", false]];
+        params ["_u", "_pfh", "_rest", "_token", ["_handoff", false], ["_prone", false]];
         [_pfh] call CBA_fnc_removePerFrameHandler;
         if (isNull _u) exitWith {};
         if ((_u getVariable ["ACME_headElev_medicAnimToken", -1]) != _token) exitWith {};
@@ -84,7 +88,7 @@ private _providerPFH = [{
 
         if (alive _u && {isNull objectParent _u} && {!(_u getVariable ["ACE_isUnconscious", false])}) then {
             _u selectWeapon "";
-            _u setUnitPos "MIDDLE";
+            _u setUnitPos (["MIDDLE", "DOWN"] select (_prone || {stance _u == "PRONE"}));
             [_u, _rest, 2] call ACME_fnc_doAnim;
             [{
                 params ["_unit", "_finishedToken"];
@@ -102,9 +106,24 @@ private _providerPFH = [{
     if ((_u getVariable ["ACME_headElev_medicAnimToken", -1]) != _token) exitWith {
         [_pfh] call CBA_fnc_removePerFrameHandler;
     };
+    // A provider can select prone during preflight. Promote the captured posture once,
+    // and replace every expected state together so a late stage never requests kneeling.
+    if (local _u && {!_prone}
+        && {([_u, "AmovPknlMstpSnonWnonDnon"] call ACME_fnc_providerAnimation) == "AmovPpneMstpSnonWnonDnon"}) then {
+        _prone = true;
+        _forcePose = [_u, _forcePose, true] call ACME_fnc_providerAnimation;
+        _first = [_u, _first, true] call ACME_fnc_providerAnimation;
+        _rest = [_u, _rest, true] call ACME_fnc_providerAnimation;
+        _second = _rest;
+        _u setVariable ["ACME_headElev_providerProne", true, false];
+        _args set [3, _forcePose]; _args set [4, _first];
+        _args set [5, _second]; _args set [6, _rest];
+        _args set [12, true];
+        _seen = false; _args set [8, false];
+    };
     if (!alive _u || {!local _u} || {_u getVariable ["ACE_isUnconscious", false]}
         || {[_u] call ACME_fnc_animBlocked}) exitWith {
-        [_u, _pfh, _rest, _token] call _finalize;
+        [_u, _pfh, _rest, _token, false, _prone] call _finalize;
     };
     _u setVariable ["ACME_headElev_seqLastSeen", CBA_missionTime, false];
 
@@ -116,7 +135,7 @@ private _providerPFH = [{
         || {_u getVariable ["ACME_chestAccessPreflightActive", false]}
         || {_u getVariable ["ACM_circulation_isPerformingCPR", false]};
     if (_continuousOwns || {_treatmentOwns}) exitWith {
-        [_u, _pfh, _rest, _token, true] call _finalize;
+        [_u, _pfh, _rest, _token, true, _prone] call _finalize;
     };
 
     // Movement cancels only provider theatre. It never changes the patient-side Semi-Fowler state.
@@ -132,7 +151,7 @@ private _providerPFH = [{
 
     private _now = CBA_missionTime;
     if (_now >= _hardDeadline) exitWith {
-        [_u, _pfh, _rest, _token] call _finalize;
+        [_u, _pfh, _rest, _token, false, _prone] call _finalize;
     };
 
     private _state = toLowerANSI animationState _u;
@@ -143,7 +162,7 @@ private _providerPFH = [{
     if (_stage == -1) exitWith {
         if (currentWeapon _u != "" && {_now < _prepUntil}) exitWith {};
         if (currentWeapon _u != "") then {_u selectWeapon "";};
-        _u setUnitPos "MIDDLE";
+        _u setUnitPos (["MIDDLE", "DOWN"] select (_prone || {stance _u == "PRONE"}));
 
         // B175 standing-casualty auscultation already owns the held hand-out frame of the Putdown entry.
         // Resume directly into the authored Putdown -> crouch return instead of replaying the reach.
@@ -177,8 +196,12 @@ private _providerPFH = [{
             _args set [8, true];
         };
 
-        private _nextAlreadyRunning = _state == _secondLC;
+        private _nextAlreadyRunning = _state == _secondLC
+            && {!_prone || {_seen && {_now - _stageAt >= _proneWorkTime}}};
         private _finished = (_seen && {_state != _firstLC}) || {_nextAlreadyRunning};
+        // The shipped prone support pose loops; it has no Putdown transition edge.
+        // Use the same provider work window, then return directly to prone idle.
+        if (_prone && {_now - _stageAt >= _proneWorkTime}) then {_finished = true;};
         if (!_finished && {!_seen} && {_now - _stageAt > 4}) then {_finished = true;};
         if (!_finished) exitWith {};
 
@@ -194,10 +217,10 @@ private _providerPFH = [{
             _seen = true;
             _args set [8, true];
         };
-        private _finished = _seen && {_state != _secondLC};
+        private _finished = _seen && {_state != _secondLC || {_prone}};
         if (!_finished && {!_seen} && {_now - _stageAt > 4}) then {_finished = true;};
-        if (_finished) then {[_u, _pfh, _rest, _token] call _finalize;};
+        if (_finished) then {[_u, _pfh, _rest, _token, false, _prone] call _finalize;};
     };
 }, 0, [_medic, _token, _mode, _forcePose, _first, _second, _rest, -1, false,
-    CBA_missionTime, _prepUntil, _hardDeadline]] call CBA_fnc_addPerFrameHandler;
+    CBA_missionTime, _prepUntil, _hardDeadline, _prone, 2.1 / _rate]] call CBA_fnc_addPerFrameHandler;
 _medic setVariable ["ACME_headElev_seqPFH", _providerPFH, false];

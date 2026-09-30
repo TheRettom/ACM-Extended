@@ -21,6 +21,7 @@ def burp_source(name):
 
 def burp_setup(kind):
     code = '''
+        ACM_TENSIONHEMOTHORAX_THRESHOLD = 1.2;
         private _serverNow = 100;
         private _patientLocal = true;
         private _epoch = 1;
@@ -45,8 +46,9 @@ def burp_setup(kind):
         _patient setVariable ["ACME_thora_incision_right", [0,0,0]];
         _patient setVariable ["ACME_thora_open_right", "sealed"];
         _patient setVariable ["ACME_thora_sealed_right", true];
+        _patient setVariable ["ACM_breathing_ChestSeal_State", true];
     '''
-    for name in ['chestSealBurpReady', 'chestSealBurp', 'thoraAftercareLocal', 'chestSealScroll', 'thoraSealScroll']:
+    for name in ['chestSealBurpReady', 'thoraDrainBloodLocal', 'chestSealBurp', 'thoraAftercareRequest', 'thoraAftercareLocal', 'chestSealScroll', 'thoraSealScroll']:
         code += f'ACME_fnc_{name} = {{' + burp_source(name) + '};\n'
     code += '''
         ACME_fnc_ownerDispatch = {

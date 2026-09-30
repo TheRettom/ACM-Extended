@@ -23,7 +23,20 @@ def test_carrier_provider_is_literal_medic4_and_freezes_at_22():
 def test_patient_lift_waits_for_real_provider_medic4():
     provider = read("addons/acm_extended/functions/fn_chestAccessVestProvider.sqf")
     acquire = read("addons/acm_extended/functions/fn_chestAccessVestAcquire.sqf")
-    assert 'animationState _m) == "ainvpknlmstpsnonwnondnon_medic4"' in provider
+    # B212 keeps literal medic4 for kneeling providers and accepts the supported prone mapping.
+    # Both wait admission and publication must observe the actual resolved work state and exact episode.
+    probe = provider.split("private _armReadyProbe = {", 1)[1].split("private _entry = _medic", 1)[0]
+    for requirement in (
+        '(_state param [0,-2]) == _epoch',
+        '(_state param [1,""]) == "chestAccess"',
+        '(_state param [3,-2]) >= _requiredStage',
+        '(toLowerANSI (_state param [2, ""])) in ["ainvpknlmstpsnonwnondnon_medic4", "acm_pronecontinuous"]',
+        '(toLowerANSI animationState _m) == (toLowerANSI (_state param [2, ""]))',
+    ):
+        assert probe.count(requirement) == 2, requirement
+    assert '(_entry param [2,""]) != _token || {(_entry param [1,-1]) != _epoch}' in probe
+    assert '(_entry param [2,""]) == _token && {(_entry param [1,-1]) == _epoch}' in probe
+    assert '"ACME_chestAccessProviderReady", [_token, serverTime], true' in probe
     assert "ACME_chestAccessProviderReady" in provider
     wait_block = acquire.split("// After any Semi-Fowler lay-flat finishes", 1)[1]
     assert "ACME_chestAccessProviderReady" in wait_block

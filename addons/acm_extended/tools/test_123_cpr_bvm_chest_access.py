@@ -70,9 +70,17 @@ def test_provider_pose_is_retired_locally_before_native_intervention_launch():
     treatment = raw(ADDONS / "core" / "overrides" / "fnc_treatment.sqf")
     acquire = acme("functions/fn_chestAccessVestAcquire.sqf")
     handoff = '[_m, _p, "stop", true, ((_m getVariable ["ACME_chestAccessProvider", []]) param [2, ""])] call ACME_fnc_chestAccessVestProvider;'
-    launch = 'private _started = _args call ACM_core_fnc_treatmentNative;'
-    assert handoff in treatment and launch in treatment
-    assert treatment.index(handoff) < treatment.index(launch)
+    # B212 gives Check Breathing its own timed work sequence after the carrier handoff.
+    # Both paths must retire the provider locally before either clinical launcher runs.
+    launch_block = treatment.split('private _launch = {', 1)[1].split('\n        [{', 1)[0]
+    selection = 'private _started = if (_classKey == "checkbreathing") then {'
+    assessment = '_args call ACME_fnc_assessmentStart'
+    native = '_args call ACM_core_fnc_treatmentNative'
+    assert handoff in launch_block and selection in launch_block
+    assert assessment in launch_block and native in launch_block
+    assert launch_block.index(handoff) < launch_block.index(selection) < launch_block.index(assessment)
+    assert launch_block.index(handoff) < launch_block.index(native)
+    assert 'else {' in launch_block[launch_block.index(assessment):launch_block.index(native)]
     # The casualty owner must never send a late provider-stop packet after publishing readiness.
     assert '"chestAccessVestProvider", [_medic, _p, "stop"' not in acquire
 

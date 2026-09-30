@@ -38,6 +38,7 @@ def pressure_source(name):
     }
     for old, new in replacements.items():
         source = re.sub(re.escape(old) + (r"\b" if old[-1].isalnum() else ""), lambda _: new, source)
+    source = re.sub(r'_(?:medic|m|u) setUnitPos ([^;]+);', r'_stanceFreed = (\1)=="AUTO";', source)
     source = re.sub(r'inputAction "[^"]+"', "0", source)
     source = source.replace("[objNull]", "[profileNamespace]")
     return adapt(source)
@@ -83,7 +84,7 @@ def setup():
                'if ((_patient getVariable [format ["ACME_DP_press_%1",_part],objNull]) isEqualTo _m) then {_patient setVariable [format ["ACME_DP_press_%1",_part],objNull];}; '
                '};}; '
                '_this call _originalOwnerDispatch;};')
-    for name in ("doAnimHeld", "directPressureStop", "directPressurePose", "directPressureTick", "directPressureLimb", "directPressureTorso", "directPressureStart"):
+    for name in ("providerAnimation", "doAnimHeld", "directPressureStop", "directPressurePose", "directPressureTick", "directPressureLimb", "directPressureTorso", "directPressureStart"):
         source += f"ACME_fnc_{name} = {{" + pressure_source(name) + "};"
     source += '''
         private _press = {

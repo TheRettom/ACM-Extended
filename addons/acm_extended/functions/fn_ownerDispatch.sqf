@@ -419,7 +419,25 @@ switch (_operation) do {
     case "debugSeizure": { _args call ACME_fnc_debugInduceSeizure; };
     case "tbiInit": { _args call ACME_fnc_tbiInit; };
     case "thoraDrain": { [_patient] call ACME_fnc_thoraPassiveDrain; };
-    case "thoraAftercare": {_args call ACME_fnc_thoraAftercareLocal;};
+    case "thoraAftercare": {
+        if ((_args param [3, ""]) != "widen") exitWith {_args call ACME_fnc_thoraAftercareLocal;};
+        _args params ["", "_medic", "_side", "", "_epoch", ["_request", []], "", ["_receipt", []]];
+        if (!(_request isEqualType []) || {count _request != 3} || {isNull _medic}
+            || {(_request findIf {!(_x isEqualType 0) || {!finite _x}}) >= 0}) exitWith {};
+        private _results = (_patient getVariable ["ACME_thoraWidenResults", []]) select {serverTime <= (_x select 3)};
+        private _known = _results findIf {(_x select 0) == _epoch && {(_x select 1) isEqualTo _request} && {(_x select 2) == _side}};
+        private _accepted = _known >= 0;
+        if (!_accepted && {count _results < 128}) then {
+            _accepted = (_args call ACME_fnc_thoraAftercareLocal) isEqualTo true;
+            if (_accepted) then {
+                _results pushBack [_epoch, +_request, _side, serverTime + 60];
+                _patient setVariable ["ACME_thoraWidenResults", _results, true];
+            };
+        };
+        private _origin = _request select 0;
+        private _replyTarget = if (_origin >= 2) then {_origin} else {_medic};
+        ["ACME_thoraAftercareAck", [_patient, _side, _epoch, _request, _receipt, _accepted], _replyTarget] call CBA_fnc_targetEvent;
+    };
     case "thoraSideState": {_args call ACME_fnc_thoraSideStateCommit;};
     case "thoraBumpVer": {_args call ACME_fnc_thoraBumpVer;};
     case "thoraPrepCommit": {

@@ -140,7 +140,7 @@ def test_invalid_epinephrine_push_changes_neither_inventory_nor_dispatch(push,si
 
 
 def aftercare_setup():
-    return setup()+function('thoraAftercareLocal',extended=True)+'''
+    return setup()+function('thoraDrainBloodLocal',extended=True)+function('thoraAftercareLocal',extended=True)+'''
         private _effects=0; private _logs=0; private _writes=[]; private _permitted=true;
         ACME_fnc_procedureAllowed={_permitted};
         ACME_fnc_chestSealBurpReady={true};

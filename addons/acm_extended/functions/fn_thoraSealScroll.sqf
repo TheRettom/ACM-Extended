@@ -18,8 +18,7 @@ if (_frame >= 5 && {_fired} && {_dir == _openDir}
 };
 if (_dir == _openDir) then {_frame = (_frame + 1) min 5;} else {_frame = (_frame - 1) max 0;};
 if (_frame >= 5 && {!_fired}) then {
-    [_patient, "thoraAftercare", [_patient, _medic, _side, "burp",
-        [_patient] call ACME_fnc_clinicalEpoch]] call ACME_fnc_ownerDispatch;
+    [_patient, _medic, _side, "burp"] call ACME_fnc_thoraAftercareRequest;
     _fired = true;
 };
 if (_frame == 0) then {_fired = false;};

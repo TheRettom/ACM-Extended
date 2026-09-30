@@ -296,4 +296,4 @@ if (_dpSamePatient) then {
             };
         };
     };
-}] call EFUNC(core,beginContinuousAction);
+}, true] call EFUNC(core,beginContinuousAction);

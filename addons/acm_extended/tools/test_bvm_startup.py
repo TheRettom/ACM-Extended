@@ -162,7 +162,7 @@ def test_listen_server_lingering_source_dialog_does_not_cancel_bvm():
 def test_continuous_controller_has_bounded_non_dialog_startup_grace():
     s=(ROOT / 'addons/core/functions/fnc_beginContinuousAction.sqf').read_text()
     assert 'private _dialogStartupUntil = diag_tickTime + 0.75;' in s
-    assert 'if (diag_tickTime < _dialogStartupUntil) then {' in s
+    assert 'if (diag_tickTime < _dialogStartupUntil && {GVAR(ContinuousAction_Active)}) then {' in s
     assert 'ACEGVAR(medical_gui,pendingReopen) = false;' in s
-    assert 'GVAR(ContinuousAction_ShouldReopen) = false;' in s
+    assert 'GVAR(ContinuousAction_ShouldReopen) = _reopenOnEnd;' in s
     assert '_dialogCondition = dialog;' in s

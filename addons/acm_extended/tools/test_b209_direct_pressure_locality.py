@@ -27,13 +27,15 @@ def source(name, text=None):
         '_medic setVariable [_name, _value, _public];': '_medic setVariable [_name, _value];',
     }.items():
         text = re.sub(re.escape(command) + (r'\b' if command[-1].isalnum() else ''), lambda _: value, text)
+    text = re.sub(r'\bstance (_medic|_m|_u)\b', '_providerStance', text)
+    text = re.sub(r'_(?:medic|m|u) setUnitPos ([^;]+);', r'_stanceCalls=_stanceCalls+1; _stances pushBack (\1);', text)
     text = re.sub(r'inputAction "[^"]+"', '([] call _input)', text)
     return network_source(name, text)
 
 
 def setup():
     text = network_setup() + '''
-        private _animation="other_pose"; private _stanceCalls=0; private _look=[0,1,0];
+        private _animation="other_pose"; private _stanceCalls=0; private _stances=[]; private _providerStance="CROUCH"; private _look=[0,1,0];
         private _inputCalls=0; private _input={_inputCalls=_inputCalls+1; 0};
         private _removedDraw=[]; private _logs=[]; private _clots=0; private _hints=0;
         CBA_fnc_removePerFrameHandler={_removed pushBack (_this select 0);(_handlers select (_this select 0)) set [2,false];};
@@ -44,7 +46,7 @@ def setup():
         ace_interaction_fnc_hideMouseHint={_hints=_hints-1;};
         ACM_damage_fnc_clotWoundsOnBodyPart={_clots=_clots+1;};
     '''
-    for name in ('doAnimHeld', 'directPressureStop', 'directPressurePose', 'directPressureTick',
+    for name in ('providerAnimation', 'doAnimHeld', 'directPressureStop', 'directPressurePose', 'directPressureTick',
                  'directPressureLimb', 'directPressureTorso', 'directPressureSelf', 'directPressureRetire'):
         text += f'ACME_fnc_{name}={{' + source(name) + '};'
     # Execute the real Local event's generation/registry prefix. The following unrelated

@@ -25,7 +25,7 @@ if ((_medic getVariable ["ACME_menuPoseGenericEpoch", -1]) != _currentEpoch) exi
 private _rate = [] call ACME_fnc_choreographyRate;
 _medic setAnimSpeedCoef _rate;
 ["ace_common_setAnimSpeedCoef", [_medic, _rate]] call CBA_fnc_globalEvent;
-[_medic, "AmovPknlMstpSnonWnonDnon", 1] call ACME_fnc_doAnim;
+[_medic, [_medic, "AmovPknlMstpSnonWnonDnon"] call ACME_fnc_providerAnimation, 1] call ACME_fnc_doAnim;
 [{
     params ["_medic", "_epoch", "_poseEpoch", "_continuousEpoch"];
     if (!isNull _medic && {local _medic} && {(_medic getVariable ["ACME_menuPoseEpoch", -1]) == _epoch}

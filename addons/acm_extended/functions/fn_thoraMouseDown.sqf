@@ -12,8 +12,7 @@ if (_button == 1) exitWith {
         private _medic = uiNamespace getVariable ["ACME_Thora_Medic", objNull];
         private _side = uiNamespace getVariable ["ACME_Thora_Side", "right"];
         if !([_medic, "thoracostomySeal", true] call ACME_fnc_procedureAllowed) exitWith {false};
-        [_patient, "thoraAftercare", [_patient, _medic, _side, "peel",
-            [_patient] call ACME_fnc_clinicalEpoch]] call ACME_fnc_ownerDispatch;
+        [_patient, _medic, _side, "peel"] call ACME_fnc_thoraAftercareRequest;
         uiNamespace setVariable ["ACME_Thora_Burp", ["", 0, 0, false]];
         [] call ACME_fnc_chestSealSnd;
         [] call ACME_fnc_thoraRender;
@@ -127,32 +126,27 @@ if (_held isEqualTo "finger") exitWith {
     if ((sqrt ((((_cu - _su) ^ 2)) + (((_cv - _sv) ^ 2)))) > 0.12) exitWith { false };
     private _medic = uiNamespace getVariable ["ACME_Thora_Medic", objNull];
     if (_tract == "finger") exitWith {
-        [_patient, "thoraAftercare", [_patient, _medic, _side, "sweep",
-            [_patient] call ACME_fnc_clinicalEpoch]] call ACME_fnc_ownerDispatch;
+        [_patient, _medic, _side, "sweep"] call ACME_fnc_thoraAftercareRequest;
         false
     };
+    private _pending = uiNamespace getVariable ["ACME_Thora_WidenPending", []];
+    private _epoch = [_patient] call ACME_fnc_clinicalEpoch;
+    if (count _pending >= 4 && {(_pending select 0) isEqualTo _patient}
+        && {(_pending select 1) == _side} && {(_pending select 2) == _epoch}
+        && {diag_tickTime - (_pending select 3) < 15}) exitWith {false};
     private _kit = [_medic, _patient] call ACME_fnc_thoraKitItem;
     if (_kit == "") exitWith {false};
     private _usedKit = _kit == "ACM_ThoracostomyKit";
+    private _supplyReceipt = [];
     if (_usedKit) then {
         // Respect ACE shared equipment and fail before creating a completed tract.
-        private _used = [_medic, _patient, [_kit]] call ACME_fnc_treatmentSupplyTake;
-        if (_used isEqualTo []) then {_kit = "";} else {[_used, false] call ACME_fnc_treatmentSupplyRefund;};
+        _supplyReceipt = [_medic, _patient, [_kit]] call ACME_fnc_treatmentSupplyTake;
+        if (_supplyReceipt isEqualTo []) then {_kit = "";};
     };
     if (_kit == "") exitWith {false};
-    [_patient, _side, "open", "finger"] call ACME_fnc_thoraSideStateCommit;
-    [_patient, _side, "closed", false] call ACME_fnc_thoraSideStateCommit;
-    [_patient, _side, "sealed", false] call ACME_fnc_thoraSideStateCommit;
-    [_patient] call ACME_fnc_thoraBumpVer;
-    [] call ACME_fnc_thoraRenderOpen;
-    if (!isNull _medic) then {
-        if ((_patient getVariable ["ACM_breathing_Thoracostomy_State", 0]) < 1) then {
-            [_medic, _patient, _usedKit] call ACM_breathing_fnc_Thoracostomy_start;
-        } else {
-            // The second side must not reset an existing tube's aggregate state.
-            if (_usedKit) then {[_patient, [["thoracostomyUsedKit", true]], true] call ACM_breathing_fnc_setRuntimeState;};
-        };
-    };
+    // Widening, complete one-off drainage and native registration are one owner
+    // transaction. The existing revision observer refreshes the provider artwork.
+    [_patient, _medic, _side, "widen", _usedKit, _supplyReceipt] call ACME_fnc_thoraAftercareRequest;
     false
 };
 

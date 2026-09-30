@@ -84,6 +84,17 @@ def test_frozen_sample_uses_native_timeline_at_accelerated_rate_and_hold_is_wall
 
 @pytest.mark.parametrize('stance,native', [('STAND',.65),('PRONE',1.116)])
 def test_provider_entry_timer_matches_rate(stance,native):
+    # Preserve the historical case IDs; B212 deliberately removes the prone-to-kneel entry RTM.
+    if stance == 'PRONE':
+        execute(pose_setup()+r'''
+            _stance="PRONE";
+            [_medic,"roll",-1,_patient] call ACME_fnc_treatmentPoseStart;
+            private _state=_medic getVariable ["ACME_treatmentPoseState",[]];
+            [(_state select 20) && {(_state select 2)=="ACM_ProneContinuous"}
+                && {(_state select 3)==1} && {_speed==1.5}
+                && {_positions isEqualTo ["DOWN"]},"prone entry raised provider or delayed work"] call _check;
+        ''')
+        return
     execute(pose_setup()+f'_stance="{stance}";'+r'''
         [_medic,"roll",-1,_patient] call ACME_fnc_treatmentPoseStart;
         private _state=_medic getVariable ["ACME_treatmentPoseState",[]];
@@ -111,7 +122,7 @@ def manual_support_setup():
     for var in ('_medic','_m'):
         for old,new in [('local '+var,'_isLocal'),('alive '+var,'_alive'),
                         ('objectParent '+var,'_parent'),('animationState '+var,'_animation'),
-                        ('getAnimSpeedCoef '+var,'_speed'),('currentWeapon '+var,'_weapon'),
+                        ('getAnimSpeedCoef '+var,'_speed'),('currentWeapon '+var,'_weapon'), ('stance '+var,'_stance'),
                         ('netId '+var,'"provider"')]:
             text=re.sub(re.escape(old)+r'\b',lambda _:new,text)
         text=re.sub(re.escape(var)+r' setAnimSpeedCoef ([^;]+);',r'_speed=(\1);',text)
@@ -125,6 +136,7 @@ def manual_support_setup():
         ACM_core_fnc_beginContinuousAction={
             _continuous=_this; ACM_core_ContinuousAction_Active=true;
             (_this select 0) call (_this select 1);
+            true
         };
         _patient setVariable ["ACME_headElev_poseToken","support"];
         _patient setVariable ["ACME_headElevated",true];

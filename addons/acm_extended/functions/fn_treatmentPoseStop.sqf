@@ -1,5 +1,5 @@
 // Release only the matching episode; stale callbacks cannot end a newer action.
-// Every ACME-owned treatment pose exits to a movable, unarmed crouch. Weapons are never automatically reselected.
+// Exit in the provider's supported posture. Weapons are never automatically reselected.
 params [["_medic", objNull, [objNull]], ["_mode", "", [""]], ["_epoch", -1, [0]], ["_handoff", false, [false]]];
 if (isNull _medic) exitWith {};
 private _state = _medic getVariable ["ACME_treatmentPoseState", []];
@@ -23,6 +23,10 @@ private _stage = _state param [3, 0];
 private _pfh = _state param [5, -1];
 private _exclusion = _state param [7, ""];
 private _upright = _state param [16, false];
+private _enteredProne = (_state param [20, false]) || {stance _medic == "PRONE"} || {
+    private _animation = toLowerANSI animationState _medic;
+    (_animation find "pknl") < 0 && {(_animation find "ppne") >= 0 || {(_animation find "prone") >= 0}}
+};
 // B175 medicUp is an AinvPknl family: the casualty is upright, the provider is not. Always return these provider
 // poses to the normal unarmed crouch. Retain the old standing exit only for a hot-loaded legacy AinvPerc state.
 private _exitUpright = _upright && {((toLowerANSI _main) find "ainvperc") == 0};
@@ -84,10 +88,11 @@ if (!_handoff
     && {_current == toLower _main || {_ownsEntry} || {_stage >= 2} || {_currentMode in ["stethoscope","pulse"]}}) then {
     // B175: current medicUp states are kneeling-provider motions and therefore exit to unarmed crouch.
     // _exitUpright is only a compatibility path for an already-running legacy AinvPerc episode.
-    _medic setUnitPos (["MIDDLE", "UP"] select _exitUpright);
-    [_medic, ["AmovPknlMstpSnonWnonDnon", "AmovPercMstpSnonWnonDnon"] select _exitUpright, 1] call ACME_fnc_doAnim;
+    _medic setUnitPos (if (_enteredProne) then {"AUTO"} else {["MIDDLE", "UP"] select _exitUpright});
+    private _exitAnim = [_medic, ["AmovPknlMstpSnonWnonDnon", "AmovPercMstpSnonWnonDnon"] select _exitUpright, _enteredProne] call ACME_fnc_providerAnimation;
+    [_medic, _exitAnim, 1] call ACME_fnc_doAnim;
 
-    if (!_exitUpright) then {
+    if (!_exitUpright && {!_enteredProne}) then {
         // ACE/ACM can apply its treatment-end move after callbackSuccess. Check once after that handoff; only if
         // the engine actually put us back on our feet do we request the normal stand-to-crouch transition. This is
         // a one-shot correction, not an animation watchdog/restart loop.

@@ -44,6 +44,9 @@ switch (_op) do {
         if (_logged) then {[_patient, localize "STR_ACM_Breathing_ChestSeal"] call ace_medical_treatment_fnc_addToTriageCard;};
     };
     case "peel": {
+        // This effect already has server edit/revision deduplication. Capture
+        // current pressure before removing the occlusive dressing.
+        [_patient, _medic, "seal", [_patient] call ACME_fnc_clinicalEpoch] call ACME_fnc_thoraDrainBloodLocal;
         if !(_args param [0, false]) then {
             [_patient, [["chestSeal", false]], true] call ACM_breathing_fnc_setRuntimeState;
             _patient setVariable ["ACME_CS_sealApplied", false, true];
@@ -51,6 +54,7 @@ switch (_op) do {
         };
         // Removing any individual seal changes communicating-wound coverage.
         [_patient, "peel"] call ACME_fnc_ptxTreat;
+        if (alive _patient) then {[_patient] call ACM_breathing_fnc_updateLungState;};
     };
     // Obsolete ncdTension packets intentionally have no handler. A delayed packet
     // cannot recreate tension after successful treatment or a healed leak.

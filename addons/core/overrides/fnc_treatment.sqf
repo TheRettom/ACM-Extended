@@ -201,11 +201,8 @@ if (_classname != "ACME_ConnectETVent") exitWith {
             && {_patient getVariable ["ACME_headElevated", false]}
             && {!(_patient getVariable ["ACME_headElev_Suspended", false])}};
 
-    // Check Breathing owns one frozen chest-access episode, including patients without a carrier.
-    // Its native three-second timer starts only after this episode reaches its held frame.
-    private _heldBreathingCheck = _nativeContinuousClass == "checkbreathing"
-        && {isNull objectParent _medic} && {_medic isNotEqualTo _patient};
-    if (_needsChestAccess && {_needsPhysicalPrep || {_heldBreathingCheck}} && {!_alreadyPrepared}
+    // B212: carrier handling remains preparation. The assessment itself owns a separate two-second medic4.
+    if (_needsChestAccess && {_needsPhysicalPrep} && {!_alreadyPrepared}
         && {local _medic} && {!isNull _medic} && {alive _medic}) exitWith {
         if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
         if !([_medic, _patient, _interactionChecks] call ace_common_fnc_canInteractWith) exitWith {false};
@@ -233,7 +230,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
         _medic setVariable ["ACME_chestAccessPreflightCancel", false, false];
         _medic setVariable ["ACME_checkBreathingProviderRequested", "", false];
         _medic setVariable ["ACME_chestAccess_treatment", [_patient, _nativeContinuousClass, _leaseId]];
-        if (_heldBreathingCheck) then {
+        if (_nativeContinuousClass == "checkbreathing") then {
             diag_log format ["[ACME CHECK BREATHING] preparing patient %1; build %2; lease %3",
                 netId _patient, missionNamespace getVariable ["ACME_buildBatch","?"], _leaseId];
         };
@@ -330,22 +327,9 @@ if (_classname != "ACME_ConnectETVent") exitWith {
                 [_m,_p,_leaseId,_classKey,_tok,_finish,true] call _abort;
             };
 
-            private _heldBreathing = _classKey == "checkbreathing" && {isNull objectParent _m};
-            private _pose = _m getVariable ["ACME_treatmentPoseState", []];
-            private _provider = _m getVariable ["ACME_chestAccessProvider", []];
-            if (_heldBreathing && {_timedOut
-                || {(_pose param [1, ""]) != "chestAccess"}
-                || {(_pose param [3, -1]) != 3}
-                || {(_pose param [0, -2]) != (_provider param [1, -1])}
-                || {(_provider param [0, objNull]) isNotEqualTo _p}}) exitWith {
-                // A presentation failure must not consume the timer or leave a held provider behind.
-                [_m,_p,_leaseId,_classKey,_tok,_finish,true] call _abort;
-            };
-
-            // CPR/BVM hand off synchronously. Check Breathing retains this exact held episode through its timer.
-            if (!_heldBreathing) then {
-                [_m, _p, "stop", true, ((_m getVariable ["ACME_chestAccessProvider", []]) param [2, ""])] call ACME_fnc_chestAccessVestProvider;
-            };
+            // Every preparation pose hands off before clinical work; Check Breathing must play its requested
+            // Dr_medic4 during the two-second assessment instead of retaining the carrier's frozen Dnon pose.
+            [_m, _p, "stop", true, ((_m getVariable ["ACME_chestAccessProvider", []]) param [2, ""])] call ACME_fnc_chestAccessVestProvider;
             [_m,_p,_tok] call _finish;
 
             _m setVariable ["ACME_chestAccessPreflightActive", false, false];
@@ -357,18 +341,12 @@ if (_classname != "ACME_ConnectETVent") exitWith {
                     _classKey, netId _p];
             };
 
-            if (_heldBreathing) then {
-                _m setVariable ["ACME_checkBreathingPose", [_p, _pose select 0, _leaseId], false];
-                _m setVariable ["ACME_suppressNativeTreatmentAnim", true, false];
-                diag_log format ["[ACME CHECK BREATHING] starting timer with provider held; lease %1", _leaseId];
+            private _started = if (_classKey == "checkbreathing") then {
+                _args call ACME_fnc_assessmentStart
+            } else {
+                _args call ACM_core_fnc_treatmentNative
             };
-            private _started = _args call ACM_core_fnc_treatmentNative;
-            if (_heldBreathing) then {_m setVariable ["ACME_suppressNativeTreatmentAnim", false, false];};
             if (!_started) then {
-                if (_heldBreathing) then {
-                    _m setVariable ["ACME_checkBreathingPose", [], false];
-                    [_m, _p, "stop", false, _provider param [2, ""]] call ACME_fnc_chestAccessVestProvider;
-                };
                 private _cur = _m getVariable ["ACME_chestAccess_treatment", []];
                 if ((_cur param [2,""]) == _leaseId) then {_m setVariable ["ACME_chestAccess_treatment", []];};
                 [_p,_m,_leaseId,false,_classKey] call ACME_fnc_chestAccessVestEvent;
@@ -411,20 +389,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
             private _lease = _m getVariable ["ACME_chestAccess_treatment", []];
             private _patientReady = (_readyLease == (_lease param [2,""]))
                 && {_ready isEqualType 0} && {_ready >= 0} && {serverTime >= _ready};
-            if (!_patientReady) exitWith {false};
-            if (_classKey != "checkbreathing" || {!isNull objectParent _m}) exitWith {true};
-
-            private _provider = _m getVariable ["ACME_chestAccessProvider", []];
-            private _pose = _m getVariable ["ACME_treatmentPoseState", []];
-            private _matchingPose = (_provider param [0, objNull]) isEqualTo _p
-                && {(_provider param [1, -1]) == (_pose param [0, -2])}
-                && {(_pose param [1, ""]) == "chestAccess"};
-            // No-carrier checks still enter the assessment hold, after any patient roll/lowering completes.
-            if (!_matchingPose && {(_m getVariable ["ACME_checkBreathingProviderRequested", ""]) != _tok}) then {
-                _m setVariable ["ACME_checkBreathingProviderRequested", _tok, false];
-                [_m, _p, "start", false, _tok] call ACME_fnc_chestAccessVestProvider;
-            };
-            _matchingPose && {(_pose param [3, -1]) == 3}
+            _patientReady
         }, {
             params ["_m","_p","_args","_tok","_leaseId","_classKey","_launch","_finish","_abort"];
             [_m,_p,_args,_tok,_leaseId,_classKey,false,_finish,_abort] call _launch;
@@ -433,6 +398,17 @@ if (_classname != "ACME_ConnectETVent") exitWith {
             [_m,_p,_args,_tok,_leaseId,_classKey,true,_finish,_abort] call _launch;
         }] call CBA_fnc_waitUntilAndExecute;
         true
+    };
+
+    // B212: assessment work owns one exact sequence. Its bounded preparation cannot consume the clinical timer.
+    if (_nativeContinuousClass in ["checkairway", "checkbreathing"]) exitWith {
+        if (_dpSamePatient) then {[_medic, _nativeContinuousClass] call _fnc_dpPauseForManeuver;};
+        private _started = _this call ACME_fnc_assessmentStart;
+        if (!_started && {_dpSamePatient} && {(_medic getVariable ["ACME_DP_PauseTreatmentClass", ""]) == _nativeContinuousClass}) then {
+            _medic setVariable ["ACME_DP_Paused", false, false];
+            _medic setVariable ["ACME_DP_PauseTreatmentClass", "", false];
+        };
+        _started
     };
 
     // Auscultation owns its own modal display and provider pose. Base ACM launches the scope from the
@@ -498,7 +474,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
         _gestureWindow = 5.0;
     } else {
         if ((_classKey find "checkbreathing") >= 0) then {
-            _exactAnim = "AinvPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_medic";
+            _exactAnim = "AinvPknlMstpSnonWnonDr_medic4";
         } else {
             if (_torso && {(_classKey find "pressurebandage") >= 0}) then {
                 _exactAnim = "AinvPknlMstpSnonWnonDnon_medic3";
@@ -631,7 +607,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
                 [{
                     params ["_m", "_anim"];
                     if (!isNull _m && {alive _m} && {local _m}) then {
-                        [_m, _anim, 1] call ACME_fnc_doAnim;
+                        [_m, [_m, _anim] call ACME_fnc_providerAnimation, 1] call ACME_fnc_doAnim;
                     };
                 }, [_medic, _exactAnim]] call CBA_fnc_execNextFrame;
             };

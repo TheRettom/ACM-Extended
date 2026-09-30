@@ -4,6 +4,8 @@
 params [["_medic", objNull, [objNull]], ["_patient", objNull, [objNull]], ["_display", displayNull, [displayNull]]];
 if !(missionNamespace getVariable ["ACME_menuPoseEnabled", true]) exitWith {false};
 if (isNull _medic || {!local _medic} || {!alive _medic} || {_medic getVariable ["ACE_isUnconscious", false]}) exitWith {false};
+// Opening a UI never raises a prone provider, including auto-reopen after another procedure.
+if (stance _medic == "PRONE" || {private _animation = toLowerANSI animationState _medic; (_animation find "pknl") < 0 && {(_animation find "ppne") >= 0 || {(_animation find "prone") >= 0}}}) exitWith {[_medic, true] call ACME_fnc_menuPoseStop; false};
 if (isNull _patient || {_patient isEqualTo _medic} || {!(_patient isKindOf "CAManBase")}) exitWith {false};
 if ([_medic] call ACME_fnc_animBlocked || {!isNull objectParent _patient} || {_medic call ace_common_fnc_isSwimming}) exitWith {false};
 if (isNull _display) then {_display = uiNamespace getVariable ["ace_medical_gui_menuDisplay", displayNull];};
@@ -35,6 +37,8 @@ _medic setVariable ["ACME_menuPoseGenericEpoch", [-1, _epoch] select _afterTreat
     private _state = _medic getVariable ["ACME_menuPose", []];
     private _retired = _state isEqualTo [];
     private _invalid = isNull _display || {!local _medic} || {!alive _medic}
+        || {!(missionNamespace getVariable ["ACME_menuPoseEnabled", true])}
+        || {(stance _medic == "PRONE" || {private _animation = toLowerANSI animationState _medic; (_animation find "pknl") < 0 && {(_animation find "ppne") >= 0 || {(_animation find "prone") >= 0}}})}
         || {_medic getVariable ["ACE_isUnconscious", false]}
         || {_bound && {!(_medic isEqualTo ACE_player)}}
         || {[_medic] call ACME_fnc_animBlocked}
@@ -71,7 +75,6 @@ _medic setAnimSpeedCoef _rate;
 private _settle = [_medic] call ACME_fnc_medicAnimationPrep;
 private _transition = switch (stance _medic) do {
     case "STAND": {"AmovPercMstpSnonWnonDnon_AmovPknlMstpSnonWnonDnon"};
-    case "PRONE": {"AmovPpneMstpSnonWnonDnon_AmovPknlMstpSnonWnonDnon"};
     default {""};
 };
 private _bound = hasInterface && {!isNil "ACE_player"} && {_medic isEqualTo ACE_player};
@@ -80,6 +83,7 @@ private _bound = hasInterface && {!isNil "ACE_player"} && {_medic isEqualTo ACE_
     if (isNull _display || {isNull _medic} || {!local _medic} || {!alive _medic}
         || {_medic getVariable ["ACE_isUnconscious", false]} || {[_medic] call ACME_fnc_animBlocked}
         || {_bound && {!(_medic isEqualTo ACE_player)}}
+        || {(stance _medic == "PRONE" || {private _animation = toLowerANSI animationState _medic; (_animation find "pknl") < 0 && {(_animation find "ppne") >= 0 || {(_animation find "prone") >= 0}}})} || {!(missionNamespace getVariable ["ACME_menuPoseEnabled", true])}
         || {(_medic getVariable ["ACME_menuPose", []]) isNotEqualTo [_epoch, _display, _patient]}) exitWith {};
     if (_transition != "") then {[_medic, _transition, 1] call ACME_fnc_doAnim;};
     [{
@@ -87,6 +91,7 @@ private _bound = hasInterface && {!isNil "ACE_player"} && {_medic isEqualTo ACE_
         if (isNull _display || {isNull _medic} || {!local _medic} || {!alive _medic}
             || {_medic getVariable ["ACE_isUnconscious", false]} || {[_medic] call ACME_fnc_animBlocked}
             || {_bound && {!(_medic isEqualTo ACE_player)}}
+            || {(stance _medic == "PRONE" || {private _animation = toLowerANSI animationState _medic; (_animation find "pknl") < 0 && {(_animation find "ppne") >= 0 || {(_animation find "prone") >= 0}}})} || {!(missionNamespace getVariable ["ACME_menuPoseEnabled", true])}
             || {(_medic getVariable ["ACME_menuPose", []]) isNotEqualTo [_epoch, _display, _patient]}) exitWith {};
         [_medic, "ACM_GenericContinuous", 1] call ACME_fnc_doAnim;
     }, [_medic, _patient, _display, _epoch, _bound], (if (_transition == "") then {0} else {(if ((_transition find "AmovPerc") == 0) then {0.65} else {1.116}) / _rate})] call CBA_fnc_waitAndExecute;

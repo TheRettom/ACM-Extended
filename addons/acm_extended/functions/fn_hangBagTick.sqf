@@ -33,7 +33,7 @@ if (!_stop && {(_medic distance _patient) > _leash}) then {
     _stop = true;
     _why = "Out of line range. Bag lowered.";
 };
-if (!_stop && {!isNull objectParent _medic || {_medic getVariable ["ACE_isUnconscious", false]} || {(stance _medic) == "PRONE"}}) then {
+if (!_stop && {!isNull objectParent _medic || {_medic getVariable ["ACE_isUnconscious", false]}}) then {
     _stop = true;
     _why = "Bag lowered.";
 };
@@ -114,7 +114,7 @@ if (hasInterface
 private _graceUntil = _medic getVariable ["ACME_hang_PoseRetryAt", 0];
 if (CBA_missionTime >= _graceUntil) then {
     private _animNow = toLower animationState _medic;
-    if ((_animNow find "jetscrewaidfcrouchthumbup") < 0) exitWith {
+    if (_animNow != toLower (_medic getVariable ["ACME_hang_Pose", "ACME_Acts_JetsCrewaidFCrouchThumbup_loop"])) exitWith {
         [true, _medic] call ACME_fnc_hangBagStop;
     };
 };

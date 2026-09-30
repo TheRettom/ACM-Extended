@@ -52,7 +52,10 @@ if (count _channels != 8) exitWith {};
 if (_now >= (_display getVariable ["ACME_stethNextLungUpdate",-1])) then {
     _display setVariable ["ACME_stethNextLungUpdate",_now + 1];
     [_patient,"stethoscopeLungs",[[_patient] call ACME_fnc_clinicalEpoch]] call ACME_fnc_ownerDispatch;
+    _display setVariable ["ACME_stethBreathGains",[_patient] call ACME_fnc_stethoscopeBreathGain];
 };
+// Keep both directions in the local cache so changing view never reuses the previous side's gain.
+private _breathGain = (_display getVariable ["ACME_stethBreathGains",[1,1]]) select ([0,1] select (_view == "back"));
 private _lungStates = +(_patient getVariable ["ACM_breathing_Stethoscope_LungState",[0,0]]);
 private _overload = _patient getVariable ["ACM_circulation_Overload_Volume",0];
 private _aspEdema = (_patient getVariable ["ACME_aspiration_edema",0]) max 0 min 1;
@@ -71,7 +74,7 @@ for "_i" from 0 to 1 do {
     private _modifier = switch (_lungStates param [_i,0]) do {
         case 1: {0.8}; case 2: {0.3}; default {1};
     };
-    private _gain = _gains select _i;
+    private _gain = (_gains select _i) * _breathGain;
     private _blend = if (_i == _affected) then {_fluidBlend * _basal} else {0};
     // Keep the underlying upper-lung finding; crossfade to crackles only at the affected lung's base.
     _gains set [_i,_gain * _modifier * (1 - _blend)];

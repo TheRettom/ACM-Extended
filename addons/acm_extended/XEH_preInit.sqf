@@ -23,6 +23,13 @@ if (hasInterface) then {
 };
 
 private _settings = [
+    ["ACME_menuPoseEnabled", "CHECKBOX",
+        ["Crouch when opening the medical menu", "Automatically kneel when opening another casualty's medical menu while standing. Prone medics keep their posture. Disabling this stops automatic menu posture changes; treatment animations keep their own posture requirements."],
+        [_cSys, "Interface"], true, 2, {
+            if (!_this && {hasInterface} && {!isNil "ACE_player"} && {!isNil "ACME_fnc_menuPoseStop"}) then {
+                [ACE_player] call ACME_fnc_menuPoseStop;
+            };
+        }],
     ["ACME_ptx_stableSec", "SLIDER",
         ["Pneumothorax stability interval", "Seconds of controlled air accumulation before the internal model records stability. Does not display a provider notification."],
         [_cTrau, "Pneumothorax"], [0, 300, 60, 0], 1, {}],

@@ -85,10 +85,10 @@ class ProcedureAccessContracts(unittest.TestCase):
         self.assertEqual(kit.count('call ace_medical_treatment_fnc_hasItem'), 2)
         click = source("thoraMouseDown")
         begin = click.index('private _usedKit = _kit == "ACM_ThoracostomyKit"')
-        end = click.index('[_patient, _side, "open", "finger"] call ACME_fnc_thoraSideStateCommit;', begin)
+        end = click.index('call ACME_fnc_thoraAftercareRequest;', begin)
         debit = click[begin:end]
         self.assertIn('if (_usedKit) then', debit)
-        self.assertIn('call ace_medical_treatment_fnc_useItem', debit)
+        self.assertIn('call ACME_fnc_treatmentSupplyTake', debit)
         self.assertIn('if (_kit == "") exitWith {false}', debit)
         self.assertNotIn('removeItem "ACE_surgicalKit"', click)
 

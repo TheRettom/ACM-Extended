@@ -16,9 +16,12 @@ def has(source, fragment):
 
 
 def assert_entry_exit_contract(start, stop):
-    has(start, '[_medic,"ACME_DirectPressureHold",1.1,1,true] call ACME_fnc_doAnimHeld;')
-    has(stop, 'private _exitPriority = [1,2] select (_stateBefore == "acme_directpressurehold");')
-    has(stop, '[_medic,"AmovPknlMstpSnonWnonDnon",_exitPriority] call ACME_fnc_doAnim;')
+    has(start, 'private _pose = [_medic, "ACME_DirectPressureHold", _prone] call ACME_fnc_providerAnimation;')
+    has(start, '_medic setVariable ["ACME_DP_Pose", _pose];')
+    has(start, '[_medic,_pose,1.1,1,true] call ACME_fnc_doAnimHeld;')
+    has(stop, 'private _heldPose = toLower (_medic getVariable ["ACME_DP_Pose", "ACME_DirectPressureHold"]);')
+    has(stop, 'private _exitPriority = [1,2] select (_stateBefore == _heldPose);')
+    has(stop, '[_medic,[_medic,"AmovPknlMstpSnonWnonDnon",_heldProne] call ACME_fnc_providerAnimation,_exitPriority] call ACME_fnc_doAnim;')
     has(stop, 'if (!_otherManeuver && {local _medic} && {alive _medic} && {isNull objectParent _medic} && {_ownsHold}) then')
 
 

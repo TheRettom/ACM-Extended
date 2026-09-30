@@ -122,9 +122,12 @@ def test_actual_gui_close_releases_before_runtime_unload_even_if_other_handler_i
 def ace_dispatch_fixture():
     # Execute supplied ACE's exact priority switch; engine animationState intentionally
     # stays unchanged while targetEvent is queued, reproducing priority-2's switchMove.
-    paths=list((ROOT.parent/'references').glob('ACE3-master/**/addons/common/functions/fnc_doAnimation.sqf'))
-    if len(paths)!=1:
+    paths=[]
+    for directory in ('references','sources'):
+        paths.extend((ROOT.parent/directory).glob('ACE3-master/**/addons/common/functions/fnc_doAnimation.sqf'))
+    if not paths:
         pytest.skip("supplied ACE3 source reference required for exact dependency dispatch")
+    assert all(path.read_bytes()==paths[0].read_bytes() for path in paths), 'conflicting supplied ACE animation sources'
     source=paths[0].read_text()
     source=re.sub(r'^\s*TRACE_\d.*$', '', source, flags=re.M)
     source=source.replace('objectParent _unit','objNull').replace('animationState _unit','"AmovPknlMstpSnonWnonDnon"')

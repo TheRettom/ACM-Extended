@@ -2060,6 +2060,15 @@ class CfgFunctions {
             class debugCheyneStokes {};
             class installRmbCancelGuard {};
             class airwayMedicPose {};
+            class assessmentTime {};
+            class assessmentStart {};
+            class assessmentTick {};
+            class assessmentStop {};
+            class assessmentFinish {};
+            class assessmentProgress {};
+            class assessmentCompletion {};
+            class assessmentAdvance {};
+            class assessmentProgressBar {};
             class airwayInjuryRelabel {};
             class animQueue {};
             class headElevMedicSeq {};
@@ -2115,6 +2124,7 @@ class CfgFunctions {
             class ivHeldRaise {};
             class ivSeedHub {};
             class doAnim {};
+            class providerAnimation {};
             class medicAnimationPrep {};
             class rollProviderStart {};
             class obtundedMasterChanged {};
@@ -2433,6 +2443,9 @@ class CfgFunctions {
             class thoraBumpVer {};
             class thoraMouseDown {};
             class thoraAftercareLocal {};
+            class thoraAftercareRequest {};
+            class thoraAftercareAck {};
+            class thoraDrainBloodLocal {};
             class thoraCanSweep {};
             class thoraSealAt {};
             class thoraSealScroll {};
@@ -2671,6 +2684,7 @@ class CfgFunctions {
             class stethoscopeFlip {};
             class stethoscopeFlipTick {};
             class stethoscopeTick {};
+            class stethoscopeBreathGain {};
             class stethoscopeWeights {};
             class stethoscopeClose {};
             class rollProviderCancel {};
@@ -7640,18 +7654,18 @@ class ace_medical_treatment_actions {
     // a lot more than these. quietly giving every descendant an animation is how you end up with a medic doing a
     // gear check while they cannulate.
     class CheckAirway {
-        // B47: one pose owner cleanly enters the requested medic4_old examination from empty-handed crouch,
-        // keeps it inside the treatment window, then blends back to the same crouch.  The exact-class guard in
-        // ACME_fnc_airwayMedicPose prevents CheckAirway descendants from inheriting this theatre accidentally.
+        // B212: medic5 to source time 1.375 s, then interpolate through the complete medic4 RTM at 1.5x.
+        // Provider preparation is outside this duration; inherited descendants do not acquire this sequence.
+        treatmentTime = "['CheckAirway'] call ACME_fnc_assessmentTime";
         animationMedic = "";
         animationMedicProne = "";
         animationMedicSelf = "";
         animationMedicSelfProne = "";
-        // Inspection remains available on a corpse; the assessment reports the retained airway findings.
         condition = "ACM_airway_enable && {!(_patient call ace_common_fnc_isAwake)}";
-        callbackStart = "_this call ACME_fnc_airwayMedicPose";
-        callbackSuccess = "_this call ACM_airway_fnc_checkAirway; [_medic, 'airway'] call ACME_fnc_treatmentPoseStop";
-        callbackFailure = "[_medic, 'airway'] call ACME_fnc_treatmentPoseStop";
+        callbackStart = "";
+        callbackProgress = "_this call ACME_fnc_assessmentProgress";
+        callbackSuccess = "_this call ACM_airway_fnc_checkAirway; [_this] call ACME_fnc_assessmentFinish";
+        callbackFailure = "[_this] call ACME_fnc_assessmentFinish";
     };
     class RecoveryPosition: CheckAirway {
         displayName = "$STR_ACM_Airway_EstablishRecoveryPosition";
@@ -7701,8 +7715,15 @@ class ace_medical_treatment_actions {
         ACM_ignoreAnimCoef = 1;
     };
     class CheckBreathing {
-        animationMedic = "AmovPknlMstpSrasWpstDnon_AmovPknlMstpSrasWpstDnon_gear";
-        animationMedicProne = "AmovPknlMstpSrasWpstDnon_AmovPknlMstpSrasWpstDnon_gear";
+        treatmentTime = 2;
+        animationMedic = "";
+        animationMedicProne = "";
+        animationMedicSelf = "";
+        animationMedicSelfProne = "";
+        callbackStart = "";
+        callbackProgress = "_this call ACME_fnc_assessmentProgress";
+        callbackSuccess = "_this call ACM_breathing_fnc_checkBreathing; [_this] call ACME_fnc_assessmentFinish";
+        callbackFailure = "[_this] call ACME_fnc_assessmentFinish";
         condition = "true";
     };
     class UseStethoscope {

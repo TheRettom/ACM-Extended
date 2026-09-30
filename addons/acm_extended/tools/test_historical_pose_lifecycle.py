@@ -98,7 +98,7 @@ def setup():
         };
     '''
     code+=settings_source()
-    for name in ('patientUpright','poseUprightState','providerStanceOwned','treatmentPoseStop','treatmentPoseStart','treatmentPoseSync'):
+    for name in ('patientUpright','poseUprightState','providerAnimation','providerStanceOwned','providerAnimSpeedOwned','treatmentPoseStop','treatmentPoseStart','treatmentPoseSync'):
         code+='ACME_fnc_'+name+'={'+pose_source(name)+'};\n'
     return code
 
@@ -278,6 +278,16 @@ def test_finite_work_enters_once_without_a_fixed_replay_loop(mode):
 
 @pytest.mark.parametrize('stance,transition',[('STAND','AmovPercMstpSnonWnonDnon_AmovPknlMstpSnonWnonDnon'),('PRONE','AmovPpneMstpSnonWnonDnon_AmovPknlMstpSnonWnonDnon')])
 def test_standing_or_prone_provider_enters_through_existing_crouch_transition(stance,transition):
+    if stance == 'PRONE':
+        # Preserve the historical identity while enforcing the user's B212 prone contract.
+        execute(setup()+r'''
+            _stance="PRONE";
+            [_medic,"inspect",6,_patient] call ACME_fnc_treatmentPoseStart;
+            private _state=_medic getVariable ["ACME_treatmentPoseState",[]];
+            [_moves isEqualTo [[_medic,"ACM_ProneContinuous",1]],"prone provider entered a crouch transition"] call _check;
+            [_positions isEqualTo ["DOWN"] && {(_state select 20)},"prone entry posture was not captured"] call _check;
+        ''')
+        return
     execute(setup()+f'_stance="{stance}";'+r'''
         [_medic,"inspect",6,_patient] call ACME_fnc_treatmentPoseStart;
         private _state=_medic getVariable ["ACME_treatmentPoseState",[]]; private _id=_state select 5;

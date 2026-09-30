@@ -28,10 +28,15 @@ if ([_patient, _bodyPart] call ACME_fnc_directPressureHasFracture) then {
 // Enter the held pressure pose directly. Direct Pressure deliberately does not call medicAnimationPrep or issue
 // weapon-selection commands; another treatment or movement may supersede this pose normally.
 if (isNull objectParent _medic) then {
-    _medic setUnitPos "MIDDLE";
+    private _prone = stance _medic == "PRONE";
+    private _pose = [_medic, "ACME_DirectPressureHold", _prone] call ACME_fnc_providerAnimation;
+    _prone = _prone || {_pose == "ACM_ProneContinuous"};
+    _medic setVariable ["ACME_DP_Pose", _pose];
+    _medic setVariable ["ACME_DP_PoseProne", _prone];
+    _medic setUnitPos (["MIDDLE", "DOWN"] select _prone);
     _medic setVariable ["ACME_DP_PoseToken", (_medic getVariable ["ACME_DP_PoseToken", 0]) + 1];
     _medic setVariable ["ACME_DP_PoseGraceUntil", CBA_missionTime + 0.15];
-    [_medic, "ACME_DirectPressureHold", 1.1, 1, true] call ACME_fnc_doAnimHeld;
+    [_medic, _pose, 1.1, 1, true] call ACME_fnc_doAnimHeld;
     _medic setVariable ["ACME_DP_InPose", true];
     _medic setVariable ["ACME_DP_LastPoseAssert", CBA_missionTime];
 };

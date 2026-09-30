@@ -71,6 +71,14 @@ if (_anim isEqualTo "") exitWith {};
     // in a vehicle the pose will not hold, and forcing it looks worse than letting it go.
     if (!isNull objectParent _u) exitWith { [_pfh] call CBA_fnc_removePerFrameHandler; };
 
+    // Provider-only retries may run after the provider selected prone during holstering.
+    // Resolve before comparing and retain that target; patient choreography uses the
+    // default false branch and must never pass through this provider posture resolver.
+    if (_localOnly) then {
+        _a = [_u, _a] call ACME_fnc_providerAnimation;
+        _args set [1, _a];
+    };
+
     // the engine reports the move name in lower case, so both sides are lowered before the comparison.
     if ((toLower animationState _u) isEqualTo (toLower _a)) exitWith {
         // it took. one more frame of grace in case ACE is still mid-restore, then stop watching.

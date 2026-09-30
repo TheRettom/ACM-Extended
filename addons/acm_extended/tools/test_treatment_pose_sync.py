@@ -19,6 +19,7 @@ def execute(scenario):
     if not vm:
         pytest.skip("SQF-VM is required for observer execution checks")
     source = (FUNCTIONS / "fn_treatmentPoseSync.sqf").read_text()
+    mapper = (FUNCTIONS / "fn_providerAnimation.sqf").read_text()
     substitutions = {
         "!isNull objectParent _medic": "_testVehicle",
         "isNull objectParent _medic": "(!_testVehicle)",
@@ -33,6 +34,8 @@ def execute(scenario):
         "alive _medic": "_testAlive",
         "getAnimSpeedCoef _medic": "_testSpeed",
         "animationState _medic": "_testMove",
+        "stance _medic": "_testStance",
+        "toLowerANSI": "toLower",
         "_medic getUnitMovesInfo 0": "_testPhase",
         "_medic setAnimSpeedCoef 0;": "_testSpeed = 0;",
         "_medic setAnimSpeedCoef 1;": "_testSpeed = 1;",
@@ -43,6 +46,9 @@ def execute(scenario):
     }
     for original, replacement in substitutions.items():
         source = source.replace(original, replacement)
+        mapper = mapper.replace(original, replacement)
+    # The provider is a namespace fixture; preserve the production mapper's argument checks.
+    mapper = mapper.replace('objNull, [objNull]', 'objNull, [missionNamespace]')
     source = re.sub(r"_medic setAnimSpeedCoef ([^;]+);", r"_testSpeed = (\1);", source)
     code = r'''
         private _ok = true;
@@ -56,6 +62,7 @@ def execute(scenario):
         private _testVehicle = false;
         private _testSpeed = 1;
         private _testMove = "ACME_StethoscopeWork";
+        private _testStance = "CROUCH";
         private _testPhase = 0.1;
         private _seeks = 0;
         private _deferSeek = false;
@@ -64,6 +71,7 @@ def execute(scenario):
         private _delays = [];
         private _removedJIP = 0;
         private _exitMoves = 0;
+        private _exitAnimations = [];
         CBA_missionTime = 10;
         private _medic = missionNamespace;
         _medic setVariable ["ACME_treatmentPoseEpisode", [1, true]];
@@ -76,7 +84,7 @@ def execute(scenario):
         CBA_fnc_waitUntilAndExecute = {_waits pushBack _this;};
         CBA_fnc_waitAndExecute = {_delays pushBack _this;};
         CBA_fnc_removeGlobalEventJIP = {_removedJIP = _removedJIP + 1;};
-        ACME_fnc_doAnim = {_exitMoves = _exitMoves + 1;};
+        ACME_fnc_doAnim = {_exitMoves = _exitMoves + 1; _exitAnimations pushBack (_this select 1);};
         private _tick = {
             params [["_id", 0]];
             private _handler = _handlers select _id;
@@ -85,6 +93,7 @@ def execute(scenario):
         private _hold = {[_medic, 1, "hold", "ACME_StethoscopeWork", 0.14, 7] call ACME_fnc_treatmentPoseSync;};
         private _release = {[_medic, 1, "release"] call ACME_fnc_treatmentPoseSync;};
         private _check = {if !(_this select 0) then {_ok = false; diag_log ("POSE_SYNC_FAIL: " + (_this select 1));};};
+        ACME_fnc_providerAnimation = {''' + mapper + "};\n" + r'''
         ACME_fnc_treatmentPoseSync = {''' + source + "};\n" + scenario + r'''
         diag_log (if (_ok) then {"POSE_SYNC_OK"} else {"POSE_SYNC_FAIL"});
     '''
@@ -247,6 +256,20 @@ def test_new_owner_aborts_old_episode_and_releases_to_crouch():
         [] call _tick;
         [_testSpeed == 1 && {_removedJIP == 1} && {_exitMoves == 1}, "new owner retained old hold"] call _check;
         [(_medic getVariable ["ACME_treatmentPoseEpisode", []]) isEqualTo [1, false], "old episode still active"] call _check;
+        [_exitAnimations isEqualTo ["AmovPknlMstpSnonWnonDnon"], "ordinary crouched hold changed its exit stance"] call _check;
+    """)
+
+
+@pytest.mark.parametrize('stance', ['PRONE','UNDEFINED'])
+def test_new_owner_aborts_old_prone_episode_without_a_kneeling_exit(stance):
+    execute(f'_testStance="{stance}";' + """
+        [_medic,1,"hold","ACM_ProneContinuous",0,7] call ACME_fnc_treatmentPoseSync;
+        _testLocal=true;_testClient=8;
+        [] call _tick;
+        [_testSpeed==1 && {_removedJIP==1} && {_exitMoves==1} && {!((_handlers select 0) select 2)},
+            "new owner retained old prone hold"] call _check;
+        [_exitAnimations isEqualTo ["AmovPpneMstpSnonWnonDnon"],"prone ownership transfer forced kneeling"] call _check;
+        [(_medic getVariable ["ACME_treatmentPoseEpisode",[]]) isEqualTo [1,false],"old prone episode still active"] call _check;
     """)
 
 

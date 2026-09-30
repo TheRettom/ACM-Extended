@@ -67,13 +67,15 @@ def test_accepted_kelly_release_still_commits_existing_tract():
 def test_finger_tract_consumes_only_disposable_and_requires_verified_receipt(kit,receipt,expected):
     text=source('thoraMouseDown')
     body=unique_slice(text,'    private _kit = [_medic, _patient] call ACME_fnc_thoraKitItem;',
-                      '    [] call ACME_fnc_thoraRenderOpen;')
+                      '\n    false\n};\n\nif (_held in ["seal", "tube"])')
     execute(thora_setup() + f'_kit="{kit}"; private _receipt="{receipt}";' + '''
-        private _uses = 0;
+        private _uses = 0; private _requests = [];
         private _side = "right";
-        ace_medical_treatment_fnc_useItem = {_uses=_uses+1; [_medic,_receipt]};
+        ACME_fnc_treatmentSupplyTake = {_uses=_uses+1; if (_receipt=="ACM_ThoracostomyKit") then {[_medic,_receipt,objNull,"receipt1"]} else {[]}};
+        ACME_fnc_thoraAftercareRequest = {_requests pushBack _this;};
     ''' + 'private _commit = {'+adapt(body)+'}; call _commit;' +
-            f'[count _writes=={3 if expected else 0},"unverified or missing kit committed tract"] call _check;' +
+            f'[count _requests=={int(expected)},"unverified or missing kit requested tract"] call _check;' +
+            '[count _writes==0,"provider changed owner tract before acceptance"] call _check;' +
             f'[_uses=={int(kit=="ACM_ThoracostomyKit")},"reusable/absent kit was consumed"] call _check;')
 
 @pytest.mark.parametrize('allowed,consumed',[(False,False),(True,False),(True,True)])

@@ -17,6 +17,8 @@ if (!_wasActive && {_pending isEqualType []} && {count _pending >= 4}) then {
     _claimEpoch = _pending select 3;
 };
 private _wasInPose = _medic getVariable ["ACME_DP_InPose", false];
+private _heldPose = toLower (_medic getVariable ["ACME_DP_Pose", "ACME_DirectPressureHold"]);
+private _heldProne = _medic getVariable ["ACME_DP_PoseProne", false];
 private _stateBefore = toLower animationState _medic;
 private _otherManeuver = (missionNamespace getVariable ["ACM_core_ContinuousAction_Active", false])
     || {_medic getVariable ["ACM_circulation_isPerformingCPR", false]}
@@ -49,11 +51,11 @@ if (!isNull _patient && {_part != ""}) then {
 
 // Break only our decorative hold. Priority 2 remains a narrow safety fallback when the engine is physically still
 // inside ACME_DirectPressureHold, preventing the provider from being stranded in the looping state.
-private _ownsHold = _wasInPose || {_stateBefore == "acme_directpressurehold"};
+private _ownsHold = _wasInPose || {_stateBefore == _heldPose};
 if (!_otherManeuver && {local _medic} && {alive _medic} && {isNull objectParent _medic} && {_ownsHold}) then {
     _medic setUnitPos "AUTO";
-    private _exitPriority = [1, 2] select (_stateBefore == "acme_directpressurehold");
-    [_medic, "AmovPknlMstpSnonWnonDnon", _exitPriority] call ACME_fnc_doAnim;
+    private _exitPriority = [1, 2] select (_stateBefore == _heldPose);
+    [_medic, [_medic, "AmovPknlMstpSnonWnonDnon", _heldProne] call ACME_fnc_providerAnimation, _exitPriority] call ACME_fnc_doAnim;
 };
 
 {
@@ -68,6 +70,8 @@ if (!_otherManeuver && {local _medic} && {alive _medic} && {isNull objectParent 
     ["ACME_DP_NextClot", 0],
     ["ACME_DP_Paused", false],
     ["ACME_DP_InPose", false],
+    ["ACME_DP_Pose", ""],
+    ["ACME_DP_PoseProne", false],
     ["ACME_DP_IdleStart", 0],
     ["ACME_DP_LastPos", []],
     ["ACME_DP_PFH", -1],
