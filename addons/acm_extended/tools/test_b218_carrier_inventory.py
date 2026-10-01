@@ -228,7 +228,7 @@ def test_magazine_supply_uses_existing_ace_dose_semantics():
 
 def test_nonpickup_and_shared_custody_are_wired_through_all_three_removal_contexts():
     config=(ROOT/'addons/acm_extended/config.cpp').read_text()
-    assert 'class ACME_RemovedCarrierCargo: GroundWeaponHolder_Scripted' in config
+    assert 'class ACME_RemovedCarrierCargo: ReammoBox_F' in config
     assert 'class ACME_OpenPlateCarrierInventory:' in config
     assert 'ace_dragging_canCarry = 0;' in config
     for name in ['chestAccessVestAcquire','headElevateStart']:

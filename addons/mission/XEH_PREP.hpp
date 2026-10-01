@@ -13,3 +13,5 @@ PREP(generatePatients);
 PREP(spawnCustomPatient);
 PREP(spawnPatient_childActions);
 PREP(spawnPatients_childActions);
+PREP(trainingPatientHold);
+PREP(trainingPatientHoldTick);

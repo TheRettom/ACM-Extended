@@ -7,7 +7,13 @@ private _s = 0;
 if (alive _patient
     && {(_patient getVariable ["ACME_lido_seizureState", ""]) == "active"}
     && {!(_patient getVariable ["ACME_seizure_suppressed", false])}
-    && {!(_patient getVariable ["ACME_roc_paralyzed", false])}) then {_s = 0.98;};
+    && {!(_patient getVariable ["ACME_roc_paralyzed", false])}) then {
+    if (([_patient] call ACME_fnc_seizureMotorMode) == "full") then {_s = 0.98;} else {
+        // Only an actual short motor pulse contaminates late-arrest ECG; quiet intervals are not convulsions.
+        if (((toLowerANSI (gestureState _patient)) find "acme_seizurespasm") == 0
+            || {CBA_missionTime < (_patient getVariable ["ACME_seizure_observerUntil",-1]) + 0.15}) then {_s = 0.82;};
+    };
+};
 private _anim = toLowerANSI animationState _patient;
 private _blend = _patient getUnitMovesInfo 3;
 private _rate = getAnimSpeedCoef _patient;

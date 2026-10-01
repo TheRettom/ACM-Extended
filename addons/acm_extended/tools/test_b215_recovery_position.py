@@ -235,7 +235,7 @@ def test_provider_sf_lower_completes_before_flip_controller_starts():
         _args call ACME_fnc_recoveryPositionStart;
         _args call _headEvent;
         [count _rolls==1,"recovery omitted Flip provider scene"] call _check;
-        [(_headCalls select 0 select 0) isEqualTo objNull,"SF teardown started a competing provider scene"] call _check;
+        [(_headCalls select 0 select 0) isEqualTo _medic && {(_headCalls select 0 select 5)},"SF teardown lost actor or enabled a competing provider scene"] call _check;
         _patient setVariable ["ACME_headElevated",false];
         _patient setVariable ["ACME_patientAnimLock",["lower","head-elev-lower","",1,11]];
         private _pose=_medic getVariable "ACME_treatmentPoseState"; _pose set [3,1];

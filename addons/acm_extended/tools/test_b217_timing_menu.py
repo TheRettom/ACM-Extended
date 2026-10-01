@@ -74,7 +74,7 @@ def test_recovery_only_begins_in_last_two_seconds(elapsed):
         _providerAnim="ainvpknlmstpsnonwnondnon_medic4";
     '''+f'''
         [_args,{elapsed},5] call ACME_fnc_recoveryPositionProgress;
-        [count _handlers=={int(elapsed>=2.5)},"recovery did not use late blend window"] call _check;
+        [count _handlers=={int(elapsed>=1.5)},"recovery did not use late blend window"] call _check;
     ''')
 
 @pytest.mark.parametrize('blend',[0,.2,.6,.98,.99,1])
@@ -147,7 +147,7 @@ def test_carrier_park_uses_patient_left_at_any_heading(angle,missing_shoulders):
 
 
 def test_random_seizures_use_only_requested_four_without_immediate_repeat():
-    raw=read('seizureGestureAdvance').replace('isAwake _patient','true')
+    raw=read('seizureGestureAdvance').replace('isAwake _patient','true').replace('serverTime','CBA_missionTime')
     raw=re.sub(r'_patient switchMove [^;]+;','',raw)
     execute('''
         private _session=[0,7,1]; private _recordedGestures=[];
@@ -156,7 +156,7 @@ def test_random_seizures_use_only_requested_four_without_immediate_repeat():
         ACME_fnc_clinicalEpoch={0}; ace_common_fnc_isBeingDragged={false}; ace_common_fnc_isBeingCarried={false};
         ACM_core_fnc_cprActive={false};
         CBA_fnc_globalEvent={_recordedGestures pushBack (_this select 1 select 2);};
-    '''+'private _advance={'+adapt(raw)+'};'+'''
+    '''+'ACME_fnc_seizureMotorMode={'+adapt(read('seizureMotorMode'))+'};'+'private _advance={'+adapt(raw)+'};'+'''
         for "_i" from 1 to 120 do {[_patient,_session] call _advance;};
         [count _recordedGestures==120,"gesture sequencer did not run"] call _check;
         private _allowed=["ACME_SeizureSpasm0","ACME_SeizureSpasm4","ACME_SeizureSpasm5","ACME_SeizureSpasm6"];

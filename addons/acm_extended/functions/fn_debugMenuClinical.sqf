@@ -237,11 +237,18 @@ private _factionClass = if (isNull _patient) then {""} else {faction _patient};
 private _factionName = getText (configFile >> "CfgFactionClasses" >> _factionClass >> "displayName");
 if (_factionName == "") then {_factionName = ["unknown", _factionClass] select (_factionClass != "");};
 private _patientSide = if (isNull _patient) then {"unknown"} else {str side group _patient};
+private _sideColor = switch (toUpperANSI _patientSide) do {
+    case "WEST": {"#4FA3FF"};
+    case "EAST": {"#FF5555"};
+    case "CIV": {"#BD83EA"};
+    case "GUER": {"#64D978"};
+    default {_cMute};
+};
 private _header = [
     format ["<t size='1.12' color='%1'>ACME DEBUG v%2 | %3</t>", _cTitle, [_ver] call _safe, [_batch] call _safe],
     ["Patient", _pName, _cLabel] call _one,
     ["Blood type", _bloodType, _cLabel, "Weight", if (_weight isEqualType 0 && {_weight > 0}) then {format ["%1 kg", _weight toFixed 1]} else {"unknown"}, _cLabel] call _pair,
-    ["Side", _patientSide, _cLabel, "Faction", _factionName, _cLabel] call _pair
+    ["Side", _patientSide, _sideColor, "Faction", _factionName, _sideColor] call _pair
 ];
 private _renderAll = {
     // Preserve the existing logical section builders, but serialize them into one compact vertical stream.
@@ -620,11 +627,7 @@ private _medicationLabel = {
 } forEach _medicationGroups;
 _right pushBack (["MEDICATIONS"] call _sect);
 _right pushBack format ["  <t color='%1'>Effective reference-dose equivalents</t>", _cMute];
-for "_i" from 0 to ((count _medicationRows) - 1) step 2 do {
-    private _row = +(_medicationRows select _i);
-    if ((_i + 1) < count _medicationRows) then {_row append (_medicationRows select (_i + 1));};
-    _right pushBack _row;
-};
+{_right pushBack (_x call _pair);} forEach ([_medicationRows] call ACME_fnc_debugMedicationColumns);
 
 // Nondrug sedation/awareness state is deliberately separated beneath the medication list.
 ([_patient] call ACME_fnc_sedationComponents) params ["_ket", "_prop", "_mid", "_fent", "_adjunct", "_sed"];

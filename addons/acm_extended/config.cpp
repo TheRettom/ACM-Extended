@@ -1854,6 +1854,7 @@ class CfgFunctions {
             class carrierInventoryCreate {};
             class carrierInventoryRestore {};
             class carrierInventoryOpen {};
+            class carrierInventoryWorld {};
             class carrierSupplyTake {};
             class manualPlateCarrierCanToggle {};
             class manualPlateCarrierCommit {};
@@ -1991,6 +1992,7 @@ class CfgFunctions {
             class clinicalRestore {};
             class clinicalReset {};
             class deathFreeze {};
+            class recoveryDeathSlump {};
             class deadPhysiologyFreeze {};
             class fluidCommit {};
             class infusionDeliver {};
@@ -2644,6 +2646,7 @@ class CfgFunctions {
             class syncPremixedBags {};
             class debugMenu {};
             class debugMenuClinical {};
+            class debugMedicationColumns {};
             class debugMenuNetwork {};
             class ejTexturePath {};
             class debugDumpToClipboard {};
@@ -2659,6 +2662,8 @@ class CfgFunctions {
             class lidoEffectiveness {};
             class lidoToxTick {};
             class debugInduceSeizure {};
+            class seizureMotorMode {};
+            class seizureArrestTrack {};
             class seizureMotion {};
             class seizureGestureAdvance {};
             class seizureGestureSync {};
@@ -6753,12 +6758,18 @@ class CfgFactionClasses {
 };
 
 class CfgVehicles {
-    class GroundWeaponHolder_Scripted;
-    // Only supplies are cargo. The carrier model is a separate, non-pickable presentation object.
-    class ACME_RemovedCarrierCargo: GroundWeaponHolder_Scripted {
+    class ReammoBox_F;
+    // A native ground container, paired with the exact removed vest mesh. There is no wearable duplicate
+    // to take; its live supplies use vanilla Gear, including world access and multiplayer inventory.
+    class ACME_RemovedCarrierCargo: ReammoBox_F {
         scope = 1;
         scopeCurator = 0;
-        displayName = "Removed plate carrier supplies";
+        displayName = "Plate carrier";
+        model = "\A3\Weapons_F\DummyWeapon.p3d";
+        simulation = "thing";
+        transportMaxWeapons = 10000;
+        transportMaxMagazines = 10000;
+        transportMaxBackpacks = 10000;
         maximumLoad = 0; // server sets the captured carrier's actual capacity before additions
         ace_dragging_canDrag = 0;
         ace_dragging_canCarry = 0;

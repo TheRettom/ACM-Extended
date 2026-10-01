@@ -1,4 +1,4 @@
-/* Start the slower casualty blend during the last 2.5 seconds of the action, never before visible Flip work. */
+/* Start the slower casualty blend during the last 3.5 seconds of the action, never before visible Flip work. */
 params ["_args", ["_elapsed", 0], ["_total", 5]];
 _args params ["_medic", "_patient", "_part", "_classname"];
 if ((toLowerANSI _classname) != "recoveryposition") exitWith {true};
@@ -23,7 +23,7 @@ private _work = toLowerANSI (_pose param [2, ""]);
 private _atWork = (_pose param [0, -1]) == _epoch && {(_pose param [1, ""]) == "roll"}
     && {(_pose param [3, -1]) >= 1} && {(toLowerANSI animationState _medic) == _work}
     && {_work == "ainvpknlmstpsnonwnondnon_medic4" || {(_pose param [20, false]) && {_work == "acm_pronecontinuous"}}};
-if (!_dispatched && {_elapsed >= ((_total - 2.5) max 0)} && {_atWork || {_completed}}) then {
+if (!_dispatched && {_elapsed >= ((_total - 3.5) max 0)} && {_atWork || {_completed}}) then {
     _record set [4, true];
     [_medic, _patient, true, false, "begin", _token, _epoch, _record param [5, -1]] call ACM_airway_fnc_setRecoveryPosition;
 };

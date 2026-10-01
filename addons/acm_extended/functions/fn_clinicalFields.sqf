@@ -1,6 +1,7 @@
 /* NA4 patient fields: [name, clock-kind, clear-on-full-heal, persist=true].
    Supplier transaction ledgers and runtime handler ownership are not saved patient state. */
 [
+  ["ACME_seizure_arrestStartedAt", "", true, false],
   // The PTX model stores elapsed durations, never an owner's raw scheduler clock.
   ["ACME_ptx_state", "", true, true],
   ["ACME_ptx_tensionSeverity", "", true, true],

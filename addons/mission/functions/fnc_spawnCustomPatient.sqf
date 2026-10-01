@@ -46,6 +46,8 @@ if (isNull _patient || {!local _patient}) exitWith {objNull};
 // watcher complete before any treatment can remove the carrier intentionally.
 _patient setVariable ["ACME_acmSpawnerPlateCarrierDone", true, true];
 _patient setVariable ["ACME_patientSpawnerVestClass", vest _patient, true];
+_patient setVariable ["ACME_trainingCrouchOnly",true,true];
+[_patient] call FUNC(trainingPatientHold);
 
 _patient disableAI "MOVE";
 

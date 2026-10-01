@@ -205,8 +205,9 @@ def test_debug_and_assessment_contracts_follow_user_requested_layout_and_normal_
     assert 'ACME_menuPoseAfterTreatment' in read('menuPoseStart')
     assert 'ACM_GenericContinuous' in read('menuPoseStart')
     shock=read('shockLocal')
-    assert '"%1: %2", [[_medic, false, true] call ace_common_fnc_getName, _log]' in shock
-    assert '"%1: Shock delivered"' in shock
+    assert '"%1 initiated defibrillation"' in shock
+    assert '[[_medic, false, true] call ace_common_fnc_getName]' in shock
+    assert "Defibrillation with ROSC" not in shock
 
 
 @pytest.mark.parametrize('action',['CheckAirway','CheckBreathing'])

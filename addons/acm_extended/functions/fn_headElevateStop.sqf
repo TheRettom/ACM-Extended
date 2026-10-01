@@ -131,8 +131,8 @@ _patient setVariable ["ACME_headElev_visualActive", false, true];
 _patient setVariable ["ACME_headElev_suspendVestLoadout", [], false];
 _patient setVariable ["ACME_headElev_suspendReadyAt", -1, false];
 _patient setVariable ["ACME_headElev_suspendKeepVestOut", false, true];
-if (!_quiet && {!isNil "ace_medical_treatment_fnc_addToLog"}) then {
-    private _providerName = if (isNull _medic) then {"Provider"} else {[_medic, false, true] call ace_common_fnc_getName};
+if (!_quiet && {!isNull _medic} && {!isNil "ace_medical_treatment_fnc_addToLog"}) then {
+    private _providerName = [_medic, false, true] call ace_common_fnc_getName;
     [_patient, "activity", "%1 laid head flat", "%1 laid them supine", [_providerName]] call ACME_fnc_medLog;
 };
 private _pfh = _patient getVariable ["ACME_headElev_pfh", -1];

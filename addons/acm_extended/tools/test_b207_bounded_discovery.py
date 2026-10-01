@@ -15,7 +15,7 @@ def execute(code):
 
 
 def carrier_source():
-    text = (F / 'fn_registerManualPlateCarrierRuntime.sqf').read_text().split('if (hasInterface &&', 1)[0]
+    text = (F / 'fn_registerManualPlateCarrierRuntime.sqf').read_text().split('if (hasInterface && {isNil "ACME_manualPlateCarrierAckEH"})', 1)[0].replace('hasInterface', 'false')
     for name in ('_patient', '_p'):
         text = text.replace('local ' + name, f'({name} getVariable ["testLocal",true])')
         text = text.replace('alive ' + name, f'({name} getVariable ["testAlive",true])')

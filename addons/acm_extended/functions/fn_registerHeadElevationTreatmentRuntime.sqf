@@ -17,8 +17,7 @@
         private _alreadyFlat = _patient getVariable ["ACME_headElev_Suspended", false];
         // Recovery already owns Flip's provider motion. Only the casualty needs the authored
         // lowering here; a second provider lower sequence would overwrite that Flip episode.
-        private _lowerMedic = [objNull, _medic] select (_classLC == "cpr");
-        [_lowerMedic, _patient, _alreadyFlat] call ACME_fnc_headElevateStop;
+        [_medic, _patient, _alreadyFlat, false, false, _classLC == "recoveryposition"] call ACME_fnc_headElevateStop;
     };
 
     private _cfg = configFile >> "ace_medical_treatment_actions" >> _classname;

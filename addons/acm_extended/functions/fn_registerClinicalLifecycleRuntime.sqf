@@ -9,7 +9,7 @@
 // Zeus module, which write their own marks, never produce a duplicate.
 ["ACM_circulation_setIVLocal", {_this call ACME_fnc_ivSeedHub}] call CBA_fnc_addEventHandler;
 // Death preserves medical evidence/interventions so the menu cannot disclose death through disappearing care.
-addMissionEventHandler ["EntityKilled", { params ["_unit"]; if (local _unit) then { [_unit, "reset"] call ACME_fnc_aiProtectionSync; [_unit] call ACME_fnc_deathFreeze; }; }];
+addMissionEventHandler ["EntityKilled", { params ["_unit"]; if (local _unit) then { [_unit, "reset"] call ACME_fnc_aiProtectionSync; [_unit] call ACME_fnc_deathFreeze; [_unit] call ACME_fnc_recoveryDeathSlump; }; }];
 // Respawn resets only the NEW life; the old corpse remains an evidentiary snapshot until the engine deletes it.
 
 // y-saline owner-side setup. this fires through CBA_fnc_targetEvent at the casualty, so the ACME_SalineY retag
