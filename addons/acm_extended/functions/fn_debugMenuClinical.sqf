@@ -61,7 +61,10 @@ private _valueW = 11;
 
 private _renderBlock = {
     params ["_ctrl", "_rows"];
-    _ctrl ctrlSetStructuredText parseText format ["<t font='EtelkaMonospacePro' shadow='1'>%1</t>", _rows joinString "<br/>"];
+    // Identical attributes and final font on the hidden meter and both visible controls.
+    // Explicit alignment avoids inherited RscStructuredText attributes shifting the grid.
+    _ctrl ctrlSetStructuredText parseText format ["<t font='EtelkaMonospacePro' align='left' valign='top' shadow='1'>%1</t>", _rows joinString "<br/>"];
+    _ctrl ctrlSetFontHeight _fontH;
 };
 private _measureRows = {
     params ["_rows", "_width"];
@@ -123,7 +126,10 @@ private _ynCol = {params ["_v", ["_badWhenTrue", false]]; if (_badWhenTrue) exit
 private _padRight = {
     params ["_s", "_w"];
     if !(_s isEqualType "") then {_s = str _s;};
-    while {count _s < _w} do {_s = _s + " ";};
+    // B220: padding is layout, not a word-wrap opportunity. Ordinary spaces in
+    // the padded columns could be discarded or carried onto empty visual lines.
+    private _space = toString [160];
+    while {count _s < _w} do {_s = _s + _space;};
     _s
 };
 private _alignValue = {
@@ -180,7 +186,8 @@ private _formatRow = {
     private _labelW = _labelWidths select 0;
     private _labelWR = _labelWidths select 1;
     private _aTxt = [([_a, _labelW] call _padRight)] call _safe;
-    private _avTxt = [([_av, _valueW] call _alignValue)] call _safe;
+    // A full-width/single row has no following field to align. Do not pad its right edge.
+    private _avTxt = [_av] call _safe;
     if (count _row == 3) exitWith {
         format ["  <t color='%4'>%1 :</t> <t color='%3'>%2</t>", _aTxt, _avTxt, _ac, _cLabel]
     };
@@ -188,13 +195,15 @@ private _formatRow = {
     private _bv = _row select 4;
     private _bc = _row select 5;
     private _aLines = [([_av, _valueW] call _alignValue), _valueW] call _wrapValue;
-    private _bLines = [([_bv, _valueW] call _alignValue), _valueW] call _wrapValue;
+    private _bText = if (_bv isEqualType "") then {_bv} else {str _bv};
+    private _bLines = [_bText, _valueW] call _wrapValue;
     private _lines = [];
     for "_i" from 0 to (((count _aLines) max (count _bLines)) - 1) do {
         private _aLabel = [([if (_i == 0) then {_a} else {""}, _labelW] call _padRight)] call _safe;
         private _bLabel = [([if (_i == 0) then {_b} else {""}, _labelWR] call _padRight)] call _safe;
         private _aValue = [([_aLines param [_i, ""], _valueW] call _padRight)] call _safe;
-        private _bValue = [([_bLines param [_i, ""], _valueW] call _padRight)] call _safe;
+        // The final value ends the row: trailing padding serves no alignment purpose.
+        private _bValue = [_bLines param [_i, ""]] call _safe;
         _lines pushBack format ["  <t color='%7'>%1 :</t> <t color='%3'>%2</t>  <t color='%7'>%4 :</t> <t color='%6'>%5</t>", _aLabel, _aValue, _ac, _bLabel, _bValue, _bc, _cLabel];
     };
     _lines joinString "<br/>"
@@ -311,22 +320,37 @@ private _renderAll = {
         _gap = _fontH * _gapFactor;
     };
 
-    private _headerH = [_headerRows, _totalW] call _measureRows;
-    private _bodyH = [_bodyRows, _totalW] call _measureRows;
+    // B220: fit at the width that will actually be drawn. B215 measured height
+    // at the maximum width and only THEN narrowed the controls. That could add
+    // wrapped/blank lines after the height check and push the footer off-screen.
+    // Native text metrics include fixed insets and rounding, so converge instead
+    // of assuming one proportional font adjustment is enough. Never alter the
+    // width/font again after the final measurements used by _layout.
+    private _widthLimit = _totalW;
+    private _headerH = 0;
+    private _bodyH = 0;
     private _availableH = (_panelBottom - _y) max 0;
-    private _neededH = (_fontH * 0.75) + _headerH + _gap + _bodyH;
-    if (_neededH > _availableH && {_neededH > 0}) then {
-        // Small guard keeps the last descender inside the panel despite engine text-metric rounding.
-        _fontH = _fontH * ((_availableH / _neededH) * 0.992);
-        call _applyFont;
-        _gap = _fontH * _gapFactor;
+    for "_fitPass" from 0 to 7 do {
+        _naturalW = ([_headerRows] call _measureNaturalWidth) max ([_bodyRows] call _measureNaturalWidth);
+        _totalW = _naturalW min _widthLimit;
         _headerH = [_headerRows, _totalW] call _measureRows;
         _bodyH = [_bodyRows, _totalW] call _measureRows;
+        private _neededH = (_fontH * 0.75) + _headerH + _gap + _bodyH;
+        private _widthFits = _naturalW <= _widthLimit;
+        private _heightFits = _neededH <= _availableH;
+        if (_widthFits && {_heightFits}) exitWith {};
+        // Last pass only measures: never paint a font/width that was not checked.
+        if (_fitPass < 7) then {
+            if (!_widthFits && {_naturalW > 0}) then {
+                _fontH = _fontH * ((_widthLimit / _naturalW) * 0.992);
+            };
+            if (!_heightFits && {_neededH > 0}) then {
+                _fontH = _fontH * ((_availableH / _neededH) * 0.992);
+            };
+            call _applyFont;
+            _gap = _fontH * _gapFactor;
+        };
     };
-
-    // Height fitting can make the text substantially narrower. Measure again at the FINAL font size so
-    // the backdrop follows the actual rightmost content instead of leaving the original maximum-width strip.
-    _totalW = (([_headerRows] call _measureNaturalWidth) max ([_bodyRows] call _measureNaturalWidth)) min _totalW;
     [_headerH, _bodyH] call _layout;
     [_ctrlH, _headerRows] call _renderBlock;
     [_ctrlL, _bodyRows] call _renderBlock;
@@ -627,14 +651,17 @@ private _medicationLabel = {
 } forEach _medicationGroups;
 _right pushBack (["MEDICATIONS"] call _sect);
 _right pushBack format ["  <t color='%1'>Effective reference-dose equivalents</t>", _cMute];
-{_right pushBack (_x call _pair);} forEach ([_medicationRows] call ACME_fnc_debugMedicationColumns);
+{
+    // An odd catalog leaves a real single-field final row. Passing it to the
+    // six-argument pair builder read undefined _b/_bv/_bc and printed a ghost colon.
+    _right pushBack (if (count _x == 3) then {_x call _one} else {_x call _pair});
+} forEach ([_medicationRows] call ACME_fnc_debugMedicationColumns);
 
 // Nondrug sedation/awareness state is deliberately separated beneath the medication list.
 ([_patient] call ACME_fnc_sedationComponents) params ["_ket", "_prop", "_mid", "_fent", "_adjunct", "_sed"];
 private _sedated = _patient getVariable ["ACME_ket_sedated", false];
 private _par = _patient getVariable ["ACME_roc_paralyzed", false];
 private _awakePar = _patient getVariable ["ACME_roc_awakeParalysis", false];
-_right pushBack "";
 _right pushBack (["SEDATION / AWARENESS"] call _sect);
 _right pushBack (["Sedation load", _sed toFixed 2, if (_sed >= 1 || {_sedated}) then {_cGood} else {if (_sed > 0) then {_cWarn} else {_cMute}}, "Sedated", [_sedated] call _yn, if (_sedated) then {_cGood} else {_cMute}] call _pair);
 _right pushBack (["Paralyzed", [_par] call _yn, if (_par) then {_cWarn} else {_cMute}, "Aware", [_awakePar] call _yn, if (_awakePar) then {_cCrit} else {_cGood}] call _pair);

@@ -7,15 +7,29 @@
 params [
     ["_medic", objNull, [objNull]],
     ["_mode", "elevate", [""]],
-    ["_exitSession", "", [""]]
+    ["_exitSession", "", [""]],
+    ["_presentation", [], [[]]]
 ];
 if (isNull _medic || {!alive _medic} || {_medic getVariable ["ACE_isUnconscious", false]}) exitWith {};
 _mode = toLowerANSI _mode;
 if !(_mode in ["elevate", "lower", "contactexit", "chestsealexit"]) exitWith {};
 if (!local _medic) exitWith {
-    [_medic, "headElevMedicSeq", [_medic, _mode, _exitSession]] call ACME_fnc_ownerDispatch;
+    [_medic, "headElevMedicSeq", [_medic, _mode, _exitSession, _presentation]] call ACME_fnc_ownerDispatch;
 };
 if ([_medic] call ACME_fnc_animBlocked) exitWith {};
+// B220 optional request fingerprint for owner-acknowledged manual replacement.
+// A late packet must not holster/stop the provider's newer treatment or run after
+// the provider changed locality. Native treatments and head-position sequences
+// can advance without a new finite-pose epoch, so fingerprint both as well.
+// All normal head-position callers retain their path.
+if (_presentation isNotEqualTo [] && {
+    count _presentation != 5
+    || {(_presentation param [0, -1]) != (_medic getVariable ["ACME_treatmentPoseEpoch", 0])}
+    || {(_presentation param [1, -1]) != (_medic getVariable ["ACME_providerLocalityEpoch", 0])}
+    || {serverTime > (_presentation param [2, -1])}
+    || {(_presentation param [3, -1]) != (_medic getVariable ["ACME_providerTreatmentEpoch", 0])}
+    || {(_presentation param [4, -1]) != (_medic getVariable ["ACME_headElev_medicAnimToken", 0])}
+}) exitWith {};
 
 private _prone = stance _medic == "PRONE";
 _medic setVariable ["ACME_headElev_providerProne", _prone, false];

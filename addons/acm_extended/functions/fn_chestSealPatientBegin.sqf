@@ -48,12 +48,13 @@ _patient setVariable ["ACME_CS_facing", _preSide, true];
 _patient setVariable ["ACME_CS_rollUntil", -1, false];
 _patient setVariable ["ACME_CS_ProcedureReadyAt", -1, true];
 
-// Recovery position is suspended for the workspace; exact restoration happens after carrier restoration on close.
-if (_preRecovery) then {
-    // Native airway state remains airway-owned even though this workspace already executes on the patient owner.
-    // Suspending recovery position is state-only here: exact restoration is handled from the saved pre-procedure
-    // snapshot when the chest workspace closes.
-    [_patient, [["recovery", false], ["headTilt", false]], true] call ACM_airway_fnc_setAirwayState;
+// Chest preparation replaces recovery rather than saving it for restoration.
+// Retire any pending episode too, so a late success callback cannot re-establish
+// side positioning after the workspace normalizes the patient.
+if (_preRecovery
+    || {(_patient getVariable ["ACM_airway_RecoveryPosition_Pending", []]) isNotEqualTo []}
+    || {(_patient getVariable ["ACM_airway_RecoveryPosition_Episode", ""]) != ""}) then {
+    [_medic, _patient, false, true, "interrupt"] call ACM_airway_fnc_setRecoveryPosition;
 };
 
 // New workspace custody starts with clean carrier bookkeeping.

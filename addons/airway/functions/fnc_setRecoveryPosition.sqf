@@ -10,9 +10,29 @@ if (!local _patient) exitWith {
         [QGVAR(setRecoveryPosition), [_medic, _patient, _state, _noLog, _phase, _token, _expectedProviderEpoch, _expectedClinicalEpoch, _hops + 1], _patient] call CBA_fnc_targetEvent;
     };
 };
-if !(_phase in ["", "begin", "commit", "cancel", "apply"]) exitWith {};
+if !(_phase in ["", "begin", "commit", "cancel", "apply", "interrupt"]) exitWith {};
 private _pending = _patient getVariable [QGVAR(RecoveryPosition_Pending), []];
 private _pendingToken = _pending param [0, ""];
+
+// B220: a successful body roll permanently replaces recovery; it is not a suspension.
+// This owner-only phase retires both provisional and committed episodes WITHOUT
+// issuing a lying/supine animation over the roll that has just won the patient.
+if (_phase == "interrupt") exitWith {
+    private _episode = _patient getVariable [QGVAR(RecoveryPosition_Episode), ""];
+    private _active = _patient getVariable [QGVAR(RecoveryPosition_State), false];
+    if (!_active && {_pendingToken == ""} && {_episode == ""}) exitWith {};
+    _patient setVariable [QGVAR(RecoveryPosition_Pending), [], true];
+    _patient setVariable [QGVAR(RecoveryPosition_Episode), "", true];
+    _patient setVariable [QGVAR(RecoveryPosition_State), false, true];
+    // A provisional placement has not established head tilt. Do not clear an
+    // independent airway hold when cancelling only that pending attempt.
+    if (_active || {_episode != ""}) then {
+        _patient setVariable [QGVAR(HeadTilt_State), false, true];
+    };
+    {
+        if (_x != "") then {[_patient, _x] call ACME_fnc_patientAnimRelease;};
+    } forEach ([_pendingToken, _episode] arrayIntersect [_pendingToken, _episode]);
+};
 
 if (_phase == "cancel" || {!_state}) exitWith {
     private _ownedToken = (_patient getVariable ["ACME_patientAnimLock", []]) param [0, ""];

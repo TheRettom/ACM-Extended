@@ -2,12 +2,13 @@
 params [
     ["_medic", objNull, [objNull]],
     ["_patient", objNull, [objNull]],
-    ["_restore", false, [false]]
+    ["_restore", false, [false]],
+    ["_presentation", [], [[]]]
 ];
 
 if (isNull _patient || {isNull _medic}) exitWith {false};
 if (!local _patient) exitWith {
-    [_patient, "manualPlateCarrier", [_medic, _patient, _restore]] call ACME_fnc_ownerDispatch;
+    [_patient, "manualPlateCarrier", [_medic, _patient, _restore, _presentation]] call ACME_fnc_ownerDispatch;
     true
 };
 
@@ -29,6 +30,16 @@ if (_restore) exitWith {
     _patient setVariable ["ACME_manualPlateCarrierState", "restoring", true];
     ["ACME_manualPlateCarrierTrack", [_patient]] call CBA_fnc_localEvent;
     _patient setVariable ["ACME_manualPlateCarrierProvider", _medic, true];
+    // Accepted manual replacement only. Use the same reach/return as Lower Head,
+    // not medic4 or a new patient controller. Automatic wake/transport returns
+    // remain animation-free. The provider rejects stale/delayed presentation.
+    if (_presentation isEqualTo []) then {
+        _presentation = [_medic getVariable ["ACME_treatmentPoseEpoch", 0],
+            _medic getVariable ["ACME_providerLocalityEpoch", 0], serverTime + 3,
+            _medic getVariable ["ACME_providerTreatmentEpoch", 0],
+            _medic getVariable ["ACME_headElev_medicAnimToken", 0]];
+    };
+    [_medic, "lower", "", _presentation] call ACME_fnc_headElevMedicSeq;
     [_patient, false, _medic, "access", true] call ACME_fnc_chestAccessVestRestore;
 
     [{

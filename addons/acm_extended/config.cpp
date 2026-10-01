@@ -8056,7 +8056,7 @@ class ace_medical_treatment_actions {
     class ACME_ManualReplacePlateCarrier: ACME_ManualRemovePlateCarrier {
         displayName = "Replace Plate Carrier";
         condition = "[_medic, _patient, true] call ACME_fnc_manualPlateCarrierCanToggle";
-        callbackSuccess = "[_patient, 'manualPlateCarrier', [_medic, _patient, true]] call ACME_fnc_ownerDispatch";
+        callbackSuccess = "[_patient, 'manualPlateCarrier', [_medic, _patient, true, [_medic getVariable ['ACME_treatmentPoseEpoch', 0], _medic getVariable ['ACME_providerLocalityEpoch', 0], serverTime + 3, _medic getVariable ['ACME_providerTreatmentEpoch',0], _medic getVariable ['ACME_headElev_medicAnimToken',0]]]] call ACME_fnc_ownerDispatch";
     };
 
     class ACME_OpenPlateCarrierInventory: ACME_ManualRemovePlateCarrier {

@@ -104,15 +104,20 @@ if !([_medic, _classname] call ACME_fnc_procedureActionAllowed) exitWith {false}
 
 if (_classname == "ACME_FeelSkin") exitWith {_this call ACME_fnc_feelSkinStart;};
 
-// Stable B182: manual carrier removal/replacement is an immediate equipment-state toggle, not a timed treatment.
-// Do not close the menu, start a progress bar, holster the provider or enter chest-access animation.
+// Manual carrier controls dispatch immediately without closing the menu or a progress timer.
+// The accepted owner transaction supplies its own theatre: removal uses chest access;
+// B220 replacement uses the same provider reach/return as laying the patient supine.
 if (_classname in ["ACME_ManualRemovePlateCarrier", "ACME_ManualReplacePlateCarrier"]) exitWith {
     if (isNull _medic || {isNull _patient} || {!local _medic}) exitWith {false};
     if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
 
     private _restore = _classname == "ACME_ManualReplacePlateCarrier";
     ace_medical_gui_pendingReopen = false;
-    [_patient, "manualPlateCarrier", [_medic, _patient, _restore]] call ACME_fnc_ownerDispatch;
+    private _presentation = [_medic getVariable ["ACME_treatmentPoseEpoch", 0],
+        _medic getVariable ["ACME_providerLocalityEpoch", 0], serverTime + 3,
+        _medic getVariable ["ACME_providerTreatmentEpoch", 0],
+        _medic getVariable ["ACME_headElev_medicAnimToken", 0]];
+    [_patient, "manualPlateCarrier", [_medic, _patient, _restore, _presentation]] call ACME_fnc_ownerDispatch;
     true
 };
 

@@ -118,10 +118,11 @@ def test_clinical_debug_keeps_each_normalized_component_in_its_own_column(values
         private _pair={_this}; private _sect={_this}; private _yn={_this select 0};
         ACME_fnc_rocuroniumOnBoard={0};
     ''' + 'ACME_fnc_sedationComponents = {' + str(values) + '};' + debug_rows() + f'''
-        // B213 keeps the clinical total while moving all drug quantities into MEDICATIONS.
-        [count _right == 4,"separate nondrug sedation rows missing"] call _check;
-        [((_right select 2) select 0)=="Sedation load" && {{((_right select 2) select 1)==(({values[5]}) toFixed 2)}},"total not supplied normalized component result"] call _check;
-        [(_right select 3) isEqualTo ["Paralyzed",false,"mute","Aware",false,"good"],"paralysis/awareness values mixed with drug quantities"] call _check;
+        // B220 removes the duplicate blank before this section, not either clinical row.
+        [count _right == 3,"separate nondrug sedation rows missing or duplicate gap retained"] call _check;
+        [(_right select 0) isEqualTo ["SEDATION / AWARENESS"],"sedation section header missing"] call _check;
+        [((_right select 1) select 0)=="Sedation load" && {{((_right select 1) select 1)==(({values[5]}) toFixed 2)}},"total not supplied normalized component result"] call _check;
+        [(_right select 2) isEqualTo ["Paralyzed",false,"mute","Aware",false,"good"],"paralysis/awareness values mixed with drug quantities"] call _check;
     ''')
 
 

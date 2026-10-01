@@ -46,7 +46,8 @@ def test_debug_side_and_faction_use_requested_colors(side,color):
     execute(f'private _patientSide="{side}";private _cMute="muted";'+s[start:end].replace('toUpperANSI','toUpper')+
             f'[_sideColor=="{color}","wrong faction/side color"] call _check;')
     assert '"Faction", _factionName, _sideColor' in s
-    assert '{_right pushBack (_x call _pair);} forEach ([_medicationRows] call ACME_fnc_debugMedicationColumns)' in s
+    assert 'forEach ([_medicationRows] call ACME_fnc_debugMedicationColumns)' in s
+    assert 'if (count _x == 3) then {_x call _one} else {_x call _pair}' in s
 
 
 def shock_setup():

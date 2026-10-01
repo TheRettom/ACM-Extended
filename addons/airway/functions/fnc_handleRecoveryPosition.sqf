@@ -42,7 +42,14 @@ if (_token == "") exitWith {};
         [_medic, _patient, false, true, ["", "cancel"] select _isPending, _token] call FUNC(setRecoveryPosition);
         [_handle] call CBA_fnc_removePerFrameHandler;
     };
-    if (_isActive) exitWith {};
+    if (_isActive) exitWith {
+        // Passive fallback for direct pose changes or missed animation events.
+        // Never force recovery back onto a patient another action has repositioned.
+        if ((toLowerANSI animationState _patient) != "acm_recoveryposition") then {
+            [_medic, _patient, false, true, "interrupt"] call FUNC(setRecoveryPosition);
+            [_handle] call CBA_fnc_removePerFrameHandler;
+        };
+    };
     private _lock = _patient getVariable ["ACME_patientAnimLock", []];
     private _accepted = _pending param [5, false];
     private _owns = (_lock param [0, ""]) == _token;
