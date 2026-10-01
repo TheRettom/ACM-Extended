@@ -53,7 +53,10 @@ private _pAvl = missionNamespace getVariable ["ACME_junctionalChanceAvulsion", 0
 // patient stamp lands.
 private _allParts = ["leftarm", "rightarm", "leftleg", "rightleg"];
 private _cap = -1;
-if ((group _unit) isEqualTo (missionNamespace getVariable ["ACM_mission_TrainingCasualtyGroup", grpNull])) then {
+if ((group _unit) in [
+    missionNamespace getVariable ["ACM_mission_TrainingCasualtyGroup", grpNull],
+    missionNamespace getVariable ["ACM_mission_TrainingBluforGroup", grpNull]
+]) then {
     private _sev = _unit getVariable ["ACME_spawnSeverity", (missionNamespace getVariable ["ACME_pendingSpawnSeverity", -1])];
     _cap = [2, 4] select (_sev >= 4);
 };

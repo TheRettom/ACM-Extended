@@ -48,7 +48,7 @@ def test_both_burp_paths_check_patient_ownership_without_a_timer():
     assert "local _patient" in gate
     assert not any(t.kind == "ident" and t.value in ("serverTime", "CBA_missionTime", "diag_tickTime") for t in lex(gate))
     assert "ACME_CS_burpCooldown" not in gate
-    assert '_medic, 0] call ACME_fnc_chestSealLogOnce' in traumatic
+    assert '_medic, 0, _session] call ACME_fnc_chestSealLogOnce' in traumatic
     assert '_medic,0] call ACME_fnc_chestSealLogOnce' in surgical
     # Burping never reuses the seal-placement medic3 theatre. Traumatic seal work stays in the
     # persistent workspace; thoracostomy aftercare performs its owner-authoritative clinical transaction in place.

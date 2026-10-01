@@ -8,4 +8,10 @@
 
 ["CBA_settingsInitialized", {
     GVAR(TrainingCasualtyGroup) = createGroup [civilian, false];
+    if (isServer) then {GVAR(TrainingBluforGroup) = createGroup [west, false];};
+}] call CBA_fnc_addEventHandler;
+
+[QGVAR(requestTrainingPatient), {
+    if (!isServer) exitWith {};
+    _this call FUNC(requestTrainingPatient);
 }] call CBA_fnc_addEventHandler;

@@ -36,6 +36,8 @@ private _main = switch (_mode) do {
     case "inspect": {"ACME_ChestInspectWork"};
     case "chestSealWorkspace": {"ACME_ChestSealWorkspace"};
     case "junctional": {"ACME_JunctionalWork"};
+    // AAJT placement/removal uses Flip's empty-handed medic4 as repeating work until ACE ends the treatment.
+    case "aajt": {"ACME_JunctionalWork"};
     case "stethoscope": {"ACME_StethoscopeWork"};
     case "chestSeal": {"AinvPknlMstpSnonWnonDnon_medic3"};
     case "ncdSeat": {"AinvPknlMstpSnonWnonDnon_medic1"};
@@ -311,7 +313,7 @@ private _pfh = [{
             // The move class is looped, but some Arma animation transitions still fall out to crouch after one
             // native cycle. Reassert only if the junctional state actually exited, never on a fixed timer.
             if (_holdAt < 0) exitWith {
-                if (_mode == "junctional" && {_current != toLower _main} && {_now - _stageStarted >= 0.20}) then {
+                if (_mode in ["junctional", "aajt"] && {_current != toLower _main} && {_now - _stageStarted >= 0.20}) then {
                     [_medic, _main, 1] call ACME_fnc_doAnim;
                     _state set [4, _now];
                 };

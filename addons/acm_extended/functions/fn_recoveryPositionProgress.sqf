@@ -9,6 +9,9 @@ _record params ["", "", "_epoch", "_rollToken", "_dispatched"];
 if (isNull _medic || {isNull _patient} || {!local _medic} || {!alive _medic} || {!alive _patient}
     || {!([_medic] call ace_common_fnc_isAwake)} || {[_patient] call ace_common_fnc_isAwake}
     || {!isNull objectParent _medic} || {!isNull objectParent _patient}
+    || {_patient getVariable ["ACME_vent_driving", false]}
+    || {[_patient] call ACM_core_fnc_cprActive}
+    || {alive (_patient getVariable ["ACM_breathing_BVM_Medic", objNull])}
     || {([_medic, _patient] call ACME_fnc_patientInteractionDistance) > ace_medical_gui_maxDistance}
     || {(_record param [6, -1]) != (_medic getVariable ["ACME_providerLocalityEpoch", 0])}
 ) exitWith {false};

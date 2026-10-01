@@ -42,6 +42,15 @@ if (_phase == "cancel" || {!_state}) exitWith {
     };
 };
 if (!alive _patient || {!(IS_UNCONSCIOUS(_patient))} || {!isNull objectParent _patient}) exitWith {};
+// B216: fitted adjuncts do not prevent side positioning. Active respiratory support
+// does; recheck on the casualty owner as well as the provider's menu/progress path.
+if (_patient getVariable ["ACME_vent_driving", false]
+    || {[_patient] call EFUNC(core,cprActive)}
+    || {alive (_patient getVariable ["ACM_breathing_BVM_Medic", objNull])}) exitWith {
+    if (_token != "" && {_pendingToken == _token}) then {
+        [_medic, _patient, false, true, "cancel", _token] call FUNC(setRecoveryPosition);
+    };
+};
 if (_patient getVariable [QGVAR(RecoveryPosition_State), false]) exitWith {};
 
 if (_phase == "commit") exitWith {

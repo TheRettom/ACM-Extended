@@ -7,6 +7,7 @@ class CfgPatches {
         name = COMPONENT_NAME;
         units[] = {
             QGVAR(TrainingPatient),
+            QGVAR(TrainingCivilian),
             QGVAR(Eden_FullHealFacility),
             QGVAR(Eden_ElevationOverride)
         };

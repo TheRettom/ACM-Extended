@@ -44,9 +44,7 @@ switch (_op) do {
         if (_logged) then {[_patient, localize "STR_ACM_Breathing_ChestSeal"] call ace_medical_treatment_fnc_addToTriageCard;};
     };
     case "peel": {
-        // This effect already has server edit/revision deduplication. Capture
-        // current pressure before removing the occlusive dressing.
-        [_patient, _medic, "seal", [_patient] call ACME_fnc_clinicalEpoch] call ACME_fnc_thoraDrainBloodLocal;
+        // Ordinary wound seals vent air only. Blood drainage requires the separate surgical tract aftercare.
         if !(_args param [0, false]) then {
             [_patient, [["chestSeal", false]], true] call ACM_breathing_fnc_setRuntimeState;
             _patient setVariable ["ACME_CS_sealApplied", false, true];

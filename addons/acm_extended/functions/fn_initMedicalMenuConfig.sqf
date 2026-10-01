@@ -16,7 +16,7 @@
 // Format: [key, label, category, exact fallback names, visibility code, color].
 // Group visibility is anatomy-only presentation. It prevents a stale cached dropdown from surviving a body-part
 // change (including death transitions) without touching any treatment row, condition, statement or callback.
-// Head: Airway, Breathing, Capnography. Body: Chest, Positioning. Medication route groups were already head-only.
+// Head: Airway, Breathing, Capnography. Body: Breathing, Chest, Positioning. Medication routes remain head-only.
 ACME_menuGroups = [
     // airway
     ["adjuncts", "Airway", "airway", [
@@ -28,10 +28,10 @@ ACME_menuGroups = [
         "Establish Surgical Airway", "Stitch Airway Incision"
     ], {ace_medical_gui_selectedBodyPart == 0}, [0.53, 0.53, 0.95, 1]],
     ["ventilation", "Breathing", "airway", [
-        "Check Breathing",
+        "Check Breathing", "Measure Respirations",
         "Use BVM", "Use BVM with Oxygen", "Use BVM with Oxygen (Vehicle)", "Use BVM with Oxygen (Portable)",
         "Apply Non-Rebreather Mask", "Remove Non-Rebreather Mask"
-    ], {ace_medical_gui_selectedBodyPart == 0}, [0.19, 0.65, 0.57, 1]],
+    ], {ace_medical_gui_selectedBodyPart in [0, 1]}, [0.19, 0.65, 0.57, 1]],
     ["chest", "Chest", "airway", [
         "Apply Chest Seal", "Perform Needle-Chest-Decompression", "Perform NCD (NAR SPEAR)",
         "Perform Thoracostomy", "Perform Thoracostomy (Kit)", "Adjust Thoracostomy", "Insert Chest Tube",

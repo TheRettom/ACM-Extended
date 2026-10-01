@@ -58,5 +58,5 @@ def test_stable_public_version_stays_1241_and_internal_build_is_b203():
     startup = read("addons/acm_extended/functions/fn_initForkStartupRuntime.sqf")
 
     assert 'version = "1.2.4.1";' in config
-    assert 'ACME_buildBatch = "B215";' in startup
-    assert 'ACME_networkAuditRevision = "NA8-B215-1.2.4.1-stable";' in startup
+    assert 'ACME_buildBatch = "B216";' in startup
+    assert 'ACME_networkAuditRevision = "NA8-B216-1.2.4.1-stable";' in startup

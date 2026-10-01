@@ -464,30 +464,40 @@ if (_classname != "ACME_ConnectETVent") exitWith {
     private _category = toLowerANSI getText (_cfg >> "category");
     private _part = toLowerANSI _bodyPart;
     private _classKey = toLowerANSI _classname;
+    // AAJT's callbacks own one repeating pose for the actual ACE timer. In particular, Zone 3 must not be
+    // mistaken for a torso bandage and handed the generic 2.4-second gesture or a native weapon/end-pose queue.
+    private _aajtOwned = _classKey in [
+        "acme_applyaajt_inguinal", "acme_removeaajt_inguinal",
+        "acme_applyaajt_axilla", "acme_removeaajt_axilla",
+        "acme_applyaajt_zone3", "acme_removeaajt_zone3"
+    ];
     private _torso = _part in ["body", "torso", "chest", "abdomen"];
     private _mode = "";
     private _exactAnim = "";
     private _gestureWindow = 2.4;
 
-    if ((_classKey find "performncd") >= 0 || {(_classKey find "narspear") >= 0}) then {
-        _mode = "ncdSeat";
-        _gestureWindow = 5.0;
-    } else {
-        if ((_classKey find "checkbreathing") >= 0) then {
-            _exactAnim = "AinvPknlMstpSnonWnonDr_medic4";
+    // AAJT callbackStart performs one weapon preflight; exact success/failure callbacks own its cleanup.
+    if (!_aajtOwned) then {
+        if ((_classKey find "performncd") >= 0 || {(_classKey find "narspear") >= 0}) then {
+            _mode = "ncdSeat";
+            _gestureWindow = 5.0;
         } else {
-            if (_torso && {(_classKey find "pressurebandage") >= 0}) then {
-                _exactAnim = "AinvPknlMstpSnonWnonDnon_medic3";
+            if ((_classKey find "checkbreathing") >= 0) then {
+                _exactAnim = "AinvPknlMstpSnonWnonDr_medic4";
             } else {
-                if (_torso && {(_classKey find "emergencytraumadressing") >= 0}) then {
-                    _exactAnim = "AinvPknlMstpSnonWnonDnon_medic4";
+                if (_torso && {(_classKey find "pressurebandage") >= 0}) then {
+                    _exactAnim = "AinvPknlMstpSnonWnonDnon_medic3";
                 } else {
-                    if (_category == "bandage" && {_torso}) then {
-                        _mode = "torsoBandage";
+                    if (_torso && {(_classKey find "emergencytraumadressing") >= 0}) then {
+                        _exactAnim = "AinvPknlMstpSnonWnonDnon_medic4";
                     } else {
-                        if (_category == "bandage" && {_part == "head"}) then {
-                            private _relative = _patient worldToModel (getPosWorld _medic);
-                            _mode = ["headBandageLeft", "headBandageRight"] select ((_relative param [0, 0]) > 0);
+                        if (_category == "bandage" && {_torso}) then {
+                            _mode = "torsoBandage";
+                        } else {
+                            if (_category == "bandage" && {_part == "head"}) then {
+                                private _relative = _patient worldToModel (getPosWorld _medic);
+                                _mode = ["headBandageLeft", "headBandageRight"] select ((_relative param [0, 0]) > 0);
+                            };
                         };
                     };
                 };
@@ -561,7 +571,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
         // Ordinary ACE work has no treatmentPose controller of its own. Its existing completion events
         // retire this animation-only rate without changing native treatment/progress-bar duration.
     private _nativeRateRecord = [];
-    if (_mode == "" && {!_headOwned} && {local _medic} && {isNull objectParent _medic}) then {
+    if (_mode == "" && {!_headOwned} && {!_aajtOwned} && {local _medic} && {isNull objectParent _medic}) then {
             [_medic, "", -1, true] call ACME_fnc_treatmentPoseStop;
             [_medic, true] call ACME_fnc_menuPoseStop;
             private _serial = (_medic getVariable ["ACME_nativeTreatmentRateSerial", 0]) + 1;

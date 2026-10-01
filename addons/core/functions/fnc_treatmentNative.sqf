@@ -335,6 +335,15 @@ if (toLowerANSI _classname in ["checkairway", "checkbreathing"]) then {
     _callbackArgs pushBack ((_medic getVariable ["ACME_assessment", []]) param [0, -1]);
 };
 _callbackArgs call _callbackStart;
+// AAJT starts its full-duration provider pose in callbackStart. Bind the same argument array used by ACE's
+// eventual success/failure to that exact episode; a late cancellation must not release a replacement AAJT pose.
+if (toLowerANSI _classname in [
+    "acme_applyaajt_inguinal", "acme_removeaajt_inguinal",
+    "acme_applyaajt_axilla", "acme_removeaajt_axilla",
+    "acme_applyaajt_zone3", "acme_removeaajt_zone3"
+]) then {
+    _callbackArgs pushBack ((_medic getVariable ["ACME_aajtTreatment", []]) param [0, -1]);
+};
 
 ["ace_treatmentStarted", [_medic, _patient, _bodyPart, _classname, _itemUser, _usedItem, _createLitter]] call CBA_fnc_localEvent;
 

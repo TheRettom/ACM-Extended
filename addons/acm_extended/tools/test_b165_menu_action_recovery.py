@@ -1,5 +1,6 @@
 """B165 regression contracts: restore B161 action execution and keep anatomy fixes presentation-only."""
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 RENDER = (ROOT.parent / "gui" / "overrides" / "fnc_updateActions.sqf").read_text(encoding="utf-8")
@@ -31,6 +32,11 @@ def test_anatomy_fix_is_group_visibility_only():
     assert '["chest", "Chest", "airway"' in GROUPS
     assert '["position", "Positioning", "airway"' in GROUPS
     assert '["capno", "Capnography", "airway"' in GROUPS
-    assert GROUPS.count("{ace_medical_gui_selectedBodyPart == 0}") >= 6
-    assert GROUPS.count("{ace_medical_gui_selectedBodyPart == 1}") >= 2
+    gates = dict(re.findall(r'\["([^"]+)", "[^"]+", "[^"]+",.*?\], \{([^}]+)\}', GROUPS, re.S))
+    assert {name for name, gate in gates.items() if gate == "ace_medical_gui_selectedBodyPart == 0"} == {
+        "adjuncts", "capno", "route_po", "route_in", "route_buc"
+    }
+    assert {name for name, gate in gates.items() if gate == "ace_medical_gui_selectedBodyPart == 1"} == {"chest", "position"}
+    # Measure Respirations is valid on Head/Body; native per-action anatomy filtering remains in the renderer.
+    assert gates["ventilation"] == "ace_medical_gui_selectedBodyPart in [0, 1]"
     assert "private _anatomyFiltered" not in GROUPS

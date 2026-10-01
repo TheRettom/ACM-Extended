@@ -203,7 +203,15 @@ def test_aajt_application_tamponade_clock_is_patient_owner_local():
     owner = src('functions/fn_ownerDispatch.sqf')
     apply = src('functions/fn_aajtApply.sqf')
     assert "setVariable ['ACME_Junc_AAJTApplying'" not in config
-    assert config.count("'aajtApplying'") >= 6
+    # B216 centralizes apply/cancel dispatch in token-scoped provider callbacks;
+    # the synchronized applying timestamp remains stamped exclusively on the patient owner.
+    start = src('functions/fn_aajtTreatmentStart.sqf')
+    finish = src('functions/fn_aajtTreatmentFinish.sqf')
+    assert config.count('callbackStart = "_this call ACME_fnc_aajtTreatmentStart";') == 6
+    assert config.count('callbackFailure = "[_this, false] call ACME_fnc_aajtTreatmentFinish";') == 6
+    assert '"aajtApplying", [toLowerANSI _bodyPart, true]' in start
+    assert '"aajtApplying", ["", false]' in finish
+    assert 'ACME_Junc_AAJTApplying' not in start + finish
     assert 'case "aajtApplying"' in owner
     block = owner.split('case "aajtApplying"', 1)[1].split('case "xstatApply"', 1)[0]
     assert '[serverTime, toLowerANSI _part]' in block

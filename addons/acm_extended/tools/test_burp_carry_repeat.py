@@ -39,6 +39,8 @@ def burp_setup(kind):
         ACME_fnc_chestSealRender = {};
         ACME_fnc_thoraRenderTube = {};
         ACM_breathing_fnc_updateLungState = {};
+        uiNamespace setVariable ["ACME_CS_SessionToken", "panel-1"];
+        _patient setVariable ["ACME_CS_ProcedureTokens", ["panel-1"]];
         uiNamespace setVariable ["ACME_CS_Patient", _patient];
         uiNamespace setVariable ["ACME_CS_Medic", _medic];
         uiNamespace setVariable ["ACME_Thora_Patient", _patient];
@@ -50,7 +52,10 @@ def burp_setup(kind):
     '''
     for name in ['chestSealBurpReady', 'thoraDrainBloodLocal', 'chestSealBurp', 'thoraAftercareRequest', 'thoraAftercareLocal', 'chestSealScroll', 'thoraSealScroll']:
         code += f'ACME_fnc_{name} = {{' + burp_source(name) + '};\n'
+    code += 'private _panelLog = {' + burp_source('chestSealLogOnce') + '};'
     code += '''
+        ACME_fnc_chestSealLogOnce = {if ((_this param [6,""]) != "") then {_this call _panelLog;} else {_logs = _logs + 1;};};
+        ace_medical_treatment_fnc_addToLog = {_logs = _logs + 1;};
         ACME_fnc_ownerDispatch = {
             if ((_this select 1) == "thoraAftercare") then {
                 _burpRequests = _burpRequests + 1;
@@ -63,6 +68,7 @@ def burp_setup(kind):
     # Burping remains inside the existing chest workspace/aftercare theatre. medic3 is reserved
     # for actual seal placement, so neither burp path requests a separate placement gesture.
     code += 'private _gesturePerBurp = 0;'
+    code += f'private _surgical = {str(kind == "thora").lower()};'
     code += f'private _wheel = {{[objNull, _this select 0] call ACME_fnc_{"chestSealScroll" if kind == "trauma" else "thoraSealScroll"};}};'
     code += 'private _lift = {for "_i" from 1 to 5 do {_this call _wheel;};};'
     return code
@@ -77,9 +83,9 @@ def test_same_corner_can_burp_repeatedly_without_advancing_time(kind, direction)
         for "_i" from 1 to 4 do {[_direction] call _wheel;};
         [_logs == 1 && {_burpRequests == 1},"partial peel repeated treatment"] call _check;
         [_direction] call _wheel;
-        [_logs == 2 && {_effects == 2} && {_gestures == (2 * _gesturePerBurp)},"immediate second burp remained blocked"] call _check;
+        [_logs == ([1,2] select _surgical) && {_effects == 2} && {_gestures == (2 * _gesturePerBurp)},"immediate second burp remained blocked"] call _check;
         [_direction] call _lift;
-        [_logs == 3 && {_burpRequests == 3},"immediate third cycle failed"] call _check;
+        [_logs == ([1,3] select _surgical) && {_burpRequests == 3},"immediate third cycle failed"] call _check;
     ''')
 
 
@@ -92,7 +98,7 @@ def test_can_lower_seal_then_immediately_burp_again(kind):
     ''' + f'[{frame} == 0,"could not lay seal flat"] call _check;' + '''
         [_logs == 1,"lowering repeated treatment"] call _check;
         [1] call _lift;
-        [_logs == 2 && {_effects == 2},"flat seal could not burp immediately"] call _check;
+        [_logs == ([1,2] select _surgical) && {_effects == 2},"flat seal could not burp immediately"] call _check;
     ''')
 
 
@@ -103,7 +109,7 @@ def test_both_seal_types_and_providers_can_burp_without_waiting():
         [_logs == 2 && {_effects == 2},"other seal/provider was blocked"] call _check;
         [_patient,missionNamespace,"right","burp",1] call ACME_fnc_thoraAftercareLocal;
         [_medic,_patient] call ACME_fnc_chestSealBurp;
-        [_logs == 4 && {_effects == 4},"repeated treatment was blocked"] call _check;
+        [_logs == 3 && {_effects == 4},"repeated treatment was blocked"] call _check;
     ''')
 
 
@@ -126,7 +132,7 @@ def test_corpse_seals_remain_reusable_without_restarting_physiology(kind):
         _patientAlive = false;
         [1] call _lift;
         [1] call _lift;
-        [_logs == 2 && {_gestures == (2 * _gesturePerBurp)},"corpse seal became unusable"] call _check;
+        [_logs == ([1,2] select _surgical) && {_gestures == (2 * _gesturePerBurp)},"corpse seal became unusable"] call _check;
         [_effects == 0,"burp restarted corpse physiology"] call _check;
     ''')
 
@@ -136,7 +142,7 @@ def test_existing_cooldown_record_cannot_block_repeated_burps():
         _patient setVariable ["ACME_CS_burpCooldown", [1, 10000, "serverTime"]];
         [1] call _lift;
         [1] call _lift;
-        [_logs == 2 && {_effects == 2},"old cooldown record blocked a burp"] call _check;
+        [_logs == ([1,2] select _surgical) && {_effects == 2},"old cooldown record blocked a burp"] call _check;
     ''')
 
 

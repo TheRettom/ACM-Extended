@@ -34,9 +34,13 @@
  * Public: No
  */
 
-params ["_location", ["_woundArray", []], ["_fractureArray", [false,false,false,false]], ["_bloodVolumeArray", [6,0,0,3]], ["_airwayStateArray", [0,0]], ["_chestInjuryArray", [0,0,0]]];
+params ["_location", ["_woundArray", []], ["_fractureArray", [false,false,false,false]], ["_bloodVolumeArray", [6,0,0,3]], ["_airwayStateArray", [0,0]], ["_chestInjuryArray", [0,0,0]], ["_existingPatient", objNull], ["_startUnconscious", true]];
 
-private _patient = GVAR(TrainingCasualtyGroup) createUnit [QGVAR(TrainingPatient), position _location, [], 0, "FORM"];
+private _patient = _existingPatient;
+if (isNull _patient) then {
+    _patient = GVAR(TrainingCasualtyGroup) createUnit [QGVAR(TrainingPatient), position _location, [], 0, "FORM"];
+};
+if (isNull _patient || {!local _patient}) exitWith {objNull};
 
 // The unit class supplies its carrier during creation. Mark the legacy armor
 // watcher complete before any treatment can remove the carrier intentionally.
@@ -52,7 +56,7 @@ removeGoggles _patient;
 
 _patient setVariable [QACEGVAR(medical_statemachine,AIUnconsciousness), true, true];
 
-[_patient, true, 30] call ACEFUNC(medical,setUnconscious);
+if (_startUnconscious) then {[_patient, true, 30] call ACEFUNC(medical,setUnconscious);};
 
 _patient setVariable [QEGVAR(damage,InstantDeathImmune), true, true];
 

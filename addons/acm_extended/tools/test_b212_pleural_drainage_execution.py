@@ -161,19 +161,23 @@ def test_expired_high_water_mark_allows_fresh_reconnected_origin_but_not_old_pac
 def test_normal_chest_seal_burp_uses_current_pressure_and_replay_fence():
     execute(drain_setup()+function('chestSealBurp',extended=True)+'''
         _patient setVariable ["ACM_breathing_ChestSeal_State",true];
+        _patient setVariable ["ACME_CS_ProcedureTokens",["panel-1"]];
         _patient setVariable ["ACM_breathing_Hemothorax_Fluid",0.6];
         _patient setVariable ["ACME_ptx_state",[1,3,0.8,0,0.8,0,1,3,0.5]];
-        [_medic,_patient,"body",1,[7,1,100]] call ACME_fnc_chestSealBurp;
-        [abs ((_patient getVariable "ACM_breathing_Hemothorax_Fluid")-0.12)<0.000001,"normal seal did not drain scaled volume"] call _check;
+        [_medic,_patient,"body",1,[7,1,100],"panel-1"] call ACME_fnc_chestSealBurp;
+        [(_patient getVariable "ACM_breathing_Hemothorax_Fluid")==0.6,"normal seal drained retained blood"] call _check;
+        [count _effects==1 && {count _events==0},"normal seal lost air relief or showed a drainage popup"] call _check;
         _patient setVariable ["ACM_breathing_Hemothorax_Fluid",0.3];
-        [_medic,_patient,"body",1,[7,1,100]] call ACME_fnc_chestSealBurp;
+        [_medic,_patient,"body",1,[7,1,100],"panel-1"] call ACME_fnc_chestSealBurp;
         [(_patient getVariable "ACM_breathing_Hemothorax_Fluid")==0.3,"normal burp replay drained again"] call _check;
+        [count _effects==1,"normal burp replay treated again"] call _check;
     ''')
 
 
 def test_normal_unsealed_chest_cannot_drain_by_burp_call():
     execute(drain_setup()+function('chestSealBurp',extended=True)+'''
-        [_medic,_patient,"body",1,[7,1,100]] call ACME_fnc_chestSealBurp;
+        _patient setVariable ["ACME_CS_ProcedureTokens",["panel-1"]];
+        [_medic,_patient,"body",1,[7,1,100],"panel-1"] call ACME_fnc_chestSealBurp;
         [(_patient getVariable "ACM_breathing_Hemothorax_Fluid")==1.1 && {count _events==0},"unsealed burp drained"] call _check;
     ''')
 

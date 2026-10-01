@@ -2054,6 +2054,8 @@ class CfgFunctions {
             class bloodFridgeSetup {};
             class bloodFridgeTakeMenu {};
             class bloodFridgeTake {};
+            class bloodFridgeTakeOwner {};
+            class bloodFridgeReceive {};
             class bloodFridgeTick {};
             class bloodFridgeMenuPoll {};
             class coolerInvHook {};
@@ -2414,6 +2416,8 @@ class CfgFunctions {
             class seizureControl {};
             class forceRagdoll {};
             class aajtApply {};
+            class aajtTreatmentStart {};
+            class aajtTreatmentFinish {};
             class aajtRemove {};
             class aajtStateCommit {};
             class aajtSetLegTQ {};
@@ -7307,15 +7311,11 @@ class CfgVehicles {
     };
 
     // blood fridge.
-    // this is a stocked blood refrigerator. the module spawns a closed-model fridge plus a co-located open-model
-    // twin, and the server hides and shows whichever matches the live state. the fridge auto-opens, with the model
-    // and the door sfx, while any player has the ACE interaction menu pointed at it, and shuts when the last one
-    // looks away. ACE "Take" hands out 500 ml units by type, and if the player carries a cooler the cold-chain
-    // ledger covers the unit by volume automatically. stock is preserved indefinitely while inside, and it can
-    // restock to its configured load each in-game day.
-    // two object classes share one ACE_Actions body through the FRIDGE_ACTIONS macro, so take works on whichever
-    // model is currently shown. the closed object is always the state anchor, and the open object stores
-    // ACME_bf_anchor pointing at it.
+    // The stocked refrigerator uses the native Door_1_noSound_source on one persistent model, with our
+    // DoorOpen/DoorClose sounds. ACE interaction and taking a unit hold the door open while in use.
+    // Taking a unit uses the existing head-positioning provider sequence; door motion is independent of
+    // whether cold-chain physiology is enabled. The stock owner grants each requested unit once.
+    // Both legacy vehicle classes retain the same ACE actions for existing missions.
     #define FRIDGE_ACTIONS \
         class ACE_Actions { \
             class ACE_MainActions { \
@@ -7693,7 +7693,7 @@ class ace_medical_treatment_actions {
         medicRequired = 0;
         treatmentTime = 3;
         allowedSelections[] = {"Body"};
-        condition = "alive _patient && {ACM_airway_enable} && {!(_patient call ace_common_fnc_isAwake)} && {(_patient getVariable ['ACM_airway_AirwayItem_Oral','']) != 'SGA'} && {!(_patient getVariable ['ACME_ETT_Inserted',false])} && {!(_patient getVariable ['ACME_vent_driving',false])} && {!(_patient getVariable ['ACM_airway_RecoveryPosition_State',false])} && {isNull objectParent _patient}";
+        condition = "alive _patient && {ACM_airway_enable} && {!(_patient call ace_common_fnc_isAwake)} && {!(_patient getVariable ['ACME_vent_driving',false])} && {!([_patient] call ACM_core_fnc_cprActive)} && {!alive (_patient getVariable ['ACM_breathing_BVM_Medic',objNull])} && {!(_patient getVariable ['ACM_airway_RecoveryPosition_State',false])} && {isNull objectParent _patient}";
         // Explicit callbacks prevent CheckAirway's assessment controller being inherited here.
         callbackStart = "_this call ACME_fnc_recoveryPositionStart";
         callbackProgress = "_this call ACME_fnc_recoveryPositionProgress";
@@ -7818,7 +7818,10 @@ class ace_medical_treatment_actions {
         consumeItem = 1;
         condition = "ACM_airway_enable && !(_patient call ace_common_fnc_isAwake) && (_patient getVariable ['ACM_airway_AirwayItem_Oral','']) == '' && !(_patient getVariable ['ACME_ETT_Inserted', false]) && !(_patient getVariable ['ACM_airway_SurgicalAirway_TubeInserted', false])";
         callbackSuccess = "[_medic, _patient, 'OPA'] call ACM_airway_fnc_insertAirwayItem";
-        ACM_cancelRecovery = 1;
+        // Basic adjuncts complement lateral drainage in either treatment order.
+        ACM_cancelRecovery = 0;
+        ACM_rollToBack = 0;
+        ACME_neverRollToBack = 1;
         ACM_menuIcon = "ACM_OPA";
     };
     class InsertNPA: InsertOPA {
@@ -7841,6 +7844,10 @@ class ace_medical_treatment_actions {
         items[] = {"ACM_IGel"};
         condition = "ACM_airway_enable && !(_patient call ace_common_fnc_isAwake) && (_patient getVariable ['ACM_airway_AirwayItem_Oral','']) == '' && !(_patient getVariable ['ACME_ETT_Inserted', false]) && !(_patient getVariable ['ACM_airway_SurgicalAirway_TubeInserted', false]) && !(_patient getVariable ['ACME_nrb_on', false])";
         callbackSuccess = "[_medic, _patient, 'SGA'] call ACM_airway_fnc_insertAirwayItem";
+        // Fitted i-gels permit recovery; inserting one still uses its existing supine access.
+        ACM_cancelRecovery = 1;
+        ACM_rollToBack = 1;
+        ACME_neverRollToBack = 0;
         ACM_menuIcon = "ACM_IGel";
     };
     // CPR remains entirely native ACM. ACME does not restate its condition, callback or continuous-action behavior.
@@ -8320,7 +8327,7 @@ class ace_medical_treatment_actions {
     class ACME_MeasureRespirations: CheckPulse {
         displayName = "Measure Respirations";
         displayNameProgress = "";
-        category = "examine";
+        category = "airway";
         allowedSelections[] = {"Head", "Body"};
         treatmentLocations[] = {"All"};
         medicRequired = 0;
@@ -8802,10 +8809,11 @@ class ace_medical_treatment_actions {
         treatmentTime = 20;
         allowedSelections[] = {"LeftLeg","RightLeg"};
         condition = "!(_patient getVariable ['ACME_AAJT_inguinal', false])";
-        callbackStart = "[_this select 1, 'aajtApplying', [toLowerANSI (_this select 2), true]] call ACME_fnc_ownerDispatch";
-        callbackSuccess = "_this call ACME_fnc_aajtApply";
-        callbackFailure = "[_this select 1, 'aajtApplying', ['', false]] call ACME_fnc_ownerDispatch";
+        callbackStart = "_this call ACME_fnc_aajtTreatmentStart";
+        callbackSuccess = "if ([_this, true] call ACME_fnc_aajtTreatmentFinish) then {_this call ACME_fnc_aajtApply}";
+        callbackFailure = "[_this, false] call ACME_fnc_aajtTreatmentFinish";
         callbackProgress = "";
+        ACME_suppressNativeTreatmentAnim = 1;
         animationMedic = "AinvPknlMstpSnonWnonDr_medic4";
         items[] = {"ACME_AAJT_S"};
         consumeItem = 1;
@@ -8821,9 +8829,11 @@ class ace_medical_treatment_actions {
         treatmentTime = 4;
         allowedSelections[] = {"LeftLeg","RightLeg"};
         condition = "(_patient getVariable ['ACME_AAJT_inguinal', false]) && {(_patient getVariable ['ACME_AAJT_inguinalSide', '']) == toLowerANSI _bodyPart}";
-        callbackSuccess = "_this call ACME_fnc_aajtRemove";
-        callbackFailure = "";
+        callbackStart = "_this call ACME_fnc_aajtTreatmentStart";
+        callbackSuccess = "if ([_this, true] call ACME_fnc_aajtTreatmentFinish) then {_this call ACME_fnc_aajtRemove}";
+        callbackFailure = "[_this, false] call ACME_fnc_aajtTreatmentFinish";
         callbackProgress = "";
+        ACME_suppressNativeTreatmentAnim = 1;
         animationMedic = "AinvPknlMstpSnonWnonDr_medic4";
         items[] = {};
         icon = "\acm_extended\ui\items\aajt-s_ca.paa";
@@ -8838,10 +8848,11 @@ class ace_medical_treatment_actions {
         treatmentTime = 20;
         allowedSelections[] = {"LeftArm","RightArm"};
         condition = "((toLowerANSI _bodyPart) == 'leftarm' && {!(_patient getVariable ['ACME_AAJT_axillaleft', false])}) || {(toLowerANSI _bodyPart) == 'rightarm' && {!(_patient getVariable ['ACME_AAJT_axillaright', false])}}";
-        callbackStart = "[_this select 1, 'aajtApplying', [toLowerANSI (_this select 2), true]] call ACME_fnc_ownerDispatch";
-        callbackSuccess = "_this call ACME_fnc_aajtApply";
-        callbackFailure = "[_this select 1, 'aajtApplying', ['', false]] call ACME_fnc_ownerDispatch";
+        callbackStart = "_this call ACME_fnc_aajtTreatmentStart";
+        callbackSuccess = "if ([_this, true] call ACME_fnc_aajtTreatmentFinish) then {_this call ACME_fnc_aajtApply}";
+        callbackFailure = "[_this, false] call ACME_fnc_aajtTreatmentFinish";
         callbackProgress = "";
+        ACME_suppressNativeTreatmentAnim = 1;
         animationMedic = "AinvPknlMstpSnonWnonDr_medic4";
         items[] = {"ACME_AAJT_S"};
         consumeItem = 1;
@@ -8857,9 +8868,11 @@ class ace_medical_treatment_actions {
         treatmentTime = 4;
         allowedSelections[] = {"LeftArm","RightArm"};
         condition = "((toLowerANSI _bodyPart) == 'leftarm' && {_patient getVariable ['ACME_AAJT_axillaleft', false]}) || {(toLowerANSI _bodyPart) == 'rightarm' && {_patient getVariable ['ACME_AAJT_axillaright', false]}}";
-        callbackSuccess = "_this call ACME_fnc_aajtRemove";
-        callbackFailure = "";
+        callbackStart = "_this call ACME_fnc_aajtTreatmentStart";
+        callbackSuccess = "if ([_this, true] call ACME_fnc_aajtTreatmentFinish) then {_this call ACME_fnc_aajtRemove}";
+        callbackFailure = "[_this, false] call ACME_fnc_aajtTreatmentFinish";
         callbackProgress = "";
+        ACME_suppressNativeTreatmentAnim = 1;
         animationMedic = "AinvPknlMstpSnonWnonDr_medic4";
         items[] = {};
         icon = "\acm_extended\ui\items\aajt-s_ca.paa";
@@ -8874,10 +8887,11 @@ class ace_medical_treatment_actions {
         treatmentTime = 20;
         allowedSelections[] = {"Body"};
         condition = "!(_patient getVariable ['ACME_AAJT_zone3', false])";
-        callbackStart = "[_this select 1, 'aajtApplying', ['body', true]] call ACME_fnc_ownerDispatch";
-        callbackSuccess = "_this call ACME_fnc_aajtApply";
-        callbackFailure = "[_this select 1, 'aajtApplying', ['', false]] call ACME_fnc_ownerDispatch";
+        callbackStart = "_this call ACME_fnc_aajtTreatmentStart";
+        callbackSuccess = "if ([_this, true] call ACME_fnc_aajtTreatmentFinish) then {_this call ACME_fnc_aajtApply}";
+        callbackFailure = "[_this, false] call ACME_fnc_aajtTreatmentFinish";
         callbackProgress = "";
+        ACME_suppressNativeTreatmentAnim = 1;
         animationMedic = "AinvPknlMstpSnonWnonDr_medic4";
         items[] = {"ACME_AAJT_S"};
         consumeItem = 1;
@@ -8893,9 +8907,11 @@ class ace_medical_treatment_actions {
         treatmentTime = 4;
         allowedSelections[] = {"Body"};
         condition = "_patient getVariable ['ACME_AAJT_zone3', false]";
-        callbackSuccess = "_this call ACME_fnc_aajtRemove";
-        callbackFailure = "";
+        callbackStart = "_this call ACME_fnc_aajtTreatmentStart";
+        callbackSuccess = "if ([_this, true] call ACME_fnc_aajtTreatmentFinish) then {_this call ACME_fnc_aajtRemove}";
+        callbackFailure = "[_this, false] call ACME_fnc_aajtTreatmentFinish";
         callbackProgress = "";
+        ACME_suppressNativeTreatmentAnim = 1;
         animationMedic = "AinvPknlMstpSnonWnonDr_medic4";
         items[] = {};
         icon = "\acm_extended\ui\items\aajt-s_zone3_reboa_ca.paa";

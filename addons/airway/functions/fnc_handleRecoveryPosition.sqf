@@ -34,7 +34,10 @@ if (_token == "") exitWith {};
     // Established interventions remain part of the postmortem record; only provisional work is cancelled.
     if (_isActive && {!alive _patient}) exitWith {[_handle] call CBA_fnc_removePerFrameHandler;};
     private _invalid = !alive _patient || {!(IS_UNCONSCIOUS(_patient))} || {!isNull objectParent _patient}
-        || {[_patient] call ACEFUNC(common,isBeingDragged)} || {[_patient] call ACEFUNC(common,isBeingCarried)};
+        || {[_patient] call ACEFUNC(common,isBeingDragged)} || {[_patient] call ACEFUNC(common,isBeingCarried)}
+        || {_patient getVariable ["ACME_vent_driving", false]}
+        || {[_patient] call EFUNC(core,cprActive)}
+        || {alive (_patient getVariable ["ACM_breathing_BVM_Medic", objNull])};
     if (_invalid) exitWith {
         [_medic, _patient, false, true, ["", "cancel"] select _isPending, _token] call FUNC(setRecoveryPosition);
         [_handle] call CBA_fnc_removePerFrameHandler;
@@ -49,8 +52,7 @@ if (_token == "") exitWith {};
         && {isNull objectParent _medic} && {(_medic distance _patient) <= 5} && {_providerEpoch <= _expectedEpoch}};
     if (!_providerValid || {serverTime >= (_pending select 2)} || {_accepted && {!_owns}}
         || {(_pending param [8, -1]) != ([_patient] call ACME_fnc_clinicalEpoch)}
-        || {_patient getVariable ["ACME_CS_ProcedureActive", false]}
-        || {[_patient] call ACM_core_fnc_cprActive} || {alive (_patient getVariable ["ACM_breathing_BVM_Medic", objNull])}) exitWith {
+        || {_patient getVariable ["ACME_CS_ProcedureActive", false]}) exitWith {
         [_medic, _patient, false, true, "cancel", _token] call FUNC(setRecoveryPosition);
         [_handle] call CBA_fnc_removePerFrameHandler;
     };

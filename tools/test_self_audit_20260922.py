@@ -44,11 +44,18 @@ REVIEWED_B212_UPDATES = {
 REVIEWED_B213_UPDATES = {
     'tools/test_fork_phase164_chest_animation_contract.py': '70e52fbd3e10fcdd0ef3c7847ba86d01a7f139a6a0eb1c7a1c6da0cae1bf9a79',
 }
+# B216 requested ordinary-seal behavior: air relief without surgical blood drainage,
+# and one quick-view entry per active panel session. Executed by test_b216_chest_seals.
+# Keep the original snapshot parameter identity and all unrelated protected hashes.
+REVIEWED_B216_UPDATES = {
+    'addons/acm_extended/functions/fn_chestSealBurp.sqf': '387cb1d08890377d76f2db08682a600a159fec3dec40ddf6210f876c3043bc51',
+}
 @pytest.mark.parametrize("path,expected", sorted(PROTECTED.items()))
 def test_prior_fix_restored_without_rewrite(path, expected):
     # Keep the historical parameter identity stable; reviewed bounded updates replace only
     # the assertion target so CI does not manufacture a new test identity for a known change.
     expected = REVIEWED_B213_UPDATES.get(path, REVIEWED_B212_UPDATES.get(path, REVIEWED_AW_UPDATES.get(path, expected)))
+    expected = REVIEWED_B216_UPDATES.get(path, expected)
     data = (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
     assert hashlib.sha256(data).hexdigest() == expected, path
 
