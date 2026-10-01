@@ -37,8 +37,8 @@ _medic setVariable ["ACME_DP_KeyIDs", []];
 
 private _partShort = [_bodyPart, "abbr"] call ACME_fnc_bodyPartName;
 [_patient, "activity",
- "%1 started Direct pressure on %2",
- "%1 started Direct pressure on %2",
+ "%1 applied direct pressure to %2",
+ "%1 applied direct pressure to %2",
  [[_medic, false, true] call ace_common_fnc_getName, _partShort]] call ACME_fnc_medLog;
 
 // Publish the clinical pressure marker only after provider-local episode state is fully initialized.

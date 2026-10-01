@@ -22,8 +22,8 @@ _medic setVariable ["ACME_DP_KeyIDs", []];
 ["", "Stop Direct Pressure", ""] call ace_interaction_fnc_showMouseHint;
 
 [_medic, "activity",
- "%1 started Direct pressure on own %2",
- "%1 started Direct pressure on own %2",
+ "%1 applied direct pressure to %2",
+ "%1 applied direct pressure to %2",
  [[_medic, false, true] call ace_common_fnc_getName, ([_bodyPart, "abbr"] call ACME_fnc_bodyPartName)]] call ACME_fnc_medLog;
 
 // Publish the clinical pressure marker only after provider-local episode state is fully initialized.

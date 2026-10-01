@@ -54,8 +54,8 @@ private _x = safeZoneXAbs + _marginX;
 private _y = safeZoneY + _marginY;
 private _panelBottom = safeZoneY + safeZoneH - _marginY;
 
-// B213: give the full drug catalog and explicit clinical labels room to breathe. The strip remains below
-// one quarter of screen width, including narrow displays; all text shares the existing measured font scale.
+// B215: this is a width ceiling, not a fixed backdrop width. Final measured content determines the right edge
+// after both width and height fitting; the strip always stays below one quarter of the screen.
 private _totalW = (safeZoneH * 0.40) min (safeZoneWAbs * 0.245) min (safeZoneWAbs - (2 * _marginX));
 private _valueW = 11;
 
@@ -161,6 +161,18 @@ private _wrapValue = {
 private _formatRow = {
     params ["_row", "_valueW", ["_labelWidths", [20, 20]]];
     if (_row isEqualType "") exitWith {_row};
+    // A bullet has an explicit depth and spans both columns; it must not widen either label column.
+    if (count _row == 4) exitWith {
+        _row params ["", "_text", "_color", "_depth"];
+        private _indent = if (_depth > 0) then {"    "} else {"  "};
+        private _limit = ((_labelWidths select 0) + (_labelWidths select 1) + 2 * _valueW + 10 - count _indent - 2) max 10;
+        private _lines = [_text, _limit] call _wrapValue;
+        private _formatted = [];
+        {
+            _formatted pushBack format ["%1%2<t color='%3'>%4</t>", _indent, if (_forEachIndex == 0) then {"• "} else {"  "}, _color, [_x] call _safe];
+        } forEach _lines;
+        _formatted joinString "<br/>"
+    };
     _row params ["_a", "_av", "_ac"];
     // B213: label widths are measured over the whole display, independently for each paired column.
     // Two spaces indent values under section titles. Exactly one space follows the longest label before ':'.
@@ -250,7 +262,7 @@ private _renderAll = {
 
     private _labelWidths = [0, 0];
     {
-        if (_x isEqualType [] && {count _x >= 3}) then {
+        if (_x isEqualType [] && {count _x in [3, 6]}) then {
             _labelWidths set [0, (_labelWidths select 0) max (count (_x select 0))];
             if (count _x >= 6) then {_labelWidths set [1, (_labelWidths select 1) max (count (_x select 3))];};
         };
@@ -299,6 +311,9 @@ private _renderAll = {
         _bodyH = [_bodyRows, _totalW] call _measureRows;
     };
 
+    // Height fitting can make the text substantially narrower. Measure again at the FINAL font size so
+    // the backdrop follows the actual rightmost content instead of leaving the original maximum-width strip.
+    _totalW = (([_headerRows] call _measureNaturalWidth) max ([_bodyRows] call _measureNaturalWidth)) min _totalW;
     [_headerH, _bodyH] call _layout;
     [_ctrlH, _headerRows] call _renderBlock;
     [_ctrlL, _bodyRows] call _renderBlock;
@@ -321,27 +336,6 @@ private _naOwner = missionNamespace getVariable ["ACME_NA2_ownerInstalled", fals
 _network pushBack (["Chest", if (_naChest) then {"on"} else {"off"}, if (_naChest) then {_cGood} else {_cBad}, "Owner", if (_naOwner) then {"on"} else {"off"}, if (_naOwner) then {_cGood} else {_cBad}] call _pair);
 private _rev = missionNamespace getVariable ["ACME_networkAuditRevision", "none"];
 _network pushBack (["Revision", _rev, _cMute] call _one);
-
-_network pushBack (["CHEST-SEAL TRANSPORT"] call _sect);
-private _pend = 0;
-private _pendMap = missionNamespace getVariable ["ACME_CS_pending", nil];
-if (!isNil "_pendMap" && {(typeName _pendMap) isEqualTo "HASHMAP"}) then {_pend = count (keys _pendMap);};
-private _sessTxt = "n/a";
-private _sessCol = _cMute;
-if (isServer) then {
-    private _sess = 0;
-    private _sessMap = missionNamespace getVariable ["ACME_CS_sessions", nil];
-    if (!isNil "_sessMap" && {(typeName _sessMap) isEqualTo "HASHMAP"}) then {_sess = count (keys _sessMap);};
-    _sessTxt = str _sess;
-    _sessCol = if (_sess > 0) then {_cLabel} else {_cGood};
-};
-_network pushBack (["Pending", _pend, if (_pend > 0) then {_cWarn} else {_cGood}, "Sessions", _sessTxt, _sessCol] call _pair);
-private _roster = uiNamespace getVariable ["ACME_CS_presenceTargets", []];
-if !(_roster isEqualType []) then {_roster = [];};
-_roster = _roster - [uiNamespace getVariable ["ACME_CS_presenceViewer", player]];
-private _rate = missionNamespace getVariable ["ACME_CS_presenceRate", 0.07];
-if (!(_rate isEqualType 0) || {!finite _rate}) then {_rate = 0.07;};
-_network pushBack (["Viewers", count _roster, if ((count _roster) > 0) then {_cGood} else {_cMute}, "Rate", format ["%1s", _rate toFixed 2], _cLabel] call _pair);
 
 _network pushBack (["COMPATIBILITY"] call _sect);
 private _networkStatus = missionNamespace getVariable ["ACME_networkCompatStatus", "pending"];
@@ -481,7 +475,7 @@ _left pushBack (["Airway", _airwayTxt, _airwayCol, "Reflex", [_airReflex] call _
 private _adj = [];
 if (_opa != "") then {_adj pushBack "OPA";}; if (_npa != "") then {_adj pushBack "NPA";};
 _left pushBack (["Adjunct", if (_adj isEqualTo []) then {"none"} else {_adj joinString "+"}, if (_adj isEqualTo []) then {_cMute} else {_cGood}, "Obs", format ["C%1 V%2 B%3", _collapse, _vomit, _bloodObs], _obsCol] call _pair);
-_left pushBack (["PTX", _ptx, if (_ptx > 0) then {_cWarn} else {_cGood}, "TPTX", [_tptx] call _yn, [_tptx, true] call _ynCol] call _pair);
+_left pushBack (["PTX", _ptx toFixed 3, if (_ptx > 0) then {_cWarn} else {_cGood}, "TPTX", [_tptx] call _yn, [_tptx, true] call _ynCol] call _pair);
 _left pushBack (["HTX", format ["%1 / %2L", _hemo, _hemoFluid toFixed 2], if (_hemo > 0 || {_hemoFluid > 0.3}) then {_cWarn} else {_cGood}, "Seal", [_seal] call _yn, if (_seal) then {_cGood} else {_cMute}] call _pair);
 _left pushBack (["FThor Left", _thoraL, if (_tubeL) then {_cTube} else {if (_closedL || {_openL}) then {_cGood} else {_cMute}}, "FThor Right", _thoraR, if (_tubeR) then {_cTube} else {if (_closedR || {_openR}) then {_cGood} else {_cMute}}] call _pair);
 _left pushBack (["BVM", [_bvm] call _yn, if (_bvm) then {_cGood} else {_cMute}, "Ventilator", [_vent] call _yn, if (_vent) then {_cGood} else {_cMute}] call _pair);
@@ -593,6 +587,22 @@ if (_medicationGroups isEqualTo []) then {
     missionNamespace setVariable ["ACME_debugMedicationGroups", _medicationGroups];
 };
 private _medicationRows = [];
+private _medicationLabel = {
+    params ["_name"];
+    // Preserve acronyms (TXA/HTS) while separating CamelCase words, including optional future medications.
+    private _chars = toArray _name;
+    private _label = "";
+    {
+        private _previous = if (_forEachIndex > 0) then {_chars select (_forEachIndex - 1)} else {0};
+        private _next = _chars param [_forEachIndex + 1, 0];
+        private _upper = _x >= 65 && {_x <= 90};
+        private _previousLower = (_previous >= 97 && {_previous <= 122}) || {_previous >= 48 && {_previous <= 57}};
+        private _acronymEnd = _previous >= 65 && {_previous <= 90} && {_next >= 97} && {_next <= 122};
+        if (_forEachIndex > 0 && {_upper} && {_previousLower || {_acronymEnd}}) then {_label = _label + " ";};
+        _label = _label + (if (_x == 95) then {" "} else {toString [_x]});
+    } forEach _chars;
+    _label
+};
 {
     _x params ["_family", "_classes"];
     private _effect = 0;
@@ -600,7 +610,7 @@ private _medicationRows = [];
         private _value = [_patient, _x, false] call ACME_fnc_medicationCountCompat;
         if (_value isEqualType 0 && {finite _value}) then {_effect = _effect + (_value max 0);};
     } forEach _classes;
-    _medicationRows pushBack [_family, _effect toFixed 2, if (_effect > 0) then {_cGood} else {_cMute}];
+    _medicationRows pushBack [[_family] call _medicationLabel, _effect toFixed 2, if (_effect > 0) then {_cGood} else {_cMute}];
 } forEach _medicationGroups;
 _right pushBack (["MEDICATIONS"] call _sect);
 _right pushBack format ["  <t color='%1'>Effective reference-dose equivalents</t>", _cMute];
@@ -631,63 +641,118 @@ _right pushBack (["SEIZURE CONTROL"] call _sect);
 _right pushBack (["Seizing", if (_szState == "") then {"none"} else {_szState}, if (_szState == "active") then {_cCrit} else {if (_szState == "postictal") then {_cWarn} else {_cMute}}, "Motor", _szMotor, if (_szMasked) then {_cWarn} else {if (_szState == "active") then {_cCrit} else {_cMute}}] call _pair);
 _right pushBack (["Drive", _szDrive toFixed 2, _cLabel, "Suppress", _szSupp toFixed 2, if (_szControlled) then {_cGood} else {if (_szSupp > 0) then {_cWarn} else {_cMute}}] call _pair);
 
-// Fluids / infusions: physical hung bags, with medication contents folded into the same line.
+// B215: one bullet per connected physical bag, with contents nested beneath it. This is read-only:
+// never allocate bag identities from a debug refresh or bind an unidentified bag to another bag's medication.
 private _medEntries = _patient getVariable ["ACME_infusion_BagMedications", []];
+if !(_medEntries isEqualType []) then {_medEntries = [];};
 private _ivMap = _patient getVariable ["ACM_circulation_IV_Bags", createHashMap];
 private _fluidRows = [];
 private _bpShort = {
     params ["_bp"];
     switch (toLowerANSI _bp) do {
-        case "leftarm": {"LA"}; case "rightarm": {"RA"};
-        case "leftleg": {"LL"}; case "rightleg": {"RL"};
-        case "body": {"B"}; default {_bp};
+        case "leftarm": {"LUE"}; case "rightarm": {"RUE"};
+        case "leftleg": {"LLE"}; case "rightleg": {"RLE"};
+        case "body": {"Torso"}; case "head": {"Head"}; default {_bp};
     }
 };
 private _fluidShort = {
-    params ["_t"];
-    switch (toLowerANSI _t) do {
-        case "blood": {"Blood"}; case "freshblood": {"FreshB"}; case "plasma": {"Plasma"};
+    params ["_type"];
+    switch (toLowerANSI _type) do {
+        case "blood": {"Blood"}; case "freshblood": {"Fresh Blood"}; case "plasma": {"Plasma"};
         case "saline": {"NS"}; case "acme_saliney": {"NS-Y"}; case "plasmalyte": {"PL"};
-        case "hts": {"HTS"}; case "hypertonicsaline": {"HTS"}; case "mannitol": {"Mtol"};
-        case "fbtk": {"FBTK"}; case "acme_empty": {""}; case "acme_emptysaline": {""};
-        default {_t};
+        case "hts": {"HTS"}; case "hts3": {"HTS"}; case "hypertonicsaline": {"HTS"};
+        case "mannitol": {"Mannitol"}; case "fbtk": {"FBTK"};
+        case "acme_empty": {""}; case "acme_emptysaline": {""}; default {_type};
     }
 };
-{
-    private _bp = _x;
-    private _arrB = _y;
-    {
-        private _bag = _x;
-        private _type = _bag param [0, ""];
-        private _remain = _bag param [1, 0];
-        private _site = _bag param [3, -1];
-        private _isIV = _bag param [4, true];
-        private _uid = _bag param [8, ""];
-        if (_uid == "") then {_uid = [_patient, _bp, _forEachIndex] call ACME_fnc_bagIdentity;};
-        private _short = [_type] call _fluidShort;
-        if (_short != "" && {_remain > 0.01}) then {
-            private _meds = _medEntries select {(_x param [23, ""]) == _uid && {(_x param [14, 0]) > 0.0001}};
-            private _medNames = _meds apply {_x param [11, "?"]};
-            private _what = _short + (if (_medNames isEqualTo []) then {""} else {"+" + (_medNames joinString "+")});
-            private _where = format ["%1 %2%3", [_bp] call _bpShort, if (_isIV) then {"IV"} else {"IO"}, if (_site >= 0) then {str _site} else {""}];
-            private _rate = if (_meds isEqualTo []) then {-1} else {(_meds select 0) param [21, 0]};
-            _fluidRows pushBack [_what, _where, _remain, _rate];
+private _medicationShort = {
+    params ["_name"];
+    _name = [_name] call _medicationFamily;
+    switch (_name) do {
+        case "Epinephrine": {"Epi"}; case "Norepinephrine": {"Norepi"};
+        case "CalciumChloride": {"CaCl2"}; case "CalciumGluconate": {"Ca Gluc"};
+        case "Magnesium": {"MgSO4"}; case "HTS3": {"HTS 3%"};
+        default {[_name] call _medicationLabel};
+    }
+};
+private _matchingBagMeds = {
+    params ["_bag", "_bp", "_index", "_entries"];
+    private _uid = _bag param [8, "", [""]];
+    _entries select {
+        private _entry = _x;
+        private _matches = false;
+        if (_entry isEqualType [] && {count _entry >= 15}) then {
+            private _entryUid = _entry param [23, "", [""]];
+            if (_entryUid != "") then {
+                _matches = _uid != "" && {_uid == _entryUid};
+            } else {
+                // Legacy data is slot-exact AND metadata-exact, never nearest-volume/identity-only fallback.
+                _matches = (toLowerANSI (_entry param [1, ""])) == toLowerANSI _bp
+                    && {(_entry param [2, -1]) == _index}
+                    && {(_entry param [3, ""]) == (_bag param [0, ""])}
+                    && {(_entry param [4, -1]) == (_bag param [3, -1])}
+                    && {(_entry param [5, true]) isEqualTo (_bag param [4, true])}
+                    && {(_entry param [6, -1]) == (_bag param [5, -1])}
+                    && {(_entry param [7, 0]) == (_bag param [6, 0])}
+                    && {(_entry param [8, -1]) == (_bag param [7, -1])};
+            };
+            private _dose = _entry param [14, 0, [0]];
+            _matches = _matches && {_dose > 0.000001};
         };
-    } forEach _arrB;
-} forEach _ivMap;
+        _matches
+    }
+};
+private _fluidBagRows = {
+    params ["_bag", "_bp", "_index", "_entries"];
+    if !(_bag isEqualType [] && {count _bag >= 7}) exitWith {[]};
+    private _type = _bag param [0, "", [""]];
+    private _short = [_type] call _fluidShort;
+    private _remaining = _bag param [1, 0, [0]];
+    // FBTK is a receiving bag and remains connected while empty. Empty plumbing markers are never bags.
+    if (_short == "" || {_remaining <= 0.01 && {toLowerANSI _type != "fbtk"}}) exitWith {[]};
+    // Native field 6 is the initial mixture volume (including added medication solution), not remaining mL.
+    private _volume = _bag param [6, 0, [0]];
+    private _size = if (_volume > 0) then {format ["%1 mL", _volume toFixed 0]} else {"Unknown size"};
+    private _rows = [["bullet", format ["%1 %2", _size, _short], _cGood, 0]];
+    private _site = _bag param [3, -1, [0]];
+    private _isIV = _bag param [4, true, [true]];
+    private _where = format ["%1 %2%3", [_bp] call _bpShort, if (_isIV) then {"IV"} else {"IO"}, if (_site >= 0) then {str _site} else {""}];
+    private _volumeLabel = if (toLowerANSI _type == "fbtk") then {"collected"} else {"remaining"};
+    _rows pushBack ["bullet", format ["%1 | %2 mL %3", _where, (_remaining max 0) toFixed 0, _volumeLabel], _cLabel, 1];
+    private _bloodType = _bag param [5, -1, [0]];
+    if (toLowerANSI _type in ["blood", "freshblood", "fbtk"] && {_bloodType in [0,1,2,3,4,5,6,7]}) then {
+        _rows pushBack ["bullet", "Blood type: " + (["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"] select _bloodType), _cLabel, 1];
+    };
+    private _meds = [_bag, _bp, _index, _entries] call _matchingBagMeds;
+    if !(_meds isEqualTo []) then {
+        private _control = _meds select 0;
+        private _drops = (_control param [21, 0, [0]]) max 0;
+        private _dropSet = (_control param [20, 20, [0]]) max 1;
+        _rows pushBack ["bullet", format ["Clamp: %1 gtt/min (%2 gtt/mL)", _drops toFixed 0, _dropSet toFixed 0], if (_drops > 0) then {_cGood} else {_cWarn}, 1];
+        {
+            private _name = _x param [11, "?", [""]];
+            private _dose = _x param [14, 0, [0]];
+            _rows pushBack ["bullet", format ["%1: %2 remaining", [_name] call _medicationShort, [_name, _dose] call ACME_fnc_formatDose], _cLabel, 1];
+        } forEach _meds;
+    };
+    _rows
+};
+if (_ivMap isEqualType createHashMap) then {
+    private _parts = keys _ivMap;
+    _parts sort true;
+    {
+        private _bp = _x;
+        private _bags = _ivMap getOrDefault [_bp, []];
+        if (_bags isEqualType []) then {
+            {_fluidRows append ([_x, _bp, _forEachIndex, _medEntries] call _fluidBagRows);} forEach _bags;
+        };
+    } forEach _parts;
+};
 _right pushBack (["FLUIDS / INFUSIONS"] call _sect);
 if (_fluidRows isEqualTo []) then {
-    _right pushBack (["Bags", 0, _cGood, "Pressor", _pressor toFixed 2, if (_pressor > 0) then {_cGood} else {_cMute}] call _pair);
+    _right pushBack ["bullet", "No connected bags", _cMute, 0];
 } else {
-    // Every active bag retains the common readable font; the measured block grows with wrapped rows.
-    for "_i" from 0 to ((count _fluidRows) - 1) do {
-        (_fluidRows select _i) params ["_what", "_where", "_rem", "_rate"];
-        private _tail = if (_rate >= 0) then {format ["%1mL/%2g", _rem toFixed 0, round _rate]} else {format ["%1mL", _rem toFixed 0]};
-        _right pushBack ([format ["Bag %1", _i + 1], format ["%1@%2 %3", _what, _where, _tail], if (_rate == 0) then {_cWarn} else {_cGood}] call _one);
-    };
+    _right append _fluidRows;
 };
-
-
-
 
 call _renderAll;

@@ -38,7 +38,7 @@ if (isNull objectParent _medic) then {[_medic, _patient] call ACME_fnc_directPre
 // Stop Direct Pressure menu action is the deliberate UI fallback. Escape/H remain available to the player.
 _medic setVariable ["ACME_DP_KeyIDs", []];
 
-[_patient, "activity", "%1 started Direct pressure on %2", "%1 started Direct pressure on %2", [[_medic, false, true] call ace_common_fnc_getName, ([_bodyPart, "abbr"] call ACME_fnc_bodyPartName)]] call ACME_fnc_medLog;
+[_patient, "activity", "%1 applied direct pressure to %2", "%1 applied direct pressure to %2", [[_medic, false, true] call ace_common_fnc_getName, ([_bodyPart, "abbr"] call ACME_fnc_bodyPartName)]] call ACME_fnc_medLog;
 
 // Publish the clinical pressure marker only after provider-local episode state is fully initialized.
 [_patient, "directPressureMarker", [_medic, _bodyPart, true, _medic getVariable ["ACME_DP_ClaimToken", ""], _medic getVariable ["ACME_DP_ClaimEpoch", -1]]] call ACME_fnc_ownerDispatch;

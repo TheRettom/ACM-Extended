@@ -2138,6 +2138,9 @@ class CfgFunctions {
             class providerAnimation {};
             class medicAnimationPrep {};
             class rollProviderStart {};
+            class recoveryPositionStart {};
+            class recoveryPositionProgress {};
+            class recoveryPositionFinish {};
             class obtundedMasterChanged {};
             class obtundedWeaponIntent {};
             class ivSiteAtPoint {};
@@ -7691,8 +7694,24 @@ class ace_medical_treatment_actions {
         treatmentTime = 3;
         allowedSelections[] = {"Body"};
         condition = "alive _patient && {ACM_airway_enable} && {!(_patient call ace_common_fnc_isAwake)} && {(_patient getVariable ['ACM_airway_AirwayItem_Oral','']) != 'SGA'} && {!(_patient getVariable ['ACME_ETT_Inserted',false])} && {!(_patient getVariable ['ACME_vent_driving',false])} && {!(_patient getVariable ['ACM_airway_RecoveryPosition_State',false])} && {isNull objectParent _patient}";
-        callbackSuccess = "[_medic,_patient,true] call ACM_airway_fnc_setRecoveryPosition";
+        // Explicit callbacks prevent CheckAirway's assessment controller being inherited here.
+        callbackStart = "_this call ACME_fnc_recoveryPositionStart";
+        callbackProgress = "_this call ACME_fnc_recoveryPositionProgress";
+        callbackSuccess = "[_this, true] call ACME_fnc_recoveryPositionFinish";
+        callbackFailure = "[_this, false] call ACME_fnc_recoveryPositionFinish";
         ACM_rollToBack = 0;
+        ACME_neverRollToBack = 1;
+    };
+
+    class CancelRecoveryPosition: RecoveryPosition {
+        // This native cancellation action must retain its roll-to-back and avoid the entry transaction.
+        ACME_neverRollToBack = 0;
+        ACM_rollToBack = 1;
+        ACM_cancelRecovery = 1;
+        callbackSuccess = "[_medic, _patient, false] call ACM_airway_fnc_setRecoveryPosition";
+        callbackStart = "";
+        callbackProgress = "";
+        callbackFailure = "";
     };
 
     class CheckResponse: CheckPulse {

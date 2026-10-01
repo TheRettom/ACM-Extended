@@ -6,6 +6,8 @@
 [QGVAR(handleAirwayObstruction_Blood), LINKFUNC(handleAirwayObstruction_Blood)] call CBA_fnc_addEventHandler;
 
 [QGVAR(handleRecoveryPosition), LINKFUNC(handleRecoveryPosition)] call CBA_fnc_addEventHandler;
+// Fixed native owner endpoint; no dynamic function or arbitrary variable transport.
+[QGVAR(setRecoveryPosition), LINKFUNC(setRecoveryPosition)] call CBA_fnc_addEventHandler;
 
 [QGVAR(handleSuctionLocal), LINKFUNC(handleSuctionLocal)] call CBA_fnc_addEventHandler;
 [QGVAR(setAirwayCheckedTime), {

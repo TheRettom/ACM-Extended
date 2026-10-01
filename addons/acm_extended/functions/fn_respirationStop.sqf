@@ -27,7 +27,7 @@ if (_complete && {_validProvider} && {count _watch >= 5}
     private _count = _watch select 3;
     private _estimate = round (_count * 60 / 15);
     [format ["Respirations: %1~ /min (%2 breaths in 15 seconds)", _estimate, _count], 5, _medic] call ace_common_fnc_displayTextStructured;
-    [_patient, "activity", "%1 measured respirations: %2~ /min (%3 breaths in 15 seconds)",
+    [_patient, "activity", "%1 measured respirations @ %2 RR/min~ (%3 breaths in 15 seconds)",
         [[_medic, false, true] call ace_common_fnc_getName, _estimate, _count]] call ace_medical_treatment_fnc_addToLog;
 };
 if (_reopen && {_validProvider} && {!isNull _patient}
