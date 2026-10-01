@@ -217,7 +217,13 @@ private _providerPFH = [{
         private _elapsed = (_now - _stageAt) * 1.5;
         if (_inEnd) then {
             private _nativeElapsed = _u getUnitMovesInfo 1;
-            if (_nativeElapsed isEqualType 0 && {finite _nativeElapsed} && {_nativeElapsed > 0}) then {_elapsed = _nativeElapsed;};
+            if (_nativeElapsed isEqualType 0 && {finite _nativeElapsed} && {_nativeElapsed > 0}) then {
+                _elapsed = _nativeElapsed;
+                // Entry can be observed after the RTM has already advanced. Preserve that native progress
+                // when BI's graph reaches idle and getUnitMovesInfo begins describing the next move.
+                _stageAt = _now - _nativeElapsed / 1.5;
+                _args set [9, _stageAt];
+            };
         };
         private _neutralAfterEnd = _state == toLowerANSI _rest
             || {(_state find "aidlpknlmstpsnonwnondnon") == 0};
@@ -235,7 +241,7 @@ private _providerPFH = [{
         };
         if (!_complete) exitWith {};
         [_u, _token] call _releaseChestGate;
-        // This is one interpolation directly from the authored medicEnd to the existing carrier reach.
+        // Request the existing carrier reach through BI's native exit graph after completed medicEnd.
         [_u, _first, 1] call ACME_fnc_doAnim;
         _u setVariable ["ACME_headElev_medicAnimStage", 1, false];
         _args set [7, 1]; _args set [8, false]; _args set [9, _now];

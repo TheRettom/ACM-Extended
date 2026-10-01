@@ -73,11 +73,10 @@ class CfgMovesMaleSdr: CfgMovesBasic {
         // medic3 is reserved exclusively for the moment a chest seal is actually applied. The CPR stop pose is
         // already a stable hands-planted-on-chest state, so the panel can remain open without replaying a treatment.
         class ACM_CPR_Stop;
-        // B213: keep BI's normal medicEnd exits and add the carrier-restoration reach.
-        class AinvPknlMstpSnonWnonDnon_medicEnd {
-            connectTo[] += {"AmovPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_Putdown", 0.08};
-            interpolateTo[] += {"AmovPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_Putdown", 0.08};
-        };
+        // B214: retain BI's complete native state and its normal empty-hands exit graph.
+        // Reopening this without its native parent removes inherited move properties (connectFrom, etc.).
+        // The provider controller observes the completed exit before requesting the carrier reach.
+        class AinvPknlMstpSnonWnonDnon_medicEnd;
         class ACME_ChestSealWorkspace: ACM_CPR_Stop {
             looped = 1;
             disableWeapons = 1;
