@@ -86,7 +86,9 @@ if (_token == "") exitWith {};
         _pending set [4, serverTime];
         _patient setVariable [QGVAR(RecoveryPosition_Pending), _pending, true];
     };
-    if ((_pending param [3, false]) && {serverTime >= ((_pending select 4) + 0.5)}) then {
+    private _moveBlend = _patient getUnitMovesInfo 3;
+    private _settled = _moveBlend isEqualType 0 && {finite _moveBlend} && {_moveBlend >= 0.99};
+    if ((_pending param [3, false]) && {_settled} && {serverTime >= ((_pending select 4) + 2)}) then {
         [_medic, _patient, true, _pending param [6, false], "apply", _token] call FUNC(setRecoveryPosition);
     };
 }, 0.05, [_medic, _patient, _token, _patient getVariable ["ACME_providerLocalityEpoch", 0]]] call CBA_fnc_addPerFrameHandler;

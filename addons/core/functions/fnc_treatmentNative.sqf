@@ -19,6 +19,7 @@
  */
 
 params ["_medic", "_patient", "_bodyPart", "_classname"];
+if (_classname == "ACME_FeelSkin") exitWith {_this call ACME_fnc_feelSkinStart;};
 
 // Delay by a frame if cursor menu is open to prevent progress bar failing
 if (uiNamespace getVariable [QACEGVAR(interact_menu,cursorMenuOpened), false]) exitWith {

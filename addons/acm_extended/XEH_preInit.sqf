@@ -477,11 +477,11 @@ private _settings = [
     // the physiology of a seizure is core gameplay and has no switch: the casualty still seizes, still loses
     // consciousness, and still carries every vital sign and consequence of it. this setting governs the BODY
     // MOTION and nothing else.
-    // ACME uses BI's GestureSpasm3-6 as dedicated 1.35x seizure gestures. Each gesture finishes before the next
+    // ACME uses BI's GestureSpasm0/4/5/6 as isolated seizure gestures. Each gesture finishes before the next
     // begins. The old heading tremor, random yaw jitter and repeated ragdoll-flop loop are no longer used.
     [
         "ACME_seizure_animEnabled", "CHECKBOX",
-        ["Seizure body motion", "The convulsion ANIMATION only. ON: active seizures cycle BI GestureSpasm3-6 at 1.35x, allowing each spasm to finish before the next begins. OFF: a seizing casualty lies still, while loss of consciousness, apnea, vitals, postictal state and treatment remain unchanged. Takes effect immediately, including on a seizure already running."],
+        ["Seizure body motion", "The convulsion ANIMATION only. ON: active seizures randomly play BI GestureSpasm0, GestureSpasm4, GestureSpasm5 and GestureSpasm6, allowing each spasm to finish before the next begins. OFF: a seizing casualty lies still, while loss of consciousness, apnea, vitals, postictal state and treatment remain unchanged. Takes effect immediately, including on a seizure already running."],
         [_cTrau, "3. Seizures"],
         true, 2, {}
     ],

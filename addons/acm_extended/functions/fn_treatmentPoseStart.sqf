@@ -39,6 +39,9 @@ private _main = switch (_mode) do {
     // AAJT placement/removal uses Flip's empty-handed medic4 as repeating work until ACE ends the treatment.
     case "aajt": {"ACME_JunctionalWork"};
     case "stethoscope": {"ACME_StethoscopeWork"};
+    // B217: same native reach/return as head elevation; only Feel Skin adds a contact hold.
+    case "feelSkin": {"AmovPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_Putdown"};
+    case "feelSkinReturn": {"AinvPknlMstpSnonWnonDnon_Putdown_AmovPknlMstpSnonWnonDnon"};
     case "chestSeal": {"AinvPknlMstpSnonWnonDnon_medic3"};
     case "ncdSeat": {"AinvPknlMstpSnonWnonDnon_medic1"};
     case "pulse": {"ACME_StethoscopeWork"};
@@ -71,6 +74,7 @@ if (_enteredProne) then {_main = [_medic, _main, true] call ACME_fnc_providerAni
 
 private _holdAt = (missionNamespace getVariable ["ACME_poseHoldAt", createHashMap]) getOrDefault [_mode, -1];
 private _stopAfterHold = (missionNamespace getVariable ["ACME_poseStopAfterHold", createHashMap]) getOrDefault [_mode, -1];
+if (_mode == "feelSkin") then {_holdAt = 0.55; _stopAfterHold = -1;};
 if !(_holdAt isEqualType 0) then {_holdAt = -1;};
 if !(_stopAfterHold isEqualType 0) then {_stopAfterHold = -1;};
 // A prone specialty fallback is already a supported medical hold. Do not seek a kneeling RTM timestamp into it.

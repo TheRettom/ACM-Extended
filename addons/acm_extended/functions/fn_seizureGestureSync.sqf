@@ -55,7 +55,8 @@ if (!isNull objectParent _patient) exitWith {
     false
 };
 
-if (_session isEqualTo [] || {_gesture == ""}) exitWith {false};
+// Reject retired/unknown gestures from a delayed packet or mismatched older build.
+if !(_gesture in ["ACME_SeizureSpasm0", "ACME_SeizureSpasm4", "ACME_SeizureSpasm5", "ACME_SeizureSpasm6"]) exitWith {false};
 _patient setVariable ["ACME_seizure_observerSession", +_session, false];
 _patient switchGesture [_gesture, 0, 1, false];
 true

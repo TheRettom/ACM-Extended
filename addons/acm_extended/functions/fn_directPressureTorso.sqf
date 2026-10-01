@@ -19,7 +19,7 @@ _medic setVariable ["ACME_DP_Start", CBA_missionTime];
 _medic setVariable ["ACME_DP_NextClot", CBA_missionTime + 15];
 _medic setVariable ["ACME_DP_Paused", false];
 _medic setVariable ["ACME_DP_InPose", false];
-_medic setVariable ["ACME_DP_IdleStart", CBA_missionTime];
+_medic setVariable ["ACME_DP_IdleStart", CBA_missionTime - 2];
 _medic setVariable ["ACME_DP_LastPos", getPosASL _medic];
 _medic setVariable ["ACME_DP_LastPoseAssert", 0];
 _medic setVariable ["ACME_DP_ClinicalYield", false];

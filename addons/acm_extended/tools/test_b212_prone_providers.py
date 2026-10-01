@@ -29,7 +29,9 @@ def test_prone_pressure_resumes_without_raising_provider_then_right_click_releas
         [_medic getVariable ["ACME_DP_Active",false],"prone movement cancelled clinical pressure"] call _check;
         _inputActions=[]; _animation="amovppnemrunsnonwnondf";
         CBA_missionTime=CBA_missionTime+0.016; call _pressTick;
-        [_medic getVariable ["ACME_DP_InPose",false],"prone pressure did not resume immediately"] call _check;
+        [!(_medic getVariable ["ACME_DP_InPose",false]),"prone pressure skipped quiet interval"] call _check;
+        CBA_missionTime=(_medic getVariable "ACME_DP_IdleStart")+2; call _pressTick;
+        [_medic getVariable ["ACME_DP_InPose",false],"prone pressure did not resume after two quiet seconds"] call _check;
         _moves=[]; (count _handlers-1) call _tick;
         [count _moves==1 && {{((_moves select 0) select 1)=="ACM_ProneContinuous"}},"resume requested kneeling hold"] call _check;
         // An exact expected-state comparison must not keep restarting the fallback.

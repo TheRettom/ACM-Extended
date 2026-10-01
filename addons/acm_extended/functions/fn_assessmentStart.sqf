@@ -1,6 +1,4 @@
-/* Assessment-only animation preflight. Native ACE still owns clinical progress/results/cancellation.
- * Start its timer after the requested work state enters, so holstering cannot consume the two-second check.
- */
+/* B217: native progress includes provider entry. The observed animation still owns completion safety. */
 params ["_medic", "_patient", "_bodyPart", "_classname"];
 private _class = toLowerANSI _classname;
 if !(_class in ["checkairway", "checkbreathing"]) exitWith {false};
@@ -19,20 +17,13 @@ if (_epoch < 0) exitWith {false};
 private _token = format ["assessment:%1:%2:%3", clientOwner, netId _medic, _epoch];
 private _record = [_epoch, +_this, 0, -1, CBA_missionTime, _token, []];
 _medic setVariable ["ACME_assessment", _record, false];
-private _keys = [];
-if (hasInterface && {[_medic] call ace_common_fnc_isPlayer}) then {
-    ace_medical_gui_pendingReopen = false;
-    if (dialog) then {closeDialog 0;};
-    [true, _medic, _patient, _token] call ACME_fnc_chestAccessPreparing;
-    // Local input must not resolve a netId: single-player object identities need not be network-addressable.
-    missionNamespace setVariable ["ACME_assessmentInputProvider", _medic];
-    private _cancel = compile format [
-        "private _m=missionNamespace getVariable ['ACME_assessmentInputProvider',objNull]; if (!isNull _m && {local _m}) then {[_m,%1,true] call ACME_fnc_assessmentStop;}; false",
-        _epoch
-    ];
-    {_keys pushBack ([_x, [false,false,false], _cancel, "keydown", "", false, 0] call CBA_fnc_addKeyHandler);} forEach [0x01, 0xF0];
-};
-_record set [6, _keys];
 private _pfh = [ACME_fnc_assessmentTick, 0, [_medic, _epoch]] call CBA_fnc_addPerFrameHandler;
 _record set [3, _pfh];
-true
+// Mark launch before calling native code: synchronous failure/callbacks must see a launched episode.
+_record set [10, true];
+private _started = _this call ACM_core_fnc_treatmentNative;
+if (!_started) then {
+    _record set [10, false];
+    [_medic, _epoch, true] call ACME_fnc_assessmentStop;
+};
+_started

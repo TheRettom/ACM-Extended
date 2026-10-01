@@ -61,7 +61,7 @@ if (!isAwake _patient && {!_afterHandoff}) exitWith {
     },[_patient,_session]] call CBA_fnc_execNextFrame;
 };
 private _gestures = [
-    "ACME_SeizureSpasm3",
+    "ACME_SeizureSpasm0",
     "ACME_SeizureSpasm4",
     "ACME_SeizureSpasm5",
     "ACME_SeizureSpasm6"

@@ -3,6 +3,7 @@
 RTM rendering/engine phase values are explicit boundaries. These tests do not claim an Arma visual run.
 """
 import re
+from functools import lru_cache
 import pytest
 from test_menu_death_lifecycle import adapt, execute, read, ROOT
 
@@ -21,6 +22,7 @@ def function(name):
     return f'ACME_fnc_{name}={{' + adapt(s) + '};\n'
 
 
+@lru_cache(maxsize=1)
 def setup():
     return r'''
         private _localMedic=true; private _vehicle=objNull; private _patientVehicle=objNull;
@@ -85,10 +87,10 @@ def test_preparation_waits_for_actual_work_entry_and_native_timer_starts_once(ac
     execute(setup()+f'_request set [3,"{action}"];'+r'''
         [_request call ACME_fnc_assessmentStart,"start denied"] call _check;
         call _frame; call _frame;
-        [count _nativeCalls==0,"prep consumed clinical timer"] call _check;
+        [count _nativeCalls==1,"entry was not included in the clinical timer"] call _check;
         call _ready; call _frame;
         [count _nativeCalls==1,"native timer missing or duplicated"] call _check;
-        [count _removed==2,"preflight cancel keys leaked"] call _check;
+        [count _added==0,"redundant preflight cancel keys installed"] call _check;
         [[_nativeArgs] call ACME_fnc_assessmentProgress,"current clinical work rejected"] call _check;
         [_nativeArgs] call ACME_fnc_assessmentFinish;
         [(_medic getVariable ["ACME_assessment",[]]) isEqualTo [],"completion retained sequence"] call _check;
@@ -121,9 +123,9 @@ def test_invalid_or_timed_out_preparation_never_launches(invalidation):
         _request call ACME_fnc_assessmentStart;
     '''+invalidation+r'''
         call _ready;
-        [count _nativeCalls==0,"invalid prep launched treatment"] call _check;
+        [count _nativeCalls==1,"entry cancellation relaunched treatment"] call _check;
         [(_medic getVariable ["ACME_assessment",[]]) isEqualTo [],"invalid prep retained sequence"] call _check;
-        [count _removed==2,"cancel keys leaked"] call _check;
+        [count _added==0,"redundant input handlers leaked"] call _check;
     ''')
 
 
@@ -156,8 +158,7 @@ def test_preflight_rejection_releases_dp_pause_and_own_carrier_lease():
         _medic setVariable ["ACME_chestAccess_treatment",[_patient,"checkbreathing","lease"]];
         _medic setVariable ["ACME_DP_PauseTreatmentClass","checkbreathing"];
         _medic setVariable ["ACME_DP_Paused",true];
-        _request call ACME_fnc_assessmentStart;
-        _nativeAccepted=false; call _ready;
+        _nativeAccepted=false; _request call ACME_fnc_assessmentStart;
         [!(_medic getVariable ["ACME_DP_Paused",true]),"failed startup stranded DP"] call _check;
         [count _leases==1 && {!((_leases select 0) select 3)},"failed startup retained carrier lease"] call _check;
     ''')
@@ -166,9 +167,10 @@ def test_preflight_rejection_releases_dp_pause_and_own_carrier_lease():
 def test_cancel_key_uses_direct_local_provider_even_without_network_identity():
     execute(setup()+r'''
         _request call ACME_fnc_assessmentStart;
-        [] call ((_added select 1) select 2);
+        // Native progress owns ESC/RMB from the first frame; its failure callback retires this exact episode.
+        [_nativeArgs] call ACME_fnc_assessmentFinish;
         [(_medic getVariable ["ACME_assessment",[]]) isEqualTo [],"RMB failed to cancel local prep"] call _check;
-        [count _nativeCalls==0 && {count _removed==2},"RMB cancellation leaked timer or handlers"] call _check;
+        [count _nativeCalls==1 && {count _added==0},"native cancellation leaked preflight handlers"] call _check;
     ''')
 
 

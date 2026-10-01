@@ -5,6 +5,11 @@
  */
 params ["_medic", "_patient", "_bodyPart", "_classname"];
 
+// B217: a successor click preempts only the matching tactile exam. Never leave its held frame behind.
+if (!isNull _medic && {local _medic} && {_classname != "ACME_FeelSkin"}) then {
+    [_medic] call ACME_fnc_feelSkinStop;
+};
+
 // B190: the exposed HPMK overlay represents a physically open chest. CPR must execute as the canonical Body
 // treatment even if the medical-menu overlay retained another exposed selection when the button was pressed.
 if ((toLowerANSI _classname) == "cpr"
@@ -90,6 +95,8 @@ if (_classname == "ACME_StopDirectPressure") exitWith {
 };
 
 if !([_medic, _classname] call ACME_fnc_procedureActionAllowed) exitWith {false};
+
+if (_classname == "ACME_FeelSkin") exitWith {_this call ACME_fnc_feelSkinStart;};
 
 // Stable B182: manual carrier removal/replacement is an immediate equipment-state toggle, not a timed treatment.
 // Do not close the menu, start a progress bar, holster the provider or enter chest-access animation.
@@ -201,7 +208,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
             && {_patient getVariable ["ACME_headElevated", false]}
             && {!(_patient getVariable ["ACME_headElev_Suspended", false])}};
 
-    // B212: carrier handling remains preparation. The assessment itself owns a separate two-second medic4.
+    // B217: carrier handling remains equipment preparation; assessment entry is part of its progress timer.
     if (_needsChestAccess && {_needsPhysicalPrep} && {!_alreadyPrepared}
         && {local _medic} && {!isNull _medic} && {alive _medic}) exitWith {
         if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
@@ -400,7 +407,7 @@ if (_classname != "ACME_ConnectETVent") exitWith {
         true
     };
 
-    // B212: assessment work owns one exact sequence. Its bounded preparation cannot consume the clinical timer.
+    // B217: assessment entry and clinical progress start together; observed work still gates completion.
     if (_nativeContinuousClass in ["checkairway", "checkbreathing"]) exitWith {
         if (_dpSamePatient) then {[_medic, _nativeContinuousClass] call _fnc_dpPauseForManeuver;};
         private _started = _this call ACME_fnc_assessmentStart;

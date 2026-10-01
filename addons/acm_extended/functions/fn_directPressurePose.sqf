@@ -2,7 +2,7 @@
 // the medic can still use the medical menu and other treatments. while stationary and looking at the patient they
 // adopt the connected direct-pressure hold. any competing treatment, movement, or look-away immediately retires the
 // held-animation reassert worker. Movement only releases the pose, not the clinical Direct Pressure state, so the
-// animation reapplies on the next eligible tick after the provider stops moving and faces the patient.
+// animation reapplies only after two quiet seconds facing the patient; the pressure session remains active.
 params ["_medic", "_patient"];
 if (isNull _medic || {!local _medic}) exitWith {};
 private _exit = _medic getVariable ["ACME_DP_Exit", []];
@@ -66,7 +66,7 @@ if (_moving || {!_looking}) then {
     if ((_medic getVariable ["ACME_DP_Exit", []]) isNotEqualTo []) exitWith {};
     if (!_inPose) then {
         private _idleStart = _medic getVariable ["ACME_DP_IdleStart", _now];
-        if ((_now - _idleStart) >= (missionNamespace getVariable ["ACME_DP_idleToPose", 0])) then {
+        if ((_now - _idleStart) >= (missionNamespace getVariable ["ACME_DP_idleToPose", 2])) then {
             [_medic, _patient] call ACME_fnc_directPressurePoseEnter;
         };
     } else {

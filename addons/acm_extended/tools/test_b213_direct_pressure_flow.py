@@ -36,7 +36,9 @@ def test_real_holster_finishes_before_first_hold_and_is_never_replayed_on_resume
         [_medic getVariable ["ACME_DP_Active",false],"movement stopped clinical pressure"] call _check;
         call _finishPressureExit;
         _animation="amovpknlmstpsnonwnondnon"; _inputActions=[]; call _pressTick;
-        [_medic getVariable ["ACME_DP_InPose",false],"pressure did not resume after full exit"] call _check;
+        [!(_medic getVariable ["ACME_DP_InPose",false]),"pressure skipped two-second quiet interval"] call _check;
+        CBA_missionTime=(_medic getVariable "ACME_DP_IdleStart")+2; call _pressTick;
+        [_medic getVariable ["ACME_DP_InPose",false],"pressure did not resume after full exit and quiet interval"] call _check;
         [_holsters==1 && {{_dpWeapon==""}},"resume replayed holster or restored selected weapon"] call _check;
     ''')
 
@@ -186,7 +188,9 @@ def test_starting_during_movement_waits_for_idle_and_repeated_move_does_not_repl
         _inputActions=["MoveForward"]; ["body"] call _start;
         [!(_medic getVariable ["ACME_DP_InPose",false]),"pressure forced hold while moving at start"] call _check;
         _inputActions=[]; call _pressTick;
-        [_medic getVariable ["ACME_DP_InPose",false],"idle did not enter pressure"] call _check;
+        [!(_medic getVariable ["ACME_DP_InPose",false]),"first quiet frame entered pressure"] call _check;
+        CBA_missionTime=(_medic getVariable "ACME_DP_IdleStart")+2; call _pressTick;
+        [_medic getVariable ["ACME_DP_InPose",false],"two quiet seconds did not enter pressure"] call _check;
         _animation="acme_directpressurehold"; _inputActions=["MoveForward"]; CBA_missionTime=CBA_missionTime+0.2;
         call _pressTick; private _movesBefore=count _moves; private _handlersBefore=count _handlers;
         for "_i" from 1 to 5 do {CBA_missionTime=CBA_missionTime+0.016; call _pressTick;};

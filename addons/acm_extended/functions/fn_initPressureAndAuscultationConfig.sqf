@@ -14,7 +14,7 @@ ACME_DP_fractureWakeMinMAP = 60;
 ACME_DP_fractureWakeGrace = 8;
 
 // direct-pressure free-movement pose tuning, for the limb and the head.
-ACME_DP_idleToPose = 0;  // return to the hold on the first eligible tick after repositioning
+ACME_DP_idleToPose = 2; // two quiet seconds after repositioning before resuming the pressure pose
 ACME_DP_lookDot    = 0.4;  // minimum horizontal facing dot toward the patient to hold the pose, about a 66 deg cone.
 // B128: give every other-casualty Direct Pressure hold one additional metre of working leash. Movement input
 // yields only the pose; exceeding this distance releases the pressure episode.

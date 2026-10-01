@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import tempfile
 
 import pytest
 from source_scan import lex, matching, split_args
@@ -172,7 +173,12 @@ def execute(code):
     vm = os.environ.get('SQFVM') or shutil.which('sqfvm')
     if not vm:
         pytest.skip('SQF-VM required')
-    result = subprocess.run([vm, '--automated', '--suppress-welcome', '--no-execute-print', '--no-work-print', '--sqf', PREAMBLE + code + '\ndiag_log (if (_ok) then {"MENU_FIX_OK"} else {"MENU_FIX_FAIL"});'], capture_output=True, text=True, timeout=15)
+    # A complete production bridge can exceed both Windows and Linux argument limits.
+    # A temporary input file preserves every source byte without truncation or weakening assertions.
+    with tempfile.TemporaryDirectory(prefix="acme-sqf-test-") as directory:
+        source_path = Path(directory) / "case.sqf"
+        source_path.write_text(PREAMBLE + code + '\ndiag_log (if (_ok) then {"MENU_FIX_OK"} else {"MENU_FIX_FAIL"});', encoding="utf-8")
+        result = subprocess.run([vm, '--automated', '--suppress-welcome', '--no-execute-print', '--no-work-print', '--input-sqf', str(source_path)], capture_output=True, text=True, timeout=15)
     output = result.stdout + result.stderr
     assert result.returncode == 0 and '[ERR]' not in output and '[FAT]' not in output, output
     assert 'MENU_FIX_OK' in output and 'MENU_FIX_FAIL' not in output, output

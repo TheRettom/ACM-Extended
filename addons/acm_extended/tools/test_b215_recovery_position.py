@@ -1,6 +1,7 @@
 """Execute recovery provider/owner transactions; engine move graph and RTM blending remain boundaries."""
 import re
 from pathlib import Path
+from functools import lru_cache
 import pytest
 from test_menu_death_lifecycle import adapt, execute, read
 
@@ -22,6 +23,7 @@ def source(name, native=False):
     return adapt(raw, 'airway')
 
 
+@lru_cache(maxsize=1)
 def setup():
     code = '''
         private _patientLocal=true; private _medicLocal=true; private _patientUnconscious=true;
@@ -78,7 +80,7 @@ def test_observed_blend_and_native_success_both_required_before_airway_commit():
     execute(setup()+begin()+'''
         _patient setVariable ["ACM_airway_AirwayObstructionBlood_State",1];
         _patient setVariable ["ACM_airway_AirwayObstructionVomit_State",1];
-        _serverClock=11; call _run;
+        _serverClock=12.01; call _run;
         [!(_patient getVariable ["ACM_airway_RecoveryPosition_State",false]) && {count _logs==0},"pose-only stage credited treatment"] call _check;
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
         call _run;
@@ -93,9 +95,9 @@ def test_observed_blend_and_native_success_both_required_before_airway_commit():
 def test_success_before_blend_finishes_waits_for_half_second_observation():
     execute(setup()+begin()+'''
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
-        _serverClock=10.49; call _run;
+        _serverClock=11.99; call _run;
         [!(_patient getVariable ["ACM_airway_RecoveryPosition_State",false]),"incomplete blend counted"] call _check;
-        _serverClock=10.51; call _run;
+        _serverClock=12.01; call _run;
         [_patient getVariable ["ACM_airway_RecoveryPosition_State",false],"complete observed blend did not commit"] call _check;
     ''')
 
@@ -196,16 +198,16 @@ def test_provider_uses_flip_and_observed_prone_mapping_then_commits_on_success()
             private _args=[_medic,_patient,"Body","RecoveryPosition"];
             _args call ACME_fnc_recoveryPositionStart;
             [count _rolls==1 && {(_rolls select 0 select 1)=="recoveryPosition"},"provider did not use Flip controller"] call _check;
-            [_args] call ACME_fnc_recoveryPositionProgress;
+            [_args,3,5] call ACME_fnc_recoveryPositionProgress;
             [count _handlers==0,"patient started before observed provider work"] call _check;
             private _pose=_medic getVariable "ACME_treatmentPoseState"; _pose set [3,1];
         '''+('''_pose set [2,"ACM_ProneContinuous"]; _pose set [20,true]; _providerAnim="acm_pronecontinuous";''' if prone else '_providerAnim="ainvpknlmstpsnonwnondnon_medic4";')+'''
-            [_args] call ACME_fnc_recoveryPositionProgress;
+            [_args,3,5] call ACME_fnc_recoveryPositionProgress;
             [count _handlers==1,"provider at work did not request patient"] call _check;
             call _run; _patientAnim="acm_recoveryposition"; call _run;
             [_args,true] call ACME_fnc_recoveryPositionFinish;
             [count _poseStops==0 && {(_medic getVariable ["ACME_rollProviderToken",""])!=""},"success clipped the finite Flip scene"] call _check;
-            _serverClock=11; call _run;
+            _serverClock=12.01; call _run;
             [_patient getVariable ["ACM_airway_RecoveryPosition_State",false],"successful action did not commit"] call _check;
         ''')
 
@@ -238,12 +240,12 @@ def test_provider_sf_lower_completes_before_flip_controller_starts():
         _patient setVariable ["ACME_patientAnimLock",["lower","head-elev-lower","",1,11]];
         private _pose=_medic getVariable "ACME_treatmentPoseState"; _pose set [3,1];
         _providerAnim="ainvpknlmstpsnonwnondnon_medic4";
-        [_args] call ACME_fnc_recoveryPositionProgress; call _run;
+        [_args,3,5] call ACME_fnc_recoveryPositionProgress; call _run;
         [count _moves==0,"recovery cut off patient lower"] call _check;
         _serverClock=11; _patient setVariable ["ACME_patientAnimLock",[]]; call _run;
         _patientAnim="acm_recoveryposition"; call _run;
         _serverClock=13; [_args,true] call ACME_fnc_recoveryPositionFinish; call _run;
-        [_patient getVariable ["ACM_airway_RecoveryPosition_State",false],"SF recovery failed native three-second window"] call _check;
+        [_patient getVariable ["ACM_airway_RecoveryPosition_State",false],"SF recovery failed after complete lower and two-second blend"] call _check;
         [count _rolls==1,"SF recovery replayed provider scene"] call _check;
     ''')
 
@@ -292,7 +294,7 @@ def test_pending_clinical_reset_and_late_begin_cannot_reapply_recovery():
     execute(setup()+begin()+"""
         _clinicalEpoch=1;
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
-        _serverClock=11; call _run;
+        _serverClock=12.01; call _run;
         [!(_patient getVariable ["ACM_airway_RecoveryPosition_State",false]),"clinical reset was overwritten"] call _check;
         [_medic,_patient,true,false,"begin","late",-1,0] call ACM_airway_fnc_setRecoveryPosition;
         [(_patient getVariable ["ACM_airway_RecoveryPosition_Pending",[]]) isEqualTo [],"pre-reset delayed begin accepted"] call _check;
@@ -311,7 +313,7 @@ def test_native_reset_retires_pending_token_and_episode():
 def test_committed_death_preserves_intervention_evidence_and_retires_worker():
     execute(setup()+begin()+"""
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
-        _serverClock=11; call _run;
+        _serverClock=12.01; call _run;
         _patientAlive=false; call _run;
         [_patient getVariable ["ACM_airway_RecoveryPosition_State",false],"death erased established treatment evidence"] call _check;
         [!((_handlers select 0) select 2),"dead patient retained watcher"] call _check;
@@ -321,7 +323,7 @@ def test_committed_death_preserves_intervention_evidence_and_retires_worker():
 def test_elapsed_time_does_not_replace_native_blend_completion():
     execute(setup()+begin()+"""
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
-        _serverClock=11; _moveBlend=0.6; call _run;
+        _serverClock=12.01; _moveBlend=0.6; call _run;
         [!(_patient getVariable ["ACM_airway_RecoveryPosition_State",false]),"partial engine blend was counted as settled"] call _check;
         _moveBlend=1; call _run;
         [_patient getVariable ["ACM_airway_RecoveryPosition_State",false],"completed native blend did not authorize recovery"] call _check;
@@ -331,7 +333,7 @@ def test_elapsed_time_does_not_replace_native_blend_completion():
 def test_patient_owner_away_and_back_between_ticks_invalidates_pending():
     execute(setup()+begin()+"""
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
-        _patient setVariable ["ACME_providerLocalityEpoch",2]; _serverClock=11; call _run;
+        _patient setVariable ["ACME_providerLocalityEpoch",2]; _serverClock=12.01; call _run;
         [!(_patient getVariable ["ACM_airway_RecoveryPosition_State",false]),"owner roundtrip revived old pending action"] call _check;
         [!((_handlers select 0) select 2),"old owner worker retained"] call _check;
     """)

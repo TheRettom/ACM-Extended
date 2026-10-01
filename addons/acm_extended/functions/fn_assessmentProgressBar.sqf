@@ -1,6 +1,7 @@
 /* B212 assessment-only adapter of ACE common/fnc_progressBar.sqf (ACE3, GPL-2.0).
  * Existing controls, input cancellation, eligibility and callback arguments are unchanged.
- * A normal breathing check remains exactly two seconds. Airway completion waits for its full
+ * A normal breathing check includes entry in its two-second timer; missing entry fails boundedly.
+ * Airway completion waits for its full
  * final RTM and rounds any real graph-transition delay up to a whole second, with bounded failure.
  */
 /*

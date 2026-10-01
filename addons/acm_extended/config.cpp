@@ -28,7 +28,7 @@ class ACME_MainMenuHelperDumpDebug: RscDisplayEmpty {
 // states, so ACME gets the faster convulsion cadence without changing hit reactions or gestures used by other mods.
 class CfgMovesBasic {
     class ManActions {
-        ACME_SeizureSpasm3[] = {"ACME_SeizureSpasm3", "Gesture"};
+        ACME_SeizureSpasm0[] = {"ACME_SeizureSpasm0", "Gesture"};
         ACME_SeizureSpasm4[] = {"ACME_SeizureSpasm4", "Gesture"};
         ACME_SeizureSpasm5[] = {"ACME_SeizureSpasm5", "Gesture"};
         ACME_SeizureSpasm6[] = {"ACME_SeizureSpasm6", "Gesture"};
@@ -1735,7 +1735,7 @@ class CfgGesturesMale {
     class Default;
     class States {
         class GestureFreezeStand;  // vanilla upper-body arm gesture base. it inherits the movement-friendly mask.
-        class GestureSpasm3;
+        class GestureSpasm0;
         class GestureSpasm4;
         class GestureSpasm5;
         class GestureSpasm6;
@@ -1749,11 +1749,11 @@ class CfgGesturesMale {
             enableOptics = 0;
         };
 
-        // BI's four best whole-body-looking spasm gestures, isolated under ACME action names and played at 1.05x.
+        // B217: random, non-repeating pool of BI Spasm0/4/5/6; Spasm0 retains its native timing.
         // They retain the original RTMs, masks and interpolation data. Only playback speed changes.
         // Positive speed is clip cycles/second, not a playback multiplier.
-        // BI Spasm3-6: 0.238, 0.2325, 0.2069, 0.1287, each multiplied by 1.05.
-        class ACME_SeizureSpasm3: GestureSpasm3 { speed = 0.2499; };
+        // BI Spasm4-6: 0.2325, 0.2069, 0.1287, each multiplied by 1.05.
+        class ACME_SeizureSpasm0: GestureSpasm0 {};
         class ACME_SeizureSpasm4: GestureSpasm4 { speed = 0.244125; };
         class ACME_SeizureSpasm5: GestureSpasm5 { speed = 0.217245; };
         class ACME_SeizureSpasm6: GestureSpasm6 { speed = 0.135135; };
@@ -2662,6 +2662,10 @@ class CfgFunctions {
             // skin pallor and the "Feel Skin" action.
             class skinSigns {};
             class feelSkin {};
+            class feelSkinStart {};
+            class feelSkinTick {};
+            class feelSkinStop {};
+            class carrierParkTarget {};
             class skinInjuryEntry {};
             // TBI blast, or overpressure, trigger.
             class tbiBlast {};
@@ -7674,7 +7678,7 @@ class ace_medical_treatment_actions {
     // gear check while they cannulate.
     class CheckAirway {
         // B213: medic5 to source time 1.75 s, then interpolate through the complete medic4 RTM at 1.5x.
-        // Provider preparation is outside this duration; inherited descendants do not acquire this sequence.
+        // Provider preparation is inside this duration; inherited descendants do not acquire this sequence.
         treatmentTime = "['CheckAirway'] call ACME_fnc_assessmentTime";
         animationMedic = "";
         animationMedicProne = "";
@@ -7691,8 +7695,8 @@ class ace_medical_treatment_actions {
         displayNameProgress = "$STR_ACM_Airway_EstablishRecoveryPosition_Progress";
         icon = "";
         medicRequired = 0;
-        treatmentTime = 3;
-        allowedSelections[] = {"Body"};
+        treatmentTime = 5;
+        allowedSelections[] = {"Head", "Body"};
         condition = "alive _patient && {ACM_airway_enable} && {!(_patient call ace_common_fnc_isAwake)} && {!(_patient getVariable ['ACME_vent_driving',false])} && {!([_patient] call ACM_core_fnc_cprActive)} && {!alive (_patient getVariable ['ACM_breathing_BVM_Medic',objNull])} && {!(_patient getVariable ['ACM_airway_RecoveryPosition_State',false])} && {isNull objectParent _patient}";
         // Explicit callbacks prevent CheckAirway's assessment controller being inherited here.
         callbackStart = "_this call ACME_fnc_recoveryPositionStart";
@@ -9363,14 +9367,17 @@ class ace_medical_treatment_actions {
         category = "examine";
         treatmentLocations[] = {"All"};
         medicRequired = 0;
-        treatmentTime = 2;
+        treatmentTime = 0; // B217: immediate launcher, no progress dialog.
         allowedSelections[] = {"Head","Body","LeftArm","RightArm","LeftLeg","RightLeg"};
         condition = "true";
         callbackSuccess = "_this call ACME_fnc_feelSkin";
         callbackFailure = "";
         callbackProgress = "";
         items[] = {};
-        animationMedic = "AmovPknlMstpSrasWpstDnon_AmovPknlMstpSrasWpstDnon_gear";
+        animationMedic = "";
+        animationMedicProne = "";
+        animationMedicSelf = "";
+        animationMedicSelfProne = "";
     };
     // it requires a prepared push-dose syringe, made from a flush. see the self actions.
     class ACME_PushDoseEpi: CheckPulse {

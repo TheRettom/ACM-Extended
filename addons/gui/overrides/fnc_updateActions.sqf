@@ -141,6 +141,20 @@ _manualCarrier = _manualCarrier apply {
     _row
 };
 
+// B217: carried-BVM EMMA controls are pinned on Head and Body immediately below the carrier,
+// including flat menus and non-Airway tabs. Patient-airway EMMA controls remain in Capnography.
+private _bvmEmma = [];
+if (_bodyPart in [0, 1]) then {
+    _bvmEmma = _menuActions select {toLower (_x param [8, '']) in ['acme_attachemma', 'acme_removeemma']};
+    _menuActions = _menuActions select {!(toLower (_x param [8, '']) in ['acme_attachemma', 'acme_removeemma'])};
+    _bvmEmma = _bvmEmma apply {
+        private _row = +_x;
+        _row set [1, _selectedCategory];
+        if (count _row > 9) then {_row set [9, ''];};
+        _row
+    };
+};
+
 // Stop Direct Pressure follows the carrier control whenever its normal condition makes it visible. Apply
 // Direct Pressure remains ahead of ordinary bandage headers/actions. Use stable treatment classes, never labels.
 private _stopPressure = _menuActions select {toLower (_x param [8, '']) == 'acme_stopdirectpressure'};
@@ -229,7 +243,7 @@ if (_nestEnabled) then {
     _menuActions = _out;
 };
 
-_menuActions = _manualCarrier + _stopPressure + _pressure + _menuActions + _dogTags;
+_menuActions = _manualCarrier + _bvmEmma + _stopPressure + _pressure + _menuActions + _dogTags;
 private _shownIndex = 0;
 private _actionIndex = 0;
 {

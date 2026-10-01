@@ -10,7 +10,7 @@ if (!isNull objectParent _medic) exitWith {
     (_args param [7, -2]) == -1 && {objectParent _medic isEqualTo objectParent _patient}
 };
 private _record = _medic getVariable ["ACME_assessment", []];
-if (_record isEqualTo [] || {(_record select 2) == 0}
+if (_record isEqualTo []
     || {(_args param [7, -1]) != (_record select 0)}) exitWith {false};
 private _owned = _record select 1;
 (_owned param [1, objNull]) isEqualTo _patient

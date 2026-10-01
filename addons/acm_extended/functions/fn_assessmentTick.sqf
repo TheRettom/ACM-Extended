@@ -10,26 +10,20 @@ private _phase = _record select 2;
 if (!local _medic || {!alive _medic} || {_medic getVariable ["ACE_isUnconscious", false]}
     || {!isNull objectParent _medic} || {isNull _patient}
     || {(_pose param [0, -1]) != _epoch}) exitWith {
-    [_medic, _epoch, _phase == 0] call ACME_fnc_assessmentStop;
+    [_medic, _epoch] call ACME_fnc_assessmentStop;
 };
 if (_phase == 0) exitWith {
     if (CBA_missionTime - (_record select 4) > 5
         || {!((_record select 1) call ace_medical_treatment_fnc_canTreatCached)}
         || {!([_medic, _patient, ["isNotInside", "isNotSwimming", "isNotInZeus"]] call ace_common_fnc_canInteractWith)}
         || {([_medic, _patient] call ACME_fnc_patientInteractionDistance) > ace_medical_gui_maxDistance}) exitWith {
-        [_medic, _epoch, true] call ACME_fnc_assessmentStop;
+        [_medic, _epoch] call ACME_fnc_assessmentStop;
     };
     if ((_pose param [3, -1]) != 2) exitWith {};
     if ((toLowerANSI animationState _medic) != toLowerANSI (_pose select 2)) exitWith {};
-    {[_x, "keydown"] call CBA_fnc_removeKeyHandler;} forEach (_record select 6);
-    _record set [6, []];
-    [false, _medic, _patient, _record select 5] call ACME_fnc_chestAccessPreparing;
     _record set [2, 1];
+    // This clock belongs to the first RTM, not the already-running clinical timer.
     _record set [4, CBA_missionTime];
-    if !((_record select 1) call ACM_core_fnc_treatmentNative) then {
-        _record set [2, 0];
-        [_medic, _epoch, true] call ACME_fnc_assessmentStop;
-    };
 };
 // Prone care uses the shared controller's actual prone equivalent. Never seek a kneeling RTM on a prone provider.
 if (_pose param [20, false]) exitWith {};

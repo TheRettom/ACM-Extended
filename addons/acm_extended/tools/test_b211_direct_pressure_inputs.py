@@ -9,6 +9,7 @@ import os
 import re
 import subprocess
 
+from functools import lru_cache
 import pytest
 
 from test_b209_direct_pressure_locality import setup as locality_setup, source as locality_source
@@ -52,6 +53,7 @@ def source(name):
     return locality_source(name, text)
 
 
+@lru_cache(maxsize=1)
 def setup():
     text = locality_setup() + '''
         private _inputActions=[]; private _position=[0,0,0];
@@ -87,6 +89,7 @@ def setup():
 
 @pytest.mark.parametrize("action", MOVEMENT_ACTIONS)
 @pytest.mark.parametrize("part,self_pressure", [("body", False), ("leftarm", False), ("head", False), ("leftarm", True)])
+# B217 preserves this collected case identity; the new requested resume delay is two seconds.
 def test_movement_keeps_exact_pressure_claim_and_resumes_pose_next_tick(action, part, self_pressure):
     execute(setup() + f'''
         ["{part}",{str(self_pressure).lower()}] call _start;
@@ -116,7 +119,9 @@ def test_movement_keeps_exact_pressure_claim_and_resumes_pose_next_tick(action, 
         [_medic getVariable ["ACME_DP_Active",false],"released movement did not preserve DP"] call _check;
         [(_medic getVariable ["ACME_DP_PFH",-1])==_id,"resume replaced the pressure worker"] call _check;
     ''' + ('''
-        [_medic getVariable ["ACME_DP_InPose",false],"stationary facing provider did not resume on next tick"] call _check;
+        [!(_medic getVariable ["ACME_DP_InPose",true]),"provider resumed before the two-second pause"] call _check;
+        CBA_missionTime=(_medic getVariable "ACME_DP_IdleStart")+2; call _pressTick;
+        [_medic getVariable ["ACME_DP_InPose",false],"stationary facing provider did not resume at two seconds"] call _check;
         // Follow the actual new held worker through to the engine animation
         // boundary; InPose alone is merely controller intent.
         _moves=[]; (count _handlers-1) call _tick;
@@ -136,7 +141,9 @@ def test_actual_displacement_yields_pose_and_old_exit_cannot_break_immediate_res
         [(_medic getVariable ["ACME_DP_Exit",[]]) isNotEqualTo [],"finite movement exit was not reached"] call _check;
         call _finishPressureExit; _animation="amovpknlmstpsnonwnondnon";
         CBA_missionTime=CBA_missionTime+0.016; call _pressTick;
-        [_medic getVariable ["ACME_DP_InPose",false],"pose did not resume immediately"] call _check;
+        [!(_medic getVariable ["ACME_DP_InPose",true]),"displacement resumed without two-second pause"] call _check;
+        CBA_missionTime=(_medic getVariable "ACME_DP_IdleStart")+2; call _pressTick;
+        [_medic getVariable ["ACME_DP_InPose",false],"pose did not resume after two seconds"] call _check;
         private _before=count _moves;
         {(_x select 1) call (_x select 0);} forEach _waits;
         [count _moves==_before,"old movement exit broke the resumed hold"] call _check;

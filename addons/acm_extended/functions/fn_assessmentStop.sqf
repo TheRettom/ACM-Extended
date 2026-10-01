@@ -14,7 +14,7 @@ if (_pfh >= 0) then {[_pfh] call CBA_fnc_removePerFrameHandler;};
 [false, _medic, _patient, _token] call ACME_fnc_chestAccessPreparing;
 [_medic, "", _ownedEpoch] call ACME_fnc_treatmentPoseStop;
 // An aborted assessment preflight has not emitted ace_treatmentFailed. Release its exact carrier lease here.
-if (_phase == 0 && {local _medic}) then {
+if (_phase == 0 && {!(_record param [10, false])} && {local _medic}) then {
     if ((_medic getVariable ["ACME_DP_PauseTreatmentClass", ""]) == toLowerANSI _classname) then {
         _medic setVariable ["ACME_DP_Paused", false, false];
         _medic setVariable ["ACME_DP_PauseTreatmentClass", "", false];

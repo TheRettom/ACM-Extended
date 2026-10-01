@@ -49,7 +49,7 @@ def test_fitted_adjunct_is_eligible_and_survives_successful_recovery(label, adju
         private _ett=_patient getVariable ["ACME_ETT_Inserted",false];
         private _surgical=_patient getVariable ["ACM_airway_SurgicalAirway_TubeInserted",false];
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
-        _serverClock=11; call _run;
+        _serverClock=12.01; call _run;
         [_patient getVariable ["ACM_airway_RecoveryPosition_State",false],"fitted adjunct prevented recovery commit"] call _check;
         [(_patient getVariable ["ACM_airway_AirwayItem_Oral",""])==_oral && {(_patient getVariable ["ACM_airway_AirwayItem_Nasal",""])==_nasal},"recovery removed an adjunct"] call _check;
         [(_patient getVariable ["ACME_ETT_Inserted",false])==_ett && {(_patient getVariable ["ACM_airway_SurgicalAirway_TubeInserted",false])==_surgical},"recovery removed an advanced airway"] call _check;
@@ -91,7 +91,7 @@ def test_support_race_cancels_only_the_matching_pending_transaction(label, suppo
 def test_support_retires_established_recovery_without_reposing_successor(label, support):
     execute(recovery.setup() + recovery.begin() + '''
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
-        _serverClock=11; call _run;
+        _serverClock=12.01; call _run;
         _patient setVariable ["ACME_patientAnimLock",["successor","support","other",5,100]];
         _patientAnim="support-pose"; _moves=[];
     ''' + support + '''
@@ -108,7 +108,7 @@ def test_support_retires_established_recovery_without_reposing_successor(label, 
 def test_established_owner_transfer_rechecks_live_support_on_new_owner(label, support):
     execute(recovery.setup() + recovery.begin() + '''
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
-        _serverClock=11; call _run;
+        _serverClock=12.01; call _run;
         _patientLocal=false; _moves=[]; call _run;
         [count _events==1 && {(_events select 0 select 0)=="ACM_airway_handleRecoveryPosition"},"established watcher did not transfer"] call _check;
         [!((_handlers select 0) select 2) && {_patient getVariable ["ACM_airway_RecoveryPosition_State",false]},"departed owner mutated recovery evidence"] call _check;
@@ -168,7 +168,7 @@ def test_basic_adjunct_does_not_stop_secretions_but_recovery_drains_new_events(l
         [_medic,_patient,true,false,"begin","drain"] call ACM_airway_fnc_setRecoveryPosition;
         1 call _runWorker; _patientAnim="acm_recoveryposition"; 1 call _runWorker;
         [_medic,_patient,true,false,"commit","drain"] call ACM_airway_fnc_setRecoveryPosition;
-        _serverClock=11; 1 call _runWorker;
+        _serverClock=12.01; 1 call _runWorker;
         [_patient getVariable ["ACM_airway_RecoveryPosition_State",false],"recovery did not establish"] call _check;
         [(_patient getVariable ["{state}",-1])==0,"native mild obstruction did not drain"] call _check;
         [([_patient] call ACM_airway_fnc_getAirwayState)>=0.97,"adjunct with recovery lost airway benefit"] call _check;
@@ -187,7 +187,7 @@ def test_recovery_never_erases_major_established_obstruction(label, adjunct, sev
         _patient setVariable ["ACM_airway_AirwayObstructionVomit_State",{severity}];
     ''' + recovery.begin() + '''
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
-        _serverClock=11; call _run;
+        _serverClock=12.01; call _run;
         [_patient getVariable ["ACM_airway_RecoveryPosition_State",false],"obstruction prevented positioning"] call _check;
     ''' + f'''
         [(_patient getVariable ["ACM_airway_AirwayObstructionBlood_State",0])=={severity} && {{(_patient getVariable ["ACM_airway_AirwayObstructionVomit_State",0])=={severity}}},"positioning erased major established obstruction"] call _check;
@@ -252,7 +252,7 @@ def insertion_patient_start(classname):
 def test_native_basic_adjunct_insertion_preserves_existing_recovery(classname, slot, adjunct, part):
     execute(recovery.setup() + recovery.begin() + '''
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
-        _serverClock=11; call _run; _moves=[];
+        _serverClock=12.01; call _run; _moves=[];
     ''' + insertion_patient_start(classname) + f'''
         private _bodyPart="{part}"; private _classname="{classname}";
         private _flags=call _nativePatientStart;
@@ -271,7 +271,7 @@ def test_native_basic_adjunct_insertion_preserves_existing_recovery(classname, s
 def test_native_igel_insertion_retains_supine_placement_sequence(part):
     execute(recovery.setup() + recovery.begin() + '''
         [_medic,_patient,true,false,"commit","one"] call ACM_airway_fnc_setRecoveryPosition;
-        _serverClock=11; call _run; _moves=[];
+        _serverClock=12.01; call _run; _moves=[];
     ''' + insertion_patient_start("InsertIGel") + f'''
         private _bodyPart="{part}"; private _classname="InsertIGel";
         private _flags=call _nativePatientStart;
