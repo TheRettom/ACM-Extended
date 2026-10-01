@@ -1,0 +1,31 @@
+name: B217 source baseline
+on:
+  push:
+    branches: [audit/b217-source-baseline-20260930]
+    paths: [.github/workflows/b217-source-baseline.yml]
+permissions:
+  contents: read
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 1bf8e5d7856060f037512e77bc6a38ae634d0b5f
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export verified repository objects
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 1bf8e5d7856060f037512e77bc6a38ae634d0b5f
+          mkdir -p /tmp/acme-b217-baseline
+          git bundle create /tmp/acme-b217-baseline/ACME-B208-full.bundle HEAD
+          sha256sum /tmp/acme-b217-baseline/ACME-B208-full.bundle > /tmp/acme-b217-baseline/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: acme-b217-source-baseline
+          path: /tmp/acme-b217-baseline/
+          retention-days: 3
+          compression-level: 0
