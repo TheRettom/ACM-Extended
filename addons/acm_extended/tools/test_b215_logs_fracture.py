@@ -86,10 +86,12 @@ def test_completed_respiration_activity_has_rr_units_and_exact_watch_count(count
         _patient setVariable ["ACM_breathing_RespirationRate",{count * 4}];
         [_medic,_patient] call ACME_fnc_respirationStart; call _ready;
         _nowTime=25; call _frame; _nowTime=27; call _frame;
-        [_activity isEqualTo [[_patient,"activity","Provider measured respirations @ {count * 4} RR/min~ ({count} breaths in 15 seconds)"]],
+        [_activity isEqualTo [
+            [_patient,"activity","Provider measured respirations @ {count * 4} RR/min~ ({count} breaths in 15 seconds)"],
+            [_patient,"quick_view","Provider measured respirations @ {count * 4} RR/min~ ({count} breaths in 15 seconds)"]],
             "completed watch activity has wrong units, count or duplication"] call _check;
         [true,false] call ACME_fnc_respirationStop;
-        [count _activity==1,"repeated completion logged twice"] call _check;
+        [count _activity==2,"repeated completion logged twice"] call _check;
     ''')
 
 

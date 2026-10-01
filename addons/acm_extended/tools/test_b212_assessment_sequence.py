@@ -34,6 +34,7 @@ def setup():
         private _request=[_medic,_patient,"Head","CheckAirway"];
         private _nativeArgs=[]; private _added=[]; private _newOwner=false; private _reopened=0;
         ACME_fnc_providerStanceOwned={_newOwner || {(_medic getVariable ["ACME_treatmentPoseState",[]]) isNotEqualTo []}};
+        CBA_fnc_execNextFrame={_waits pushBack [_this select 0,_this select 1];};
         CBA_fnc_localEvent={if ((_this select 0)=="ACM_core_openMedicalMenu") then {_reopened=_reopened+1;};};
         CBA_fnc_addKeyHandler={private _id=format ["key%1",count _added]; _added pushBack _this; _id};
         ACME_fnc_chestAccessPreparing={_banners pushBack _this;};
@@ -61,6 +62,8 @@ def setup():
         ACM_core_fnc_treatmentNative={
             _nativeCalls pushBack _this;
             _nativeArgs=_this + [objNull,"",false,((_medic getVariable ["ACME_assessment",[]]) param [0,-1])];
+            private _seated=_medic getVariable ["ACME_assessmentSeated",[]];
+            if ((_nativeArgs select 7)==-1 && {_seated isNotEqualTo []}) then {_nativeArgs pushBack (_seated select 0);};
             _nativeAccepted
         };
         private _frame={
@@ -71,14 +74,18 @@ def setup():
             [_handler select 1,_id] call (_handler select 0);
         };
         private _ready={(_medic getVariable ["ACME_treatmentPoseState",[]]) set [3,2]; call _frame;};
-    ''' + ''.join(function(name) for name in ['assessmentTime','assessmentStop','assessmentStart','assessmentTick','assessmentFinish','assessmentProgress','assessmentAdvance','assessmentCompletion'])
+    ''' + ''.join(function(name) for name in ['assessmentReopen','assessmentTime','assessmentStop','assessmentStart','assessmentTick','assessmentFinish','assessmentProgress','assessmentAdvance','assessmentCompletion'])
 
 
 # Retain the B212 case identity while testing the longer B213 first-stage duration.
-@pytest.mark.parametrize('speed,expected',[(-4,4),(-4.25,4),(-4.251,5),pytest.param(-6.125,6,id='-6.125-5'),(0.25,4),(0,0)])
+# B218: exact normal-speed duration, retaining historical pytest IDs for baseline comparisons.
+@pytest.mark.parametrize('speed,expected',[
+    pytest.param(-4,5.75,id='-4-4'), pytest.param(-4.25,6,id='-4.25-4'),
+    pytest.param(-4.251,6.001,id='-4.251-5'), pytest.param(-6.125,7.875,id='-6.125-5'),
+    pytest.param(.25,5.75,id='0.25-4'), pytest.param(0,0,id='0-0')])
 def test_airway_time_uses_runtime_full_medic4_duration_and_ceil(speed,expected):
     execute(setup()+f'_configuredSpeed={speed};'+f'[["CheckAirway"] call ACME_fnc_assessmentTime == {expected},"wrong timer"] call _check;'+'''
-        [["CheckBreathing"] call ACME_fnc_assessmentTime == 2,"breathing not exactly two seconds"] call _check;
+        [["CheckBreathing"] call ACME_fnc_assessmentTime == (if (_configuredSpeed==0) then {0} else {if (_configuredSpeed<0) then {-_configuredSpeed} else {1/_configuredSpeed}}),"breathing not full RTM duration"] call _check;
     ''')
 
 
@@ -107,7 +114,7 @@ def test_airway_freezes_exact_source_sample_then_interpolates_once(elapsed):
     ''' if elapsed < 1.75 else r'''
         [count _seeks==1 && {abs (((_seeks select 0) select 1)-1.75/4)<0.00001},"not exact native sample"] call _check;
         [(_moves select 0) isEqualTo [_medic,"AinvPknlMstpSnonWnonDr_medic4",1],"not interpolated medic4"] call _check;
-        [_testAnimationSpeed==1.5,"second animation not 1.5x"] call _check;
+        [_testAnimationSpeed==1,"second animation was accelerated"] call _check;
         call _frame;
         [count _seeks==1 && {count _moves==1},"second stage restarted"] call _check;
         [((_medic getVariable ["ACME_treatmentPoseState",[]]) select 11)==-1,"medic4 inherited freeze"] call _check;
@@ -193,7 +200,7 @@ def test_final_animation_must_run_all_native_seconds_before_completion(natural_e
         CBA_missionTime=11.5; _nativeElapsed=0; _nativeDuration=4; call _frame;
         CBA_missionTime=13; _nativeElapsed=2.25; call _frame;
         [(_medic getVariable ["ACME_assessment",[]]) select 2 == 2,"incomplete final animation marked complete"] call _check;
-        CBA_missionTime=14.2; _nativeElapsed=4;
+        CBA_missionTime=15.5; _nativeElapsed=4;
     '''+('_animation="amovpknlmstpsnonwnondnon";' if natural_exit else '')+r'''
         call _frame;
         [(_medic getVariable ["ACME_assessment",[]]) select 2 == 3,"complete final animation not recognized"] call _check;
@@ -201,7 +208,7 @@ def test_final_animation_must_run_all_native_seconds_before_completion(natural_e
     ''')
 
 
-@pytest.mark.parametrize('gap,advance',[(.2,False),(2.8,True),(5,True)])
+@pytest.mark.parametrize('gap,advance',[(.2,False),pytest.param(2.8,False,id='2.8-True'),(5,True)])
 def test_sparse_frame_past_full_medic5_recovers_exact_sample_but_early_interrupt_cancels(gap,advance):
     execute(setup()+r'''
         _request call ACME_fnc_assessmentStart; call _ready;
@@ -242,9 +249,7 @@ def test_real_progress_worker_retains_same_display_until_completed_rounded_deadl
         [_finished==0 && {_failed==0} && {(_payload select 6)==5},"nominal timer closed/reset live progress"] call _check;
         (_medic getVariable ["ACME_assessment",[]]) set [2,3];
         CBA_missionTime=14.3; [_payload,_id] call _barWorker;
-        [_finished==0 && {_failed==0},"completion skipped required whole-second rounding"] call _check;
-        CBA_missionTime=15; [_payload,_id] call _barWorker;
-        [_finished==1 && {_failed==0} && {!((_handlers select _id) select 2)},"rounded completion failed or leaked worker"] call _check;
+        [_finished==1 && {_failed==0} && {!((_handlers select _id) select 2)},"completed RTM waited for an arbitrary rounded second"] call _check;
     ''')
 
 

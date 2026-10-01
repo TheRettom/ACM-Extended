@@ -25,6 +25,8 @@ def code(name, server_clock='CBA_missionTime'):
             text=re.sub(re.escape(old)+r'\b',lambda m:new,text)
         text=text.replace(unit+' setUnitLoadout [_loadout,false];',
                           '_loadouts pushBack (+_loadout); _vest=(_loadout select 4) select 0;')
+    text=text.replace('_patient setUnitLoadout [_loadout, false];',
+                      '_loadouts pushBack (+_loadout); _vest=(_loadout select 4) select 0;')
     text=text.replace('serverTime',server_clock)
     text=text.replace('finite _rollTime','(_rollTime call _finite)')
     text=text.replace('finite _animSpeed','(_animSpeed call _finite)')
@@ -105,7 +107,7 @@ def setup():
             };
             [count _waits==0,"unbounded deferred work"] call _check;
         };
-    '''+function('chestSealCanPhysicalRoll')+function('chestSealPatientBegin')+function('chestSealPatientEnd')+function('chestAccessVestRestore')
+    '''+function('carrierInventoryRestore')+function('chestSealCanPhysicalRoll')+function('chestSealPatientBegin')+function('chestSealPatientEnd')+function('chestAccessVestRestore')
 
 
 @pytest.mark.parametrize('flags,animation,expected',[

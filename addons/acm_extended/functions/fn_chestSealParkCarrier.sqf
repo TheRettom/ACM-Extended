@@ -28,3 +28,9 @@ private _defaultPark = [_patient] call ACME_fnc_carrierParkTarget;
     _patient disableCollisionWith _prop;
     [_prop, _pos, _dir, _up, missionNamespace getVariable ["ACME_headElev_propEaseTime", 0.24]] call ACME_fnc_propEaseTo;
 } forEach _props;
+
+private _cargo = [_patient] call ACME_fnc_carrierInventoryGet;
+if (!isNull _cargo && {(_cargo getVariable ["ACME_carrierSavedVar", ""]) == "ACME_CS_vestLoadout"}) then {
+    private _park = _chestProp getVariable ["ACME_chestFixedPark", _defaultPark];
+    if (_cargo distance (_park select 0) > 0.02) then {_cargo setPosATL (_park select 0);};
+};

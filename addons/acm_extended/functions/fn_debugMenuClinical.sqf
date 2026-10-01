@@ -81,14 +81,15 @@ private _measureNaturalWidth = {
 };
 private _layout = {
     params ["_headerH", "_bodyH"];
-    private _bodyY = _y + _headerH + _gap;
+    private _topPadding = _fontH * 0.75;
+    private _bodyY = _y + _topPadding + _headerH + _gap;
     private _panelH = (_panelBottom - _y) max 0;
     // Never allow the structured-text control itself to extend below the panel. The previous layout expanded
     // the body to its measured content height, which is exactly how 1680x1050 drew text past the bottom edge.
     private _bodyAvail = (_panelBottom - _bodyY) max 0;
 
     _ctrlB ctrlSetPosition [_x, _y, _totalW, _panelH];
-    _ctrlH ctrlSetPosition [_x, _y, _totalW, _headerH min _panelH];
+    _ctrlH ctrlSetPosition [_x, _y + _topPadding, _totalW, _headerH min ((_panelH - _topPadding) max 0)];
     _ctrlL ctrlSetPosition [_x, _bodyY min _panelBottom, _totalW, _bodyAvail];
 
     // Retire B162's separate top/right/footer regions in-place so an already running mission cannot leave one visible.
@@ -232,10 +233,15 @@ private _bloodType = if (_bloodTypeID isEqualType 0 && {_bloodTypeID in [0,1,2,3
     ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"] select _bloodTypeID
 } else {"unknown"};
 private _weight = if (isNull _patient) then {-1} else {_patient getVariable ["ACM_core_BodyWeight", 80]};
+private _factionClass = if (isNull _patient) then {""} else {faction _patient};
+private _factionName = getText (configFile >> "CfgFactionClasses" >> _factionClass >> "displayName");
+if (_factionName == "") then {_factionName = ["unknown", _factionClass] select (_factionClass != "");};
+private _patientSide = if (isNull _patient) then {"unknown"} else {str side group _patient};
 private _header = [
-    format ["<t color='%1'>ACME DEBUG v%2 | %3</t>", _cTitle, [_ver] call _safe, [_batch] call _safe],
+    format ["<t size='1.12' color='%1'>ACME DEBUG v%2 | %3</t>", _cTitle, [_ver] call _safe, [_batch] call _safe],
     ["Patient", _pName, _cLabel] call _one,
-    ["Blood type", _bloodType, _cLabel, "Weight", if (_weight isEqualType 0 && {_weight > 0}) then {format ["%1 kg", _weight toFixed 1]} else {"unknown"}, _cLabel] call _pair
+    ["Blood type", _bloodType, _cLabel, "Weight", if (_weight isEqualType 0 && {_weight > 0}) then {format ["%1 kg", _weight toFixed 1]} else {"unknown"}, _cLabel] call _pair,
+    ["Side", _patientSide, _cLabel, "Faction", _factionName, _cLabel] call _pair
 ];
 private _renderAll = {
     // Preserve the existing logical section builders, but serialize them into one compact vertical stream.
@@ -301,7 +307,7 @@ private _renderAll = {
     private _headerH = [_headerRows, _totalW] call _measureRows;
     private _bodyH = [_bodyRows, _totalW] call _measureRows;
     private _availableH = (_panelBottom - _y) max 0;
-    private _neededH = _headerH + _gap + _bodyH;
+    private _neededH = (_fontH * 0.75) + _headerH + _gap + _bodyH;
     if (_neededH > _availableH && {_neededH > 0}) then {
         // Small guard keeps the last descender inside the panel despite engine text-metric rounding.
         _fontH = _fontH * ((_availableH / _neededH) * 0.992);
@@ -384,11 +390,11 @@ private _tempC = if (_temp < 32 || {_temp >= 40}) then {_cBad} else {if (_temp <
 _left pushBack (["VITALS"] call _sect);
 _left pushBack (["HR", _hr, _hrC, "BP", format ["%1/%2", _sys, _dia], _bpC] call _pair);
 _left pushBack (["MAP", _map, _mapC, "RR", _rr, _rrC] call _pair);
-_left pushBack (["SpO2", format ["%1%2", _spo2, "%"], _spC, "EtCO2", if (_etco2 < 0) then {"n/a"} else {round _etco2}, if (_etco2 < 0) then {_cMute} else {if (_etco2 < 20 || {_etco2 > 55}) then {_cWarn} else {_cGood}}] call _pair);
-_left pushBack (["Temp", format ["%1 C", _temp toFixed 1], _tempC, "Pain", format ["%1%2", round (_pain * 100), "%"], if (_pain > 0.8) then {_cBad} else {if (_pain > 0.4) then {_cWarn} else {_cGood}}] call _pair);
+_left pushBack (["CO", format ["%1 L/min", _coLMin toFixed 1], if (_coLMin <= 0.01) then {_cBad} else {if (_coLMin < 3) then {_cWarn} else {_cGood}}, "EtCO2", if (_etco2 < 0) then {"n/a"} else {round _etco2}, if (_etco2 < 0) then {_cMute} else {if (_etco2 < 20 || {_etco2 > 55}) then {_cWarn} else {_cGood}}] call _pair);
+_left pushBack (["Temp", format ["%1 C", _temp toFixed 1], _tempC, "SpO2", format ["%1%2", _spo2, "%"], _spC] call _pair);
 private _stateTxt = if (!alive _patient) then {"DEAD"} else {if (_arrest) then {"ARREST"} else {if (_uncon) then {"UNCON"} else {if (_crit) then {"CRITICAL"} else {"awake"}}}};
 private _stateCol = if (!alive _patient || {_arrest}) then {_cCrit} else {if (_uncon || {_crit}) then {_cWarn} else {_cGood}};
-_left pushBack (["State", _stateTxt, _stateCol, "CO", format ["%1 L/min", _coLMin toFixed 1], if (_coLMin <= 0.01) then {_cBad} else {if (_coLMin < 3) then {_cWarn} else {_cGood}}] call _pair);
+_left pushBack (["State", _stateTxt, _stateCol, "Pain", format ["%1%2", round (_pain * 100), "%"], if (_pain > 0.8) then {_cBad} else {if (_pain > 0.4) then {_cWarn} else {_cGood}}] call _pair);
 
 // Perfusion / hemorrhage.
 private _normalBlood = missionNamespace getVariable ["ACME_hypo_bloodNormal", 6];
@@ -514,7 +520,7 @@ _left pushBack (["Acute", _tbiSev toFixed 2, if (_tbiSev >= 0.65) then {_cBad} e
 _left pushBack (["ICP", round _icp, if (_icp >= 30) then {_cBad} else {if (_icp > 20) then {_cWarn} else {_cGood}}, "CPP", round _cpp, if (_cpp < 50) then {_cBad} else {if (_cpp < 70) then {_cWarn} else {_cGood}}] call _pair);
 _left pushBack (["Autoreg", _tbiAutoreg toFixed 2, if (_tbiAutoreg < 0.40) then {_cBad} else {if (_tbiAutoreg < 0.70) then {_cWarn} else {_cGood}}, "Auto", format ["%1 / %2", _tbiAutoInt toFixed 2, _tbiTone toFixed 2], if (_tbiTone < -0.35) then {_cBad} else {if (abs _tbiTone > 0.55) then {_cWarn} else {_cLabel}}] call _pair);
 _left pushBack (["Herniation", [_hern] call _yn, [_hern, true] call _ynCol, "Cushing", [_cush] call _yn, [_cush, true] call _ynCol] call _pair);
-_left pushBack (["Obtund", [_obt] call _yn, if (_obt) then {_cWarn} else {_cMute}, "PerfOK", [(_tbi getOrDefault ["perfusionOK", true])] call _yn, if (_tbi getOrDefault ["perfusionOK", true]) then {_cGood} else {_cWarn}] call _pair);
+_left pushBack (["Obtunded", [_obt] call _yn, if (_obt) then {_cWarn} else {_cMute}, "PerfOK", [(_tbi getOrDefault ["perfusionOK", true])] call _yn, if (_tbi getOrDefault ["perfusionOK", true]) then {_cGood} else {_cWarn}] call _pair);
 
 // Resuscitation / rhythm.
 private _nativeRh = _patient getVariable ["ACM_circulation_Cardiac_RhythmState", 0];

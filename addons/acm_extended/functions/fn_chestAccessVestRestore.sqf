@@ -174,18 +174,8 @@ private _finishBookkeeping = {
 
 private _restoreNow = {
     params ["_p","_saved","_prop","_savedVar","_propVar","_busyVar","_readyVar","_pfhVar","_finish"];
-    private _restored = true;
-    if ((vest _p) == "") then {
-        private _vestClass = _saved param [0,"",[""]];
-        if (_vestClass != "") then {
-            private _loadout = getUnitLoadout _p;
-            if ((count _loadout) > 4) then {
-                _loadout set [4,+_saved];
-                _p setUnitLoadout [_loadout,false];
-                _restored = (vest _p) == _vestClass;
-            };
-        };
-    };
+    private _restored = [_p, _saved, _savedVar] call ACME_fnc_carrierInventoryRestore;
+    if (!_restored) exitWith {false};
     if (!isNull _prop) then {detach _prop; deleteVehicle _prop;};
     [_p,_savedVar,_propVar,_busyVar,_readyVar,_pfhVar] call _finish;
     _restored
@@ -282,15 +272,9 @@ private _beginRestore = {
         if (_ctx == "chestseal") then {[_p] call ACME_fnc_chestSealParkCarrier}
         else {[_p] call ACME_fnc_chestAccessVestPark};
 
-        if ((vest _p) == "") then {
-            private _vestClass = _saved param [0,"",[""]];
-            if (_vestClass != "") then {
-                private _loadout = getUnitLoadout _p;
-                if ((count _loadout) > 4) then {
-                    _loadout set [4,+_saved];
-                    _p setUnitLoadout [_loadout,false];
-                };
-            };
+        private _savedVar = ["ACME_chestAccess_vestLoadout", "ACME_CS_vestLoadout"] select (_ctx == "chestseal");
+        if !([_p, _saved, _savedVar] call ACME_fnc_carrierInventoryRestore) exitWith {
+            _p setVariable [_busyVar, "", false];
         };
 
         private _prop = _p getVariable [_propVar,objNull];

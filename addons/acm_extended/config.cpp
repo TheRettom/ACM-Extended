@@ -1846,6 +1846,15 @@ class CfgFunctions {
             class chestAccessVestRestore {};
             class chestAccessVestProvider {};
             class chestAccessPreparing {};
+            class carrierCargoSnapshot {};
+            class carrierCargoEqual {};
+            class carrierCargoPopulate {};
+            class carrierInventoryGet {};
+            class carrierInventoryCapacity {};
+            class carrierInventoryCreate {};
+            class carrierInventoryRestore {};
+            class carrierInventoryOpen {};
+            class carrierSupplyTake {};
             class manualPlateCarrierCanToggle {};
             class manualPlateCarrierCommit {};
             class manualPlateCarrierAutoReturn {};
@@ -1926,6 +1935,7 @@ class CfgFunctions {
             class ecgJostleLocal {};
             class ecgJostleRequest {};
             class ecgArtifactStrength {};
+            class ecgMotionStrength {};
             class ecgArtifactApply {};
             class sedationThreshold {};
             class sedationPhysiology {};
@@ -2069,6 +2079,7 @@ class CfgFunctions {
             class installRmbCancelGuard {};
             class airwayMedicPose {};
             class assessmentTime {};
+            class assessmentReopen {};
             class assessmentStart {};
             class assessmentTick {};
             class assessmentStop {};
@@ -6742,6 +6753,17 @@ class CfgFactionClasses {
 };
 
 class CfgVehicles {
+    class GroundWeaponHolder_Scripted;
+    // Only supplies are cargo. The carrier model is a separate, non-pickable presentation object.
+    class ACME_RemovedCarrierCargo: GroundWeaponHolder_Scripted {
+        scope = 1;
+        scopeCurator = 0;
+        displayName = "Removed plate carrier supplies";
+        maximumLoad = 0; // server sets the captured carrier's actual capacity before additions
+        ace_dragging_canDrag = 0;
+        ace_dragging_canCarry = 0;
+        ace_cargo_canLoad = 0;
+    };
     // iv line, bag and anchor classes, moved here from the former second CfgVehicles block.
     class Rope;
     // thin, pale-blue PhysX iv line. it is ACE's fuelhose shape, shrunk to about 5 mm and recolored, and it needs
@@ -7677,9 +7699,9 @@ class ace_medical_treatment_actions {
     // a lot more than these. quietly giving every descendant an animation is how you end up with a medic doing a
     // gear check while they cannulate.
     class CheckAirway {
-        // B213: medic5 to source time 1.75 s, then interpolate through the complete medic4 RTM at 1.5x.
+        // B218: initial 1.75 s inspection, then the complete medic4 RTM at its natural speed.
         // Provider preparation is inside this duration; inherited descendants do not acquire this sequence.
-        treatmentTime = "['CheckAirway'] call ACME_fnc_assessmentTime";
+        treatmentTime = "['CheckAirway', _medic] call ACME_fnc_assessmentTime";
         animationMedic = "";
         animationMedicProne = "";
         animationMedicSelf = "";
@@ -7754,7 +7776,7 @@ class ace_medical_treatment_actions {
         ACM_ignoreAnimCoef = 1;
     };
     class CheckBreathing {
-        treatmentTime = 2;
+        treatmentTime = "['CheckBreathing', _medic] call ACME_fnc_assessmentTime";
         animationMedic = "";
         animationMedicProne = "";
         animationMedicSelf = "";
@@ -8024,6 +8046,15 @@ class ace_medical_treatment_actions {
         displayName = "Replace Plate Carrier";
         condition = "[_medic, _patient, true] call ACME_fnc_manualPlateCarrierCanToggle";
         callbackSuccess = "[_patient, 'manualPlateCarrier', [_medic, _patient, true]] call ACME_fnc_ownerDispatch";
+    };
+
+    class ACME_OpenPlateCarrierInventory: ACME_ManualRemovePlateCarrier {
+        displayName = "Open Plate Carrier Inventory";
+        category = "examine";
+        allowedSelections[] = {"Head", "Body"};
+        condition = "!isNull ([_patient] call ACME_fnc_carrierInventoryGet)";
+        callbackSuccess = "[_medic, _patient] call ACME_fnc_carrierInventoryOpen";
+        ACME_neverRollToBack = 1;
     };
 
     // Keep the existing assessment action; B31 gives its medic one pose owner.

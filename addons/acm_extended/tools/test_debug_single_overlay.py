@@ -59,7 +59,10 @@ def test_common_base_font_is_safezone_relative_and_uniform_across_resolutions():
     assert 'max _bodyH' not in source
     assert 'pixelH' not in source and 'pixelW' not in source and 'getResolution' not in source
     assert '{_x ctrlSetFontHeight _fontH;} forEach [_ctrlH, _ctrlT, _ctrlL, _ctrlR, _ctrlS, _ctrlM];' in source
-    assert "size='" not in source
+    # B218 permits exactly the requested larger version heading; all other
+    # rows and section titles retain the common safezone-scaled base font.
+    assert source.count("size='1.12'") == 1
+    assert source.count("size='") == 1
 
 
 def test_section_color_spacing_and_values_survive_shared_formatting():

@@ -167,16 +167,24 @@ _patient setVariable ["ACME_headElev_hold", [[], [_medic, _poseToken, CBA_missio
 if (!_manual && {!_hasBag} && {!_manualCarrierSupport} && {!([_patient] call ACME_fnc_animBlocked)}) then {
     private _vestEntry = (getUnitLoadout _patient) param [4, [], [[]]];
     if (count _vestEntry == 2) then {
+        private _cargo = [_patient, "ACME_headElev_vestLoadout"] call ACME_fnc_carrierInventoryCreate;
+        if (isNull _cargo) exitWith {};
         _patient setVariable ["ACME_headElev_vestLoadout", _vestEntry, true];
         _patient setVariable ["ACME_headElev_vestRemoved", true, true];
         _patient setVariable ["ACME_headElev_propVest", _vestClass, true];
         _patient setVariable ["ACME_headElev_propVestItems", vestItems _patient, true];
         removeVest _patient;
         if (vest _patient != "") then {
+            // Removal failed: the original worn inventory remains authoritative.
+            _patient setVariable ["ACME_carrierCargo", objNull, true];
+            _patient setVariable ["ACME_headElev_vestLoadoutLive", false, true];
+            deleteVehicle _cargo;
             _patient setVariable ["ACME_headElev_vestRemoved", false, true];
             _patient setVariable ["ACME_headElev_vestLoadout", [], true];
             _patient setVariable ["ACME_headElev_propVest", "", true];
             _patient setVariable ["ACME_headElev_propVestItems", [], true];
+        } else {
+            ["ACME_carrierInventoryCapacity", [_patient, _cargo]] call CBA_fnc_serverEvent;
         };
     };
 

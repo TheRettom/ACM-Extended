@@ -64,5 +64,7 @@ if (alive _patient
 [_exam, 3, _medic] call ace_common_fnc_displayTextStructured;
 
 if (!isNil "ace_medical_treatment_fnc_addToLog") then {
-    [_patient, "activity", _exam, []] call ace_medical_treatment_fnc_addToLog;
+    private _args = [[_medic, false, true] call ace_common_fnc_getName, _exam];
+    [_patient, "activity", "%1 assessed pupils: %2", _args] call ace_medical_treatment_fnc_addToLog;
+    [_patient, "quick_view", "%1 assessed pupils: %2", _args] call ace_medical_treatment_fnc_addToLog;
 };

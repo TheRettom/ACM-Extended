@@ -27,8 +27,8 @@ if (_phase == 0) exitWith {
 };
 // Prone care uses the shared controller's actual prone equivalent. Never seek a kneeling RTM on a prone provider.
 if (_pose param [20, false]) exitWith {};
-if ((toLowerANSI _classname) != "checkairway") exitWith {};
-if (_phase == 2) exitWith {
+private _breathing = (toLowerANSI _classname) == "checkbreathing";
+if (_phase == 2 || {_breathing && {_phase == 1}}) exitWith {
     private _current = toLowerANSI animationState _medic;
     private _observedStart = _record param [7, -1];
     private _observedDuration = _record param [8, -1];
@@ -37,15 +37,17 @@ if (_phase == 2) exitWith {
         private _duration = _medic getUnitMovesInfo 2;
         if (_elapsed isEqualType 0 && {finite _elapsed} && {_elapsed >= 0}
             && {_duration isEqualType 0} && {finite _duration} && {_duration > 0}) then {
-            if (_observedStart < 0) then {_record set [7, CBA_missionTime - _elapsed / 1.5];};
+            if (_observedStart < 0) then {_record set [7, CBA_missionTime - _elapsed];};
             _record set [8, _duration];
+            // Track the full remaining authored movement, including any real entry/interpolation delay.
+            _record set [12, (CBA_missionTime - (_record select 11)) + ((_duration - _elapsed) max 0)];
             if (_elapsed >= _duration) then {_record set [2, 3];};
         };
     } else {
         // Normal finite RTMs can leave their state between owner frames. Only accept that exit once an
         // observed medic4 has had its complete native duration; an interrupted/missing state is not completion.
         if (_observedStart >= 0 && {_observedDuration > 0}
-            && {CBA_missionTime >= _observedStart + _observedDuration / 1.5}) then {
+            && {CBA_missionTime >= _observedStart + _observedDuration}) then {
             _record set [2, 3];
         } else {
             // Entry gets a short grace. Once medic4 was actually observed, an early departure is an
@@ -56,14 +58,14 @@ if (_phase == 2) exitWith {
         };
     };
 };
-if (_phase != 1) exitWith {};
+if (_phase != 1 || {_breathing}) exitWith {};
 private _main = "AinvPknlMstpSnonWnonDr_medic5";
 if ((toLowerANSI animationState _medic) != toLowerANSI _main) exitWith {
     // A sparse owner frame may miss the 1.75 sample and the entire first RTM. Seek that known sample
     // once only if the configured first RTM could have completed. Earlier departure is interruption.
     private _speed = getNumber (configFile >> "CfgMovesMaleSdr" >> "States" >> _main >> "speed");
     private _duration = if (_speed < 0) then {-_speed} else {if (_speed > 0) then {1 / _speed} else {0}};
-    if (_duration >= 1.75 && {CBA_missionTime - (_record select 4) >= _duration / 1.5}) then {
+    if (_duration >= 1.75 && {CBA_missionTime - (_record select 4) >= _duration}) then {
         [_medic, _pose, _record, _duration] call ACME_fnc_assessmentAdvance;
     } else {
         [_medic, _epoch] call ACME_fnc_assessmentStop;

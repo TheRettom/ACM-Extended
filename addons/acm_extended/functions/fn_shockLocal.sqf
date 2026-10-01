@@ -57,7 +57,9 @@ if (_patient getVariable ["ACM_circulation_AED_AnalyzeRhythm_State", false]) the
 } else {
     [{params ["_p", "_epoch"]; if (!isNull _p && {_epoch == ([_p] call ACME_fnc_clinicalEpoch)}) then {playSound3D ["x\ACM\addons\circulation\sound\aed_3beep.wav", _p, false, getPosASL _p, 15, 1, 15];};}, [_patient, _epoch], 0.7] call CBA_fnc_waitAndExecute;
 };
-if (!alive _patient) exitWith {};
+if (!alive _patient) exitWith {
+    [_patient, "activity", "%1: Shock delivered", [[_medic, false, true] call ace_common_fnc_getName]] call ace_medical_treatment_fnc_addToLog;
+};
 private _notice = "Shock delivered. No conversion.";
 private _log = "Shock delivered";
 if (_organized && {!_expectedSync}) then {
@@ -123,4 +125,4 @@ if (_organized && {!_expectedSync}) then {
 };
 [_patient, [["aedPadsLastSync", -1], ["aedEkgRhythm", -99]], true] call ACM_circulation_fnc_setRuntimeState;
 [_medic, _notice] call ACME_fnc_clinicalNotice;
-[_patient, "activity", _log, []] call ace_medical_treatment_fnc_addToLog;
+[_patient, "activity", "%1: %2", [[_medic, false, true] call ace_common_fnc_getName, _log]] call ace_medical_treatment_fnc_addToLog;

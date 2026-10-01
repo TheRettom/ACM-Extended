@@ -1,8 +1,7 @@
 /* B212 assessment-only adapter of ACE common/fnc_progressBar.sqf (ACE3, GPL-2.0).
  * Existing controls, input cancellation, eligibility and callback arguments are unchanged.
- * A normal breathing check includes entry in its two-second timer; missing entry fails boundedly.
- * Airway completion waits for its full
- * final RTM and rounds any real graph-transition delay up to a whole second, with bounded failure.
+ * Both assessments include entry and the complete normal-speed final RTM; missing work fails boundedly.
+ * The bar follows observed completion, including graph-transition delay, with bounded failure.
  */
 /*
  * Author: commy2, Glowbal, PabstMirror
@@ -75,6 +74,13 @@ _ctrlPos set [1, ((0 + 29 * ace_common_settingProgressBarLocation) * ((((safeZon
 
     private _elapsedTime = CBA_missionTime - _startTime;
     private _errorCode = -1;
+    private _assessment = _player getVariable ["ACME_assessment", []];
+    if ((_assessment param [0, -2]) == (_args param [7, -1]) && {(_assessment param [0, -2]) >= 0}) then {
+        private _observedTotal = _assessment param [12, -1];
+        if (_observedTotal > 0) then {_totalTime = _observedTotal;};
+        if ((_assessment param [2, -1]) == 3) then {_totalTime = _elapsedTime;};
+        (_this select 0) set [6, _totalTime];
+    };
 
     // this does not check: target fell unconscious, target died, target moved inside vehicle / left vehicle, target moved outside of players range, target moves at all.
     if (isNull (uiNamespace getVariable ["ace_common_ctrlProgressBar", controlNull])) then {
@@ -92,14 +98,14 @@ _ctrlPos set [1, ((0 + 29 * ace_common_settingProgressBarLocation) * ((((safeZon
                     if (!_dialog && {dialog}) then {
                         _errorCode = 5;
                     } else {
-                        if (_elapsedTime >= _totalTime) then {
+                        if (_elapsedTime >= _totalTime || {_elapsedTime >= _initialTime + 5}) then {
                             private _decision = [_args, _elapsedTime, _totalTime, _initialTime] call ACME_fnc_assessmentCompletion;
                             if (_decision < 0) then {
                                 _errorCode = 3;
                             } else {
                                 if (_decision > _totalTime) then {
                                     // The RTM is still moving. Keep this same progress display/input episode and
-                                    // finish only on the next whole second after its actual final frame.
+                                    // use the observed remaining duration on the following owner frame.
                                     _totalTime = _decision;
                                     (_this select 0) set [6, _totalTime];
                                 } else {

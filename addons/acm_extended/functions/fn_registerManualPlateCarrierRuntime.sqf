@@ -1,3 +1,16 @@
+// B218 server-only carrier capacity initialization; bounded for cross-client variable propagation.
+if (isServer && {isNil "ACME_carrierInventoryCapacityEH"}) then {
+    ACME_carrierInventoryCapacityEH = ["ACME_carrierInventoryCapacity", {
+        params ["_patient", "_cargo"];
+        [{
+            params ["_p", "_c"];
+            isNull _p || {isNull _c} || {
+                ((_p getVariable ["ACME_carrierCargo", objNull]) isEqualTo _c)
+                && {count (_p getVariable [_c getVariable ["ACME_carrierSavedVar", ""], []]) == 2}
+            }
+        }, ACME_fnc_carrierInventoryCapacity, _this, 2, {}] call CBA_fnc_waitUntilAndExecute;
+    }] call CBA_fnc_addEventHandler;
+};
 /* Stable B183: UI acknowledgement plus owner-local manual-carrier return watchdog. */
 // Track only casualties with an active manual lease. State commits enroll synchronously; lifecycle events
 // handle ownership/new units and a slow audit recovers missed/late replicated events.

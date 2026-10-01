@@ -226,8 +226,15 @@ private _commitRemoval = {
     private _entry = (getUnitLoadout _p) param [4, [], [[]]];
     if (_class == "" || {(count _entry) != 2}) exitWith {false};
 
+    private _cargo = [_p, _savedVar] call ACME_fnc_carrierInventoryCreate;
+    if (isNull _cargo) exitWith {false};
     removeVest _p;
-    if ((vest _p) != "") exitWith {false};
+    if ((vest _p) != "") exitWith {
+        _p setVariable ["ACME_carrierCargo", objNull, true];
+        _p setVariable [_savedVar + "Live", false, true];
+        deleteVehicle _cargo;
+        false
+    };
 
     private _model = getText (configFile >> "CfgWeapons" >> _class >> "model");
     private _prop = objNull;
@@ -235,12 +242,13 @@ private _commitRemoval = {
         _prop = createSimpleObject [_model, getPosATL _p, false];
     };
     if (isNull _prop) then {
-        _prop = createVehicle ["GroundWeaponHolder", getPosATL _p, [], 0, "CAN_COLLIDE"];
-        _prop addItemCargoGlobal [_class, 1];
+        // An unrenderable third-party carrier still has accessible supplies; never spawn a pickable vest.
+        _prop = createSimpleObject ["a3\weapons_f\dummyweapon.p3d", getPosATL _p, false];
     };
 
     _p setVariable [_savedVar, +_entry, true];
     _p setVariable [_propVar, _prop, true];
+    ["ACME_carrierInventoryCapacity", [_p, _cargo]] call CBA_fnc_serverEvent;
     _prop setVariable ["ACME_chestFixedPark", nil, false];
 
     if (_ctx == "chestseal") then {[_p] call ACME_fnc_chestSealParkCarrier}

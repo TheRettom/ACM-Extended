@@ -26,3 +26,8 @@ detach _prop;
 _prop disableCollisionWith _patient;
 _patient disableCollisionWith _prop;
 [_prop, _pos, _axis, _up, missionNamespace getVariable ["ACME_headElev_propEaseTime", 0.24]] call ACME_fnc_propEaseTo;
+
+private _cargo = [_patient] call ACME_fnc_carrierInventoryGet;
+if (!isNull _cargo && {(_cargo getVariable ["ACME_carrierSavedVar", ""]) == "ACME_chestAccess_vestLoadout"}) then {
+    if (_cargo distance _pos > 0.02) then {_cargo setPosATL _pos;};
+};

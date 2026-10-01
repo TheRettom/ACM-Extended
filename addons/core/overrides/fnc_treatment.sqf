@@ -4,6 +4,12 @@
  * Native ACM/ACE remains authoritative for treatment timing, inventory, callbacks, cancellation and patient state.
  */
 params ["_medic", "_patient", "_bodyPart", "_classname"];
+// An explicit successor click invalidates an older assessment's pending menu return.
+if (!isNull _medic && {local _medic}) then {
+    _medic setVariable ["ACME_assessmentReturn", [], false];
+    _medic setVariable ["ACME_assessmentSeated", [], false];
+};
+
 
 // B217: a successor click preempts only the matching tactile exam. Never leave its held frame behind.
 if (!isNull _medic && {local _medic} && {_classname != "ACME_FeelSkin"}) then {
@@ -108,6 +114,14 @@ if (_classname in ["ACME_ManualRemovePlateCarrier", "ACME_ManualReplacePlateCarr
     ace_medical_gui_pendingReopen = false;
     [_patient, "manualPlateCarrier", [_medic, _patient, _restore]] call ACME_fnc_ownerDispatch;
     true
+};
+
+// Inventory is a UI handoff, not a clinical timer. Native treatment completion must not reopen
+// the medical menu over the Gear display or claim a fresh provider animation.
+if (_classname == "ACME_OpenPlateCarrierInventory") exitWith {
+    if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
+    if !([_medic, _patient, _interactionChecks] call ace_common_fnc_canInteractWith) exitWith {false};
+    [_medic, _patient] call ACME_fnc_carrierInventoryOpen
 };
 
 // Opening a shared workspace must not wait for a free kneeling/holster animation.

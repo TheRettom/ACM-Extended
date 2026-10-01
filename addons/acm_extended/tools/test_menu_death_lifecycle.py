@@ -169,6 +169,12 @@ private _tick = {private _id = ACM_core_ContinuousAction_PFH; if (_id < 0) exitW
 '''
 
 
+# These historical fixtures contain no removed carrier. Execute the production
+# custody reader/debit early-exit rather than silently replacing the new boundary.
+PREAMBLE += "\nACME_fnc_carrierInventoryGet={" + adapt(read('carrierInventoryGet')) + "};"
+PREAMBLE += "\nACME_fnc_carrierSupplyTake={" + adapt(read('carrierSupplyTake')) + "};"
+
+
 def execute(code):
     vm = os.environ.get('SQFVM') or shutil.which('sqfvm')
     if not vm:

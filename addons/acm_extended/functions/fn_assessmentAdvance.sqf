@@ -4,7 +4,7 @@ if (!local _medic || {(_record select 2) != 1} || {_pose param [20, false]}
     || {(_pose select 0) != (_record select 0)}
     || {!((_medic getVariable ["ACME_assessment", []]) isEqualTo _record)}
     || {!((_medic getVariable ["ACME_treatmentPoseState", []]) isEqualTo _pose)}) exitWith {};
-// At 1.5x, source time 1.75 occurs after 1.166667 wall seconds. No persistent freeze event is sent:
+// At normal speed the initial inspection uses 1.75 native seconds. No persistent freeze event is sent:
 // a reordered hold packet could otherwise freeze a peer after the finite medic4 continuation has started.
 _medic switchMove ["AinvPknlMstpSnonWnonDr_medic5", 1.75 / _duration, 1, false];
 _medic setAnimSpeedCoef 0;
@@ -17,5 +17,5 @@ _record set [2, 2];
 _record set [7, -1];
 _record set [8, -1];
 _record set [9, CBA_missionTime];
-_medic setAnimSpeedCoef 1.5;
+_medic setAnimSpeedCoef 1;
 [_medic, _next, 1] call ACME_fnc_doAnim;

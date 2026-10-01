@@ -12,7 +12,7 @@ if ((missionNamespace getVariable ["ACME_assessmentInputProvider", objNull]) isE
 if (_pfh >= 0) then {[_pfh] call CBA_fnc_removePerFrameHandler;};
 {[_x, "keydown"] call CBA_fnc_removeKeyHandler;} forEach _keys;
 [false, _medic, _patient, _token] call ACME_fnc_chestAccessPreparing;
-[_medic, "", _ownedEpoch] call ACME_fnc_treatmentPoseStop;
+[_medic, "", _ownedEpoch, _reopen] call ACME_fnc_treatmentPoseStop;
 // An aborted assessment preflight has not emitted ace_treatmentFailed. Release its exact carrier lease here.
 if (_phase == 0 && {!(_record param [10, false])} && {local _medic}) then {
     if ((_medic getVariable ["ACME_DP_PauseTreatmentClass", ""]) == toLowerANSI _classname) then {
@@ -27,9 +27,4 @@ if (_phase == 0 && {!(_record param [10, false])} && {local _medic}) then {
         [_patient, _medic, _lease param [2, ""], false, toLowerANSI _classname] call ACME_fnc_chestAccessVestEvent;
     };
 };
-if (_reopen && {local _medic} && {alive _medic} && {!(_medic getVariable ["ACE_isUnconscious", false])}
-    && {[_medic] call ace_common_fnc_isPlayer}
-    && {!([_medic] call ACME_fnc_providerStanceOwned)}) then {
-    ace_medical_gui_pendingReopen = false;
-    ["ACM_core_openMedicalMenu", _patient] call CBA_fnc_localEvent;
-};
+if (_reopen) then {[_medic, _patient, _ownedEpoch] call ACME_fnc_assessmentReopen;};

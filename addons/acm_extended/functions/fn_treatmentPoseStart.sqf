@@ -100,7 +100,7 @@ _medic setVariable ["ACME_treatmentPoseEpisode", [_epoch, true], true];
 private _exclusion = format ["ACME_treatmentPose_%1_%2", netId _medic, _epoch];
 private _actionStarted = CBA_missionTime;
 private _rate = call ACME_fnc_choreographyRate;
-if (_mode in ["assessmentAirway", "assessmentBreathing"]) then {_rate = 1.5;};
+if (_mode in ["assessmentAirway", "assessmentBreathing"]) then {_rate = 1;};
 _medic setAnimSpeedCoef _rate;
 private _speedJIP = format ["ACME_treatmentPose_%1_%2", netId _medic, _epoch];
 ["ACME_treatmentPoseSync", [_medic, _epoch, "run", "", -1, clientOwner, _rate], _speedJIP] call CBA_fnc_globalEventJIP;
@@ -209,6 +209,11 @@ private _fnEnter = {
         default {};
     };
     if (_transition == "") exitWith {[_medic, _main, _state] call _fnStartMain;};
+    if ((_state param [1, ""]) in ["assessmentAirway", "assessmentBreathing"]) then {
+        private _speed = getNumber (configFile >> "CfgMovesMaleSdr" >> "States" >> _transition >> "speed");
+        if (_speed < 0) then {_length = -_speed;};
+        if (_speed > 0) then {_length = 1 / _speed;};
+    };
     _medic setUnitPos "MIDDLE";
     [_medic, _transition, 1] call ACME_fnc_doAnim;
     _state set [3, -2];

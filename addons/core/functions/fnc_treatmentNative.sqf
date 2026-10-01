@@ -334,6 +334,11 @@ private _callbackArgs = [_medic, _patient, _bodyPart, _classname, _itemUser, _us
 // stop a replacement assessment. Other native treatments retain their existing argument shape.
 if (toLowerANSI _classname in ["checkairway", "checkbreathing"]) then {
     _callbackArgs pushBack ((_medic getVariable ["ACME_assessment", []]) param [0, -1]);
+    // Preserve the established on-foot/legacy shape. Only a live seated episode adds its return identity.
+    private _seated = _medic getVariable ["ACME_assessmentSeated", []];
+    if ((_callbackArgs select 7) == -1 && {_seated isNotEqualTo []}) then {
+        _callbackArgs pushBack (_seated select 0);
+    };
 };
 _callbackArgs call _callbackStart;
 // AAJT starts its full-duration provider pose in callbackStart. Bind the same argument array used by ACE's

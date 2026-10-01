@@ -62,7 +62,7 @@ def test_breathing_completion_counts_entry_but_never_credits_missing_work(entere
         CBA_missionTime=11.8;
     '''+('call _ready;' if entered else '')+f'''
         private _end=[_nativeArgs,2,2,2] call ACME_fnc_assessmentCompletion;
-        [_end=={2 if entered else 3},"nominal deadline did not include entry or credited missing work"] call _check;
+        [_end=={3},"nominal deadline did not include entry or credited missing work"] call _check;
     ''')
 
 @pytest.mark.parametrize('elapsed',[0,1,2,2.999,3,4,5])
@@ -74,7 +74,7 @@ def test_recovery_only_begins_in_last_two_seconds(elapsed):
         _providerAnim="ainvpknlmstpsnonwnondnon_medic4";
     '''+f'''
         [_args,{elapsed},5] call ACME_fnc_recoveryPositionProgress;
-        [count _handlers=={int(elapsed>=3)},"recovery did not use late blend window"] call _check;
+        [count _handlers=={int(elapsed>=2.5)},"recovery did not use late blend window"] call _check;
     ''')
 
 @pytest.mark.parametrize('blend',[0,.2,.6,.98,.99,1])

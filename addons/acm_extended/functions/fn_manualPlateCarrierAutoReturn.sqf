@@ -69,8 +69,9 @@ if (_busy != "") then {
 // saved vest slot, deletes the parked prop and clears temporary chest-access custody in this same owner frame.
 private _saved = +(_patient getVariable ["ACME_chestAccess_vestLoadout", []]);
 private _hadCustody = (count _saved) == 2;
+private _restored = true;
 if (_hadCustody) then {
-    [_patient, true, _provider, "access", true] call ACME_fnc_chestAccessVestRestore;
+    _restored = [_patient, true, _provider, "access", true] call ACME_fnc_chestAccessVestRestore;
 };
 
 _patient setVariable ["ACME_manualPlateCarrierState", "", true];
@@ -80,12 +81,12 @@ _patient setVariable ["ACME_manualPlateCarrierProvider", objNull, true];
 _patient setVariable ["ACME_manualPlateCarrierOriginASL", [], true];
 _patient setVariable ["ACME_manualPlateCarrierRemoved", false, true];
 
-if (_hadCustody || {(vest _patient) != ""}) then {
+if (_restored && {_hadCustody || {(vest _patient) != ""}}) then {
     [_patient, "activity", format ["Plate carrier automatically returned (%1)", _reason], []]
         call ace_medical_treatment_fnc_addToLog;
 };
 
 if (!isNull _provider) then {
-    ["ACME_manualPlateCarrierAck", [_patient, true, true], _provider] call CBA_fnc_targetEvent;
+    ["ACME_manualPlateCarrierAck", [_patient, true, _restored], _provider] call CBA_fnc_targetEvent;
 };
 true

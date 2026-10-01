@@ -21,7 +21,7 @@ def execute(scenario):
     definitions = []
     for name in ["itemCount", "treatmentSupplyOrder", "treatmentSupplyCount", "treatmentSupplyTake", "treatmentSupplyRefund", "treatmentSupplyTakeMany"]:
         source = (FUNCTIONS / f"fn_{name}.sqf").read_text()
-        for unit in ["_unit", "_medic", "_patient", "_donor", "_vehicle", "_x"]:
+        for unit in ["_unit", "_medic", "_patient", "_donor", "_vehicle", "_carrier", "_x"]:
             source = source.replace(f"isNull {unit}", f'({unit} isEqualTo "")')
         source = source.replace("local _medic", "true")
         source = source.replace("_medic removeItem _x", "[_medic, _x] call _remove")
@@ -32,6 +32,9 @@ def execute(scenario):
         definitions.append(f"ACME_fnc_{name} = {{{source}}};")
     code = r'''
         private _ok = true;
+        // No removed-carrier fixture in this legacy string-object harness.
+        ACME_fnc_carrierInventoryGet = {""};
+        ACME_fnc_carrierSupplyTake = {["", "", false, ""]};
         private _parents = createHashMap;
         private _cargo = createHashMap;
         private _inventory = createHashMapFromArray [["medic", ["seal"]], ["patient", ["seal"]]];

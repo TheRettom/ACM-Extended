@@ -68,6 +68,14 @@ if (_headSupportRemoved && {_chestOwnsAfterCancel}
     && {(count (_patient getVariable ["ACME_chestAccess_vestLoadout", []])) != 2}) then {
     _patient setVariable ["ACME_chestAccess_vestLoadout", +_headSupportSaved, true];
     _patient setVariable ["ACME_chestAccess_vestProp", _headSupportProp, true];
+    // Transfer custody of the SAME live container; never recreate its pre-removal supplies.
+    if (_patient getVariable ["ACME_headElev_vestLoadoutLive", false]) then {
+        private _cargo = _patient getVariable ["ACME_carrierCargo", objNull];
+        if (!isNull _cargo) then {_cargo setVariable ["ACME_carrierSavedVar", "ACME_chestAccess_vestLoadout", true];};
+        _patient setVariable ["ACME_chestAccess_vestLoadoutLive", true, true];
+        _patient setVariable ["ACME_chestAccess_vestLoadoutSettled", false, true];
+        _patient setVariable ["ACME_headElev_vestLoadoutLive", false, true];
+    };
     if (!isNull _headSupportProp) then {
         _headSupportProp setVariable ["ACME_chestFixedPark", _headSupportProp getVariable ["ACME_chestFixedPark", []], false];
     };
