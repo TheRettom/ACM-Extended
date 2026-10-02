@@ -48,5 +48,5 @@ def test_every_release_component_carries_its_own_build_stamp():
         assert f'ACME_BUILD_CONFIG("{component}");' in source
         assert 'script_build.hpp"' in source
     header = (ROOT / "addons/main/script_build.hpp").read_text()
-    assert 'acmeBuildBatch = "B221"' in header
+    assert 'acmeBuildBatch = "B222"' in header
     assert 'acmeNetworkProtocol = 1' in header

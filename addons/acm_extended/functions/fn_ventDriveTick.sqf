@@ -122,8 +122,16 @@ private _cprActive = (_patient getVariable ["ace_medical_inCardiacArrest", false
 private _cprMode = (_mode == "IMV VC (CPR)");
 private _ifaceOK = if (_mandatory) then { _securedAirway && {_iface == "INVASIVE"} } else { _iface in ["INVASIVE","NON-INVASIVE","NON INVASIVE"] };
 if (_simple) then {_ifaceOK = _securedAirway;}; // physical airway; stored interface choice is inactive.
+private _mask = _patient getVariable ["ACME_vent_nivMask", false];
+if (_mask) then {
+    _ifaceOK = _mode == "CPAP PS HF" && {_iface in ["NON-INVASIVE", "NON INVASIVE"]}
+        && {[_patient] call ACME_fnc_ventNivEligible};
+} else {
+    // Selecting NON INVASIVE on a device is not itself placement of a mask.
+    if (!_simple && {_iface in ["NON-INVASIVE", "NON INVASIVE"]}) then {_ifaceOK = false;};
+};
 private _hardwareOK = true;
-if (_simple) then {
+if (_simple || {_mask}) then {
     _hardwareOK = (_patient getVariable ["ACME_vent_circuit", false])
         && {_patient getVariable ["ACME_vent_powerOn", false]}
         && {!(missionNamespace getVariable ["ACME_vent_batteryEnabled", true])
@@ -232,16 +240,19 @@ if (_driving) then {
             };
         };
         case "CPAP PS HF": {
-            if (_canTrigger && {_intrinsic > 0}) then {
+            // Pure mask CPAP is continuous pressure, not a triggered/mandatory breath.
+            if ((_canTrigger || {_mask && {_psup == 0}}) && {_intrinsic > 0}) then {
                 _spontBpm = _intrinsic;
                 _vtiSpont = [_intrinsic, _psup, _compEff] call _spontVtFor;
                 _pipSpont = _peep + _psup;
             } else {
-                _backup = true;
-                private _bkKg = (_patient getVariable ["ACME_vent_weight", 70]) max 1;
-                _mandatoryBpm = round (linearConversion [5, 40, _bkKg, 25, 12, true]);
-                _vtiMand = _vtSet * _compEff;
-                _pipMand = 8 + (12 * (_vtSet / 500) / _compEff);
+                if (!_mask && {_securedAirway}) then {
+                    _backup = true;
+                    private _bkKg = (_patient getVariable ["ACME_vent_weight", 70]) max 1;
+                    _mandatoryBpm = round (linearConversion [5, 40, _bkKg, 25, 12, true]);
+                    _vtiMand = _vtSet * _compEff;
+                    _pipMand = 8 + (12 * (_vtSet / 500) / _compEff);
+                };
             };
         };
         case "IMV VC (CPR)": {

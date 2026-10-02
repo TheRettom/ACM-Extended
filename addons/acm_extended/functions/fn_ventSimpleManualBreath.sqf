@@ -23,6 +23,7 @@ if (!(missionNamespace getVariable ["ACME_sys_vent", true])
     || {!([_medic, _patient] call ACME_fnc_ventRecoveryNear)}
     || {_custody == ""} || {_custody != (_patient getVariable ["ACME_vent_custodyId", ""])}
     || {_patient getVariable ["ACME_vent_recovering", false]}
+    || {_patient getVariable ["ACME_vent_nivMask", false]}
     || {!(_patient getVariable ["ACME_vent_circuit", false])}
     || {!(_patient getVariable ["ACME_vent_powerOn", false])}
     || {!(_patient getVariable ["ACME_vent_configured", false])}

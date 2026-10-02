@@ -2774,6 +2774,7 @@ class CfgFunctions {
             class ventFaceGate {};
             class ventPanelShowDyn {};
             class ventPanelHideScreen {};
+            class ventNivEligible {};
             class ventConnectPatient {};
             class ventDisconnectPatient {};
             class ventAirwayLoss {};
@@ -8740,6 +8741,13 @@ class ace_medical_treatment_actions {
         ACM_menuIcon = "ACME_Ventilator";
         callbackFailure = "";
         callbackProgress = "";
+    };
+
+    // B222: the carried ventilator includes the mask interface; no secured airway is required.
+    class ACME_ConnectNIVVent: ACME_ConnectETVent {
+        displayName = "Connect Mask > Ventilator (CPAP)";
+        condition = "([_medic, 'ACME_ConnectNIVVent'] call ACME_fnc_procedureActionAllowed) && {[_patient] call ACME_fnc_ventNivEligible} && {!(_patient getVariable ['ACME_vent_circuit', false])} && {!(_patient getVariable ['ACME_vent_onPatient', false])} && {!(_patient getVariable ['ACME_vent_recovering', false])} && {(_patient getVariable ['ACME_vent_custodyId', '']) == ''} && {([_medic, _patient, 'ACME_Ventilator'] call ACME_fnc_treatmentSupplyCount) > 0}";
+        callbackSuccess = "[_medic, _patient, 'MASK'] call ACME_fnc_ventConnectPatient";
     };
 
     // disconnect ventilator. there was no explicit way to take the machine off a casualty. the only route was to

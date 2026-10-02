@@ -157,7 +157,7 @@ if (_classname in [
     true
 };
 
-if (_classname != "ACME_ConnectETVent") exitWith {
+if !(_classname in ["ACME_ConnectETVent", "ACME_ConnectNIVVent"]) exitWith {
     // Preserve ACM/ACE cursor-menu deferral before ACME starts its one-shot stance/weapon preflight.
     if (uiNamespace getVariable ["ace_interact_menu_cursorMenuOpened", false]) exitWith {
         [ace_medical_treatment_fnc_treatment, _this] call CBA_fnc_execNextFrame;
@@ -661,5 +661,5 @@ if (uiNamespace getVariable ["ace_interact_menu_cursorMenuOpened", false]) exitW
 if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
 if !([_medic, _patient, _interactionChecks] call ace_common_fnc_canInteractWith) exitWith {false};
 if !([_medic, _patient] call ACME_fnc_ventRecoveryNear) exitWith {false};
-[_medic, _patient] call ACME_fnc_ventConnectPatient;
+[_medic, _patient, ["INVASIVE", "MASK"] select (_classname == "ACME_ConnectNIVVent")] call ACME_fnc_ventConnectPatient;
 true

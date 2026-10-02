@@ -21,13 +21,22 @@ if (!isNull _custodyTarget && {_custodyTarget isNotEqualTo ACE_player}
 private _vTgt = uiNamespace getVariable ["ACME_vent_target", ACE_player]; if (isNull _vTgt) then { _vTgt = ACE_player; };
 playSound "ACME_VentClick";
 private _screen = uiNamespace getVariable ["ACME_vent_screen", ""];
+if (_vTgt getVariable ["ACME_vent_nivMask", false] && {_screen in ["weight", "mode", "interface"]}) exitWith {
+    [_screen] call ACME_fnc_ventPanelShowScreen;
+};
 // A live addon-setting change may arrive before the panel tick rebuilds setup.
-if (missionNamespace getVariable ["ACME_vent_simpleMode", false] && {_screen in ["weight", "mode", "interface", "o2", "ie", "peep"]}) exitWith {
+if (((missionNamespace getVariable ["ACME_vent_simpleMode", false]) && {!((uiNamespace getVariable ["ACME_vent_target", objNull]) getVariable ["ACME_vent_nivMask", false])}) && {_screen in ["weight", "mode", "interface", "o2", "ie", "peep"]}) exitWith {
     [_screen] call ACME_fnc_ventPanelShowScreen;
 };
 // the selection comes from the unified dial index, clamped to the row range for row-commit purposes.
 private _n = uiNamespace getVariable ["ACME_vent_listCount", 0];
 private _sel = (uiNamespace getVariable ["ACME_vent_selIdx", 0]) min ((_n - 1) max 0);
+
+if (_action in ["next", "confirm"] && {_vTgt getVariable ["ACME_vent_nivMask", false]}
+    && {_screen == "connect" || {_screen == "menu" && {_sel == 0} && {!(_vTgt getVariable ["ACME_vent_connected", false])}}}
+    && {!([_vTgt] call ACME_fnc_ventNivEligible)}) exitWith {
+    ["Mask CPAP requires an awake, spontaneously breathing patient without another mask or advanced airway.", 3] call ace_common_fnc_displayTextStructured;
+};
 
 // commit the selection of the current screen to the player.
 private _commit = {
@@ -283,7 +292,7 @@ switch (_action) do {
                 };
             };
             case "interface": { ["mode"] call ACME_fnc_ventPanelShowScreen; };
-            case "connect":   { [if (missionNamespace getVariable ["ACME_vent_simpleMode", false]) then {"menu"} else {"interface"}] call ACME_fnc_ventPanelShowScreen; };
+            case "connect":   { [if (((missionNamespace getVariable ["ACME_vent_simpleMode", false]) && {!((uiNamespace getVariable ["ACME_vent_target", objNull]) getVariable ["ACME_vent_nivMask", false])})) then {"menu"} else {"interface"}] call ACME_fnc_ventPanelShowScreen; };
             case "menu":      { ["live"] call ACME_fnc_ventPanelShowScreen; };
             case "params":    { uiNamespace setVariable ["ACME_vent_editingParam", -1]; ["menu"] call ACME_fnc_ventPanelShowScreen; };
             case "o2":        { uiNamespace setVariable ["ACME_vent_editingFio2", false]; ["params"] call ACME_fnc_ventPanelShowScreen; };
