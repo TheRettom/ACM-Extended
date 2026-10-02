@@ -7,6 +7,8 @@ _session params ["_currentEpoch", "_medic", "_patient", "_poseEpoch", "_pfh", "_
 uiNamespace setVariable ["ACME_RespirationSession", []];
 if (_pfh >= 0) then {[_pfh] call CBA_fnc_removePerFrameHandler;};
 if (!isNull _main && {_keyEH >= 0}) then {_main displayRemoveEventHandler ["KeyDown", _keyEH];};
+private _watchControl = _session param [13, controlNull];
+if (!isNull _watchControl) then {ctrlDelete _watchControl;};
 "ACME_Respiration" cutText ["", "PLAIN", 0, false];
 if (_poseEpoch >= 0) then {[_medic, "pulse", _poseEpoch, _handoff] call ACME_fnc_treatmentPoseStop;};
 

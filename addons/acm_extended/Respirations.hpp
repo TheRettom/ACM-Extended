@@ -46,7 +46,7 @@ class ACME_Respiration_Display {
         };
         class WatchLabel: Title {
             idc = -1;
-            text = "OBSERVATION WATCH";
+            text = "OBSERVING...";
             y = "safezoneY + safezoneH * 0.685";
             h = "safezoneH * 0.035";
             sizeEx = "safezoneH * 0.019";
@@ -60,7 +60,7 @@ class ACME_Respiration_Display {
         };
         class Instructions: Title {
             idc = 71595;
-            text = "15 real seconds | Esc to cancel";
+            text = "Esc to cancel";
             y = "safezoneY + safezoneH * 0.78";
             h = "safezoneH * 0.03";
             sizeEx = "safezoneH * 0.018";

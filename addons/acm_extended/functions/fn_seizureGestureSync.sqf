@@ -97,8 +97,8 @@ if (_duration > 0) then {
                 if (_current in ["gestureempty","", "<none>"] || {(_current find "acme_seizurespasm") == 0}) then {
                     _patient switchGesture ["GestureEmpty",0,1,false];
                 };
-            },[_patient,_session,_pulse],0.15] call CBA_fnc_waitAndExecute;
+            },[_patient,_session,_pulse],0.06] call CBA_fnc_waitAndExecute;
         };
-    },[_patient,_session,_pulse],(_duration max 0.08) min 0.35] call CBA_fnc_waitAndExecute;
+    },[_patient,_session,_pulse],(_duration max 0.04) min 0.35] call CBA_fnc_waitAndExecute;
 };
 true

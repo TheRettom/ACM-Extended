@@ -175,6 +175,12 @@ PREAMBLE += "\nACME_fnc_carrierInventoryGet={" + adapt(read('carrierInventoryGet
 PREAMBLE += "\nACME_fnc_carrierSupplyTake={" + adapt(read('carrierSupplyTake')) + "};"
 
 
+# Shared new dependencies run as production SQF, not constant-return stubs.
+# ventMaskSelected is a read-only settings predicate with no engine operations.
+PREAMBLE += "\nACME_fnc_ventMaskSelected={" + adapt(read('ventMaskSelected')) + "};"
+PREAMBLE += "\nACME_fnc_ventSyncMask={" + adapt(read('ventSyncMask')) + "};"
+
+
 def execute(code):
     vm = os.environ.get('SQFVM') or shutil.which('sqfvm')
     if not vm:

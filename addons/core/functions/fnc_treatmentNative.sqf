@@ -341,6 +341,9 @@ if (toLowerANSI _classname in ["checkairway", "checkbreathing"]) then {
     };
 };
 _callbackArgs call _callbackStart;
+if (toLowerANSI _classname == "checkcapillaryrefill") then {
+    _callbackArgs pushBack ((_medic getVariable ["ACME_capillaryPose", []]) param [0, -1]);
+};
 // AAJT starts its full-duration provider pose in callbackStart. Bind the same argument array used by ACE's
 // eventual success/failure to that exact episode; a late cancellation must not release a replacement AAJT pose.
 if (toLowerANSI _classname in [

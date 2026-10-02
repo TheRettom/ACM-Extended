@@ -84,10 +84,14 @@ _patient setVariable ["ACME_seizure_motionCurrentGesture",_next];
 private _pulse = (_patient getVariable ["ACME_seizure_motionPulse",0]) + 1;
 _patient setVariable ["ACME_seizure_motionPulse",_pulse];
 private _jerk = (_patient getVariable ["ACME_seizure_motionMode","full"]) == "jerks";
-private _duration = if (_jerk) then {0.12 + random 0.16} else {0};
+private _onset = _patient getVariable ["ACME_seizure_arrestStartedAt", -1];
+// Unknown onset on a transferred longstanding arrest must not restart frequent early jerks.
+private _age = if (_onset isEqualType 0 && {_onset >= 0}) then {(serverTime - _onset) max 0} else {200};
+([_age] call ACME_fnc_seizureJerkTiming) params ["_snippet", "_quiet"];
+private _duration = if (_jerk) then {_snippet} else {0};
 if (_jerk) then {
     // Hold the owner sequencer through both the snippet and its random quiet interval.
-    private _nextAt = CBA_missionTime + _duration + 1.25 + random 2.75;
+    private _nextAt = CBA_missionTime + _duration + _quiet;
     _patient setVariable ["ACME_seizure_motionReadyAt",_nextAt];
     _patient setVariable ["ACME_seizure_motionAdvancePending",true];
     [{

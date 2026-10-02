@@ -2091,6 +2091,9 @@ class CfgFunctions {
             class assessmentAdvance {};
             class assessmentProgressBar {};
             class respirationStart {};
+            class capillaryStart {};
+            class capillaryStop {};
+            class cprAfterChestPrep {};
             class respirationStep {};
             class respirationTick {};
             class respirationStop {};
@@ -2465,6 +2468,7 @@ class CfgFunctions {
             class chestSealMouseDown {};
             class chestSealMouseUp {};
             class chestSealScroll {};
+            class chestSealScrollStep {};
             class chestSealSealAt {};
             class chestSealSnd {};
             class chestSealFlip {};
@@ -2663,6 +2667,7 @@ class CfgFunctions {
             class lidoToxTick {};
             class debugInduceSeizure {};
             class seizureMotorMode {};
+            class seizureJerkTiming {};
             class seizureArrestTrack {};
             class seizureMotion {};
             class seizureGestureAdvance {};
@@ -2775,6 +2780,9 @@ class CfgFunctions {
             class ventPanelShowDyn {};
             class ventPanelHideScreen {};
             class ventNivEligible {};
+            class ventMaskSelected {};
+            class ventSyncMask {};
+            class ventSetMaskCPAP {};
             class ventConnectPatient {};
             class ventDisconnectPatient {};
             class ventAirwayLoss {};
@@ -7821,8 +7829,14 @@ class ace_medical_treatment_actions {
     // feel pulse therefore still has none. fixing that properly means either blanking the animation on about
     // thirty descendants or giving feel pulse its own class, and that is a decision rather than a detail.
     class CheckCapillaryRefill {
-        animationMedic = "AmovPknlMstpSrasWpstDnon_AmovPknlMstpSrasWpstDnon_gear";
-        animationMedicProne = "AmovPknlMstpSrasWpstDnon_AmovPknlMstpSrasWpstDnon_gear";
+        ACME_suppressNativeTreatmentAnim = 1;
+        animationMedic = "";
+        animationMedicProne = "";
+        animationMedicSelf = "";
+        animationMedicSelfProne = "";
+        callbackStart = "_this call ACME_fnc_capillaryStart";
+        callbackSuccess = "[_this, true] call ACME_fnc_capillaryStop";
+        callbackFailure = "[_this, false] call ACME_fnc_capillaryStop";
     };
 
 // one advanced airway at a time.
@@ -8745,9 +8759,16 @@ class ace_medical_treatment_actions {
 
     // B222: the carried ventilator includes the mask interface; no secured airway is required.
     class ACME_ConnectNIVVent: ACME_ConnectETVent {
-        displayName = "Connect Mask > Ventilator (CPAP)";
+        displayName = "Connect Ventilator";
         condition = "([_medic, 'ACME_ConnectNIVVent'] call ACME_fnc_procedureActionAllowed) && {[_patient] call ACME_fnc_ventNivEligible} && {!(_patient getVariable ['ACME_vent_circuit', false])} && {!(_patient getVariable ['ACME_vent_onPatient', false])} && {!(_patient getVariable ['ACME_vent_recovering', false])} && {(_patient getVariable ['ACME_vent_custodyId', '']) == ''} && {([_medic, _patient, 'ACME_Ventilator'] call ACME_fnc_treatmentSupplyCount) > 0}";
         callbackSuccess = "[_medic, _patient, 'MASK'] call ACME_fnc_ventConnectPatient";
+    };
+
+    // B223: no extra device or mask item and no reconnect transaction required.
+    class ACME_VentMaskCPAP: ACME_ConnectETVent {
+        displayName = "Use NIV / CPAP Mask";
+        condition = "([_medic, 'ACME_VentMaskCPAP'] call ACME_fnc_procedureActionAllowed) && {_patient getVariable ['ACME_vent_onPatient', false]} && {_patient getVariable ['ACME_vent_circuit', false]} && {!(_patient getVariable ['ACME_vent_recovering', false])}";
+        callbackSuccess = "[_patient, _medic, _patient getVariable ['ACME_vent_custodyId', ''], [_patient] call ACME_fnc_clinicalEpoch, serverTime + 3] call ACME_fnc_ventSetMaskCPAP";
     };
 
     // disconnect ventilator. there was no explicit way to take the machine off a casualty. the only route was to

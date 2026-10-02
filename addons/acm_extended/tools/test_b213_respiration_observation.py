@@ -35,6 +35,11 @@ def function(name):
             source = source[:start] + '(' + source[tokens[opening].offset:end] + ' call _displayAddEH)' + source[end:]
     source = source.replace('_main displayRemoveEventHandler ["KeyDown", _keyEH];', '_removedEH pushBack _keyEH;')
     source = re.sub(r'\(_display displayCtrl (\d+)\) ctrlSetText ([^;]+);', r'_texts pushBack [\1, \2];', source)
+    # Native control allocation/show/delete are modeled; session ownership remains production code.
+    source = source.replace('_display ctrlCreate ["RscWatch", 71596]',
+        '(call {_watchCreates = _watchCreates + 1; missionNamespace})')
+    source = source.replace('_watchControl ctrlShow true;', '_watchShows = _watchShows + 1;')
+    source = source.replace('ctrlDelete _watchControl;', '_watchDeletes = _watchDeletes + 1;')
     source = source.replace('_display displayCtrl 71593', '71593')
     source = re.sub(r'_circle ctrlSetPosition ([^;]+);', r'_circlePosition = \1;', source)
     source = re.sub(r'_circle ctrlSetTextColor ([^;]+);', r'_circleColor = \1;', source)
@@ -44,6 +49,7 @@ def function(name):
 
 def setup():
     return r'''
+        private _watchCreates=0; private _watchShows=0; private _watchDeletes=0;
         private _localMedic=true; private _currentVehicle=objNull; private _patientVehicle=objNull;
         private _mainDisplay=missionNamespace; private _inputEH={}; private _removedEH=[];
         private _closed=0; private _texts=[]; private _circlePosition=[]; private _circleColor=[];
@@ -264,7 +270,8 @@ def test_action_and_ui_resource_have_independent_state_and_bvm_texture():
     assert 'ACME_neverRollToBack = 1;' in action
     resource = (ROOT / 'addons/acm_extended/Respirations.hpp').read_text()
     assert r'\acm_extended\ui\dot_grad_ca.paa' in resource
-    assert 'OBSERVATION WATCH' in resource
+    assert 'OBSERVING...' in resource
+    assert '15 real seconds' not in resource
     assert 'timeMultiplier' not in re.sub(r'/\*.*?\*/|//[^\n]*', '', read('respirationStep'), flags=re.S)
 
 

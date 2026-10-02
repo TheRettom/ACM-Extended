@@ -34,10 +34,10 @@ if (_cooldown < 0) then {
 private _who = if (isNull _medic) then {"none"} else {netId _medic};
 private _key = format ["%1:%2", toLowerANSI _action, _who];
 private _times = _patient getVariable ["ACME_chestSealActivityLogTimes", createHashMap];
-private _now = CBA_missionTime;
+private _now = serverTime;
 if ((_now - (_times getOrDefault [_key, -1e6])) < _cooldown) exitWith {false};
 _times set [_key, _now];
-_patient setVariable ["ACME_chestSealActivityLogTimes", _times, false];
+_patient setVariable ["ACME_chestSealActivityLogTimes", _times, true];
 
 [_patient, "activity", _message, _args] call ace_medical_treatment_fnc_addToLog;
 true

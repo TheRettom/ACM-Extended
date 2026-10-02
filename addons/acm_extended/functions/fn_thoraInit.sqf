@@ -342,4 +342,4 @@ _display displayAddEventHandler ["MouseButtonUp", {_this call ACME_fnc_thoraMous
 // Pictures can swallow wheel events before they reach the display. Bind all created controls as well.
 _display displayAddEventHandler ["MouseZChanged", {_this call ACME_fnc_thoraSealScroll}];
 {_x ctrlAddEventHandler ["MouseZChanged", {_this call ACME_fnc_thoraSealScroll}];} forEach allControls _display;
-_surface ctrlSetTooltip "Chest seal: empty hands, RMB to remove; scroll to lift a corner and burp, reverse to lay it down.";
+_surface ctrlSetTooltip "Chest seal: empty hands, RMB to remove; scroll one direction to lift and burp; move off to reset.";

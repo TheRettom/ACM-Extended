@@ -16,7 +16,7 @@ if (isNull _medic || {!alive _medic} || {!local _medic} || {!([_medic] call ace_
 
 // MOVING OFF A SEAL RELEASES ITS PEEL LOCK, AND THAT IS THE ONLY RELEASE.
 // fn_chestSealScroll locks the corner to the direction of the first notch on a seal and holds that lock even
-// when the peel is rolled back to flat, so rolling hard past flat cannot start a fresh peel on the other corner.
+// at full lift. Opposite-direction input is ignored until hover exit, so the seal never flaps or repeats.
 // something has to let go of it, and moving the cursor off the seal is the honest input for that: you have
 // stopped working this one.
 // it also lays the seal flat, so a half peeled corner cannot be stranded on a casualty by walking away from it.

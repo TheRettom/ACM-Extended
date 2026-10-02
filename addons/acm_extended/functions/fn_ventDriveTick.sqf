@@ -22,6 +22,8 @@ if (_patient getVariable ["ACME_vent_recovering", false]) exitWith {
     };
 };
 
+[_patient] call ACME_fnc_ventSyncMask;
+
 // Owner-published mode episode rejects delayed manual commands across live toggles.
 private _simpleNow = missionNamespace getVariable ["ACME_vent_simpleMode", false];
 private _episode = _patient getVariable ["ACME_vent_simpleEpisode", [!_simpleNow, 0]];
@@ -120,14 +122,14 @@ private _mandatory = _mode in ["SIMV VC PS", "SIMV PC", "IMV VC (CPR)", "SIMPLE"
 private _cprProvider = _patient getVariable ["ace_medical_CPR_provider", objNull];
 private _cprActive = (_patient getVariable ["ace_medical_inCardiacArrest", false]) && {!isNull _cprProvider};
 private _cprMode = (_mode == "IMV VC (CPR)");
-private _ifaceOK = if (_mandatory) then { _securedAirway && {_iface == "INVASIVE"} } else { _iface in ["INVASIVE","NON-INVASIVE","NON INVASIVE"] };
+private _ifaceOK = _securedAirway && {_iface == "INVASIVE"};
 if (_simple) then {_ifaceOK = _securedAirway;}; // physical airway; stored interface choice is inactive.
 private _mask = _patient getVariable ["ACME_vent_nivMask", false];
 if (_mask) then {
     _ifaceOK = _mode == "CPAP PS HF" && {_iface in ["NON-INVASIVE", "NON INVASIVE"]}
         && {[_patient] call ACME_fnc_ventNivEligible};
 } else {
-    // Selecting NON INVASIVE on a device is not itself placement of a mask.
+    // A preset or unowned device is not physical mask placement.
     if (!_simple && {_iface in ["NON-INVASIVE", "NON INVASIVE"]}) then {_ifaceOK = false;};
 };
 private _hardwareOK = true;

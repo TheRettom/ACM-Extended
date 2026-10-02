@@ -475,6 +475,8 @@ switch (_operation) do {
     case "chestSealPatientEnd": {_args call ACME_fnc_chestSealPatientEnd;};
     case "patientAnimRequest": {_args call ACME_fnc_patientAnimRequest;};
     case "patientAnimRelease": {_args call ACME_fnc_patientAnimRelease;};
+    case "ventSyncMask": {[_patient] call ACME_fnc_ventSyncMask;};
+    case "ventSetMaskCPAP": {_args call ACME_fnc_ventSetMaskCPAP;};
     case "ventManualBreath": {_args call ACME_fnc_ventManualBreathCommit;};
     case "ventBattery": {
         _patient setVariable ["ACME_vent_battery", 100, true];

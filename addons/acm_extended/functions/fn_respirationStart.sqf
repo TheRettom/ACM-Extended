@@ -30,11 +30,13 @@ if ((_medic getVariable ["ACME_DP_Active", false])
 private _poseEpoch = if (isNull _vehicle) then {
     [_medic, "pulse", -1, _patient] call ACME_fnc_treatmentPoseStart
 } else {-1};
+private _watchControl = _display ctrlCreate ["RscWatch", 71596];
+if (!isNull _watchControl) then {_watchControl ctrlShow true;};
 // Epoch, provider, casualty, pose, PFH, watch state, last visual breath, creation time,
 // captured vehicle, main display, Escape EH, final-cue deadline, native treatment generation.
 // Watch stays empty throughout preparation.
 private _session = [_epoch, _medic, _patient, _poseEpoch, -1, [], -1e9, diag_tickTime, _vehicle, displayNull, -1, -1,
-    _medic getVariable ["ACME_providerTreatmentEpoch", 0]];
+    _medic getVariable ["ACME_providerTreatmentEpoch", 0], _watchControl];
 uiNamespace setVariable ["ACME_RespirationSession", _session];
 if (isNull _vehicle && {_poseEpoch < 0}) exitWith {
     [false, true, _epoch] call ACME_fnc_respirationStop;

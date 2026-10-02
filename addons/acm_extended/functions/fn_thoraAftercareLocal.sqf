@@ -63,7 +63,8 @@ private _message = switch (_operation) do {
 };
 private _logArgs = [[_medic,false,true] call ace_common_fnc_getName,_side];
 if (_operation == "burp") then {
-    [_patient,"burp",_message,_logArgs,_medic,0] call ACME_fnc_chestSealLogOnce;
+    // Suppress rapid re-hover logging without suppressing a valid pressure release or blood debit.
+    [_patient,format ["thoraBurp:%1",_side],_message,_logArgs,_medic,10] call ACME_fnc_chestSealLogOnce;
 } else {
     [_patient,"activity",_message,_logArgs] call ace_medical_treatment_fnc_addToLog;
 };

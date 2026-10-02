@@ -108,6 +108,8 @@ def motor_code(name):
                         ('owner '+unit,'7'),('isAwake '+unit,'_physicalAwake'),('velocity '+unit,'_engineVelocity')]:
             s=re.sub(r'(?<!\w)'+re.escape(old)+r'\b',lambda _:new,s)
     s=s.replace('serverTime','_clock').replace('hasInterface','true')
+    # This harness uses finite numeric clock inputs; native finite() is not in SQF-VM.
+    s=re.sub(r'finite (_\w+)', r'(\1 isEqualType 0)', s)
     s=binary_array(s,'switchGesture',lambda u,a:f'[{a}] call ACME_test_playGesture')
     s=s.replace('_patient switchGesture "GestureEmpty";','[["GestureEmpty"]] call ACME_test_playGesture;')
     s=binary_array(s,'switchMove',lambda u,a:f'_baseMoves pushBack {a}')
@@ -130,7 +132,7 @@ def motor_setup():
         CBA_fnc_globalEvent={_events pushBack _this; if ((_this select 0)=="ACME_seizureGestureSync") then {(_this select 1) call ACME_fnc_seizureGestureSync;};};
         ace_common_fnc_isBeingDragged={false};ace_common_fnc_isBeingCarried={false};ACM_core_fnc_cprActive={false};
         private _deliver={params ["_job"]; (_job select 1) call (_job select 0);};
-    '''+''.join(motor_code(n) for n in ['clinicalEpoch','seizureMotorMode','seizureArrestTrack','seizureGestureSync','seizureGestureAdvance','seizureMotion'])
+    '''+''.join(motor_code(n) for n in ['clinicalEpoch','seizureMotorMode','seizureArrestTrack','seizureGestureSync','seizureJerkTiming','seizureGestureAdvance','seizureMotion'])
 
 
 @pytest.mark.parametrize('arrest,onset,now,expected',[(False,70,100,'full'),(True,100,100,'full'),(True,100,119.999,'full'),(True,100,120,'jerks'),(True,100,140,'jerks'),(True,-1,100,'jerks')])
@@ -175,8 +177,8 @@ def late_jerk():
 def test_late_arrest_jerks_are_brief_randomized_and_cleanly_stop_without_base_pose_reset():
     execute(motor_setup()+late_jerk()+'''
         private _duration=_short select 2;
-        [_duration>=0.12 && {_duration<=0.28},"jerk is not a brief snippet"] call _check;
-        [(_next select 2)-_duration>=1.25 && {(_next select 2)-_duration<=4},"quiet interval outside bounds"] call _check;
+        [_duration>=0.04 && {_duration<=0.12},"jerk is not a brief snippet"] call _check;
+        [(_next select 2)-_duration>=4 && {(_next select 2)-_duration<=10},"quiet interval outside bounds"] call _check;
         [count _capturedGestures==1,"jerk failed to start"] call _check;
         private _oldCount=count _jobs;
         [_patient,_gestureState] call ((_ehs select 0) select 1 select 1);

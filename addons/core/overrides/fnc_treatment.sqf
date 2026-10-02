@@ -157,6 +157,13 @@ if (_classname in [
     true
 };
 
+if (_classname == "ACME_VentMaskCPAP") exitWith {
+    if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
+    if !([_medic, _patient, _interactionChecks] call ace_common_fnc_canInteractWith) exitWith {false};
+    [_patient, _medic, _patient getVariable ["ACME_vent_custodyId", ""],
+        [_patient] call ACME_fnc_clinicalEpoch, serverTime + 3] call ACME_fnc_ventSetMaskCPAP;
+    true
+};
 if !(_classname in ["ACME_ConnectETVent", "ACME_ConnectNIVVent"]) exitWith {
     // Preserve ACM/ACE cursor-menu deferral before ACME starts its one-shot stance/weapon preflight.
     if (uiNamespace getVariable ["ace_interact_menu_cursorMenuOpened", false]) exitWith {
@@ -370,7 +377,8 @@ if !(_classname in ["ACME_ConnectETVent", "ACME_ConnectNIVVent"]) exitWith {
             private _started = if (_classKey == "checkbreathing") then {
                 _args call ACME_fnc_assessmentStart
             } else {
-                _args call ACM_core_fnc_treatmentNative
+                if (_classKey == "cpr") then {_args call ACME_fnc_cprAfterChestPrep}
+                else {_args call ACM_core_fnc_treatmentNative}
             };
             if (!_started) then {
                 private _cur = _m getVariable ["ACME_chestAccess_treatment", []];
@@ -480,6 +488,14 @@ if !(_classname in ["ACME_ConnectETVent", "ACME_ConnectNIVVent"]) exitWith {
             _medic setVariable ["ACME_DP_PauseTreatmentClass", "", false];
         };
         _startedContinuous
+    };
+
+    // Capillary refill owns a pulse pose from callbackStart through the exact native timer endpoint.
+    if (_nativeContinuousClass == "checkcapillaryrefill") exitWith {
+        if (_dpSamePatient) then {_medic setVariable ["ACME_DP_TreatmentBusy", true, false];};
+        private _started = _this call ACM_core_fnc_treatmentNative;
+        if (!_started && {_dpSamePatient}) then {_medic setVariable ["ACME_DP_TreatmentBusy", false, false];};
+        _started
     };
 
     // Resolve ACME's provider-theatre policy BEFORE native treatment starts. When one of these modes is selected,

@@ -27,7 +27,7 @@ if (!(missionNamespace getVariable ["ACME_sys_vent", true])
     || {!([_medic, _patient] call ACME_fnc_ventRecoveryNear)}
     || {_custody == ""} || {_custody != (_patient getVariable ["ACME_vent_custodyId", ""])}
     || {_patient getVariable ["ACME_vent_recovering", false]}
-    || {_patient getVariable ["ACME_vent_nivMask", false]}
+    || {(_patient getVariable ["ACME_vent_nivMask", false] || {[_patient] call ACME_fnc_ventMaskSelected})}
     || {!(_patient getVariable ["ACME_vent_configured", false])}
     || {!(_patient getVariable ["ACME_vent_connected", false])}
     || {(_patient getVariable ["ACME_vent_iface", ""]) != "INVASIVE"}) exitWith {false};

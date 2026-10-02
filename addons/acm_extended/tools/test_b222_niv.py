@@ -41,7 +41,7 @@ def setup():
         _patient setVariable ["ACM_breathing_RespirationRate",18];
         _patient setVariable ["ACE_isUnconscious",false];
         uiNamespace setVariable ["ACME_vent_target",_patient];
-    '''+func('ventNivEligible')+func('ventEffectiveSettings')
+    '''+func('ventNivEligible')+func('ventMaskSelected')+func('ventSyncMask')+func('ventEffectiveSettings')
 
 
 BLOCKERS={
@@ -160,6 +160,8 @@ def drive_setup():
             _runtime pushBack _this;
             {if ((_x select 0)=="bvmProvider") then {_p setVariable ["ACM_breathing_BVM_provider",_x select 1];};} forEach _changes;
         };
+        _patient setVariable ["ACME_vent_onPatient",true];
+        _patient setVariable ["ACME_vent_custodyId","device:1"];
         _patient setVariable ["ACME_vent_nivMask",true];
         _patient setVariable ["ACME_vent_mode","CPAP PS HF"];
         _patient setVariable ["ACME_vent_iface","NON INVASIVE"];
@@ -209,13 +211,13 @@ def test_trigger_off_with_pressure_support_never_creates_mandatory_mask_backup()
     ''')
 
 
-def test_simple_invasive_ventilation_still_ignores_saved_noninvasive_dial():
+def test_explicit_niv_cpap_selections_override_simple_invasive_delivery():
     execute(drive_setup()+'''
         _patient setVariable ["ACME_vent_nivMask",false];_patient setVariable ["ACME_ETT_Inserted",true];
         missionNamespace setVariable ["ACME_vent_simpleMode",true];
         [_patient] call ACME_fnc_ventDriveTick;
-        [_patient getVariable ["ACME_vent_driving",false],"existing SIMPLE invasive support regressed"] call _check;
-        [(_patient getVariable ["ACME_vent_rrDrive",0])==12,"SIMPLE rate stopped being authoritative"] call _check;
+        [!(_patient getVariable ["ACME_vent_driving",false]),"explicit NIV incorrectly delivered invasive breaths"] call _check;
+        [_patient getVariable ["ACME_vent_nivMask",false],"explicit NIV pair did not fit the mask"] call _check;
     ''')
 
 
