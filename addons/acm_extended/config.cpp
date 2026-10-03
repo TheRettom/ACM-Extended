@@ -2110,6 +2110,8 @@ class CfgFunctions {
             class clinicalBagRecover {};
             class preparedAttachRequest {};
             class preparedAttachLocal {};
+            class preparedAttachBlockReason {};
+            class preparedAttachMessage {};
             class preparedCarrierResolve {};
             class preparedAttachAck {};
             class preparedHangCommit {};
@@ -2189,6 +2191,7 @@ class CfgFunctions {
             class openDrawMenu {};
             class patchDrawDialog {};
             class injectIntoBag {};
+            class infusionDrawResolve {};
             class infusionDone {};
             class infusionRefreshTally {};
             class transfusionSpikeOrAdd {};

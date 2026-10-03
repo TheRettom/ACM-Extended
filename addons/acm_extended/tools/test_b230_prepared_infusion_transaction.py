@@ -101,6 +101,8 @@ def setup(baseline=False):
         text += function(name, baseline)
     if not baseline:
         text += function('preparedCarrierResolve')
+        text += function('preparedAttachBlockReason')
+        text += function('preparedAttachMessage')
     path = 'addons/core/overrides/fnc_ivBagLocal.sqf'
     native = subprocess.check_output(['git','show',f'{BASE}:{path}'],cwd=ROOT,text=True) if baseline else (ROOT/path).read_text()
     native = native.replace('ALL_BODY_PARTS','ACME_infusion_bodyParts').replace('FBTK_ARRAY_DATA','[]')
@@ -192,7 +194,7 @@ def test_ambiguous_or_invalid_creation_leaves_no_carrier_and_retains_prepared_se
       (call _ack) call ACME_fnc_preparedAttachAck;
       [count (_medic getVariable "ACME_infusion_PreparedBags")==1 && {count (_medic getVariable "ACME_preparedIVSets")==1},"failed attachment consumed prepared stock"] call _check;
       [count _clampQueue==0 && {count _refunds==0} && {count _notices==1},"rejection incorrectly opened clamp/refunded twice"] call _check;
-      [((_notices select 0 select 1) find "carrier identity mismatch")>=0,"diagnostic missing"] call _check;
+      [(_notices select 0 select 1) isEqualTo "Could not identify the new carrier bag.","diagnostic missing"] call _check;
     ''')
 
 

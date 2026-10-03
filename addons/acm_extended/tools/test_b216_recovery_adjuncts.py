@@ -145,7 +145,7 @@ def physiology_setup():
         private _runWorker={private _h=_handlers select _this;
             if (_h select 2) then {[_h select 1,_this] call (_h select 0);};};
     '''
-    for name in ["handleAirwayObstruction_Blood", "handleAirwayObstruction_Vomit", "getAirwayState"]:
+    for name in ["setAirwayState", "handleAirwayObstruction_Blood", "handleAirwayObstruction_Vomit", "getAirwayState"]:
         source = native("airway", name)
         # Sound output and engine position are the only removed vomiting boundaries.
         source = re.sub(r'playSound3D \[[^;]+;', '_sounds pushBack "vomit";', source)

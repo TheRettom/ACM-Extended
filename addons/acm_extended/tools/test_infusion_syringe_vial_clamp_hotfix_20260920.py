@@ -56,7 +56,8 @@ def test_infusion_uses_native_single_med_mover_and_rechecks_real_stock():
     assert 'if (missionNamespace getVariable ["ACM_circulation_SyringeDraw_Moving", false]) exitWith {};' in inject
     assert 'ACME_fnc_infusionVialVolume' in inject
     assert '_sessionMax min _stockMax min _size' in inject
-    assert 'Confirm the dose and inject again.' in inject
+    assert 'ACME_fnc_infusionDrawResolve' in inject
+    assert 'Vial contents changed. Check the dose and inject again.' in inject
 
 
 def test_successful_bag_injection_resets_plunger_and_native_selection_atomically():

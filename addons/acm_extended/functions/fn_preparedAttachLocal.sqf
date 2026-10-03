@@ -30,23 +30,27 @@ _ok = _ok && {!(_components isEqualTo [])};
 if (_customStaged) then {
     private _sets = _medic getVariable ["ACME_preparedIVSets", []];
     private _preparedLive = _medic getVariable ["ACME_infusion_PreparedBags", []];
-    _ok = _ok && {(_sets findIf {(_x select 0) == (_prepared select 0)}) >= 0} &&
+    private _hasPreparedSet = (_sets findIf {(_x select 0) == (_prepared select 0)}) >= 0 &&
         {(_preparedLive findIf {_x isEqualTo _prepared}) >= 0};
+    _ok = _ok && {_hasPreparedSet};
+    if (!_hasPreparedSet) then {_reason = "prepared-set-missing";};
 };
 if !(_staged isEqualTo []) then {
     private _sets = _medic getVariable ["ACME_preparedIVSets", []];
     _ok = _ok && {(toLowerANSI (getText (configFile >> "ace_medical_treatment" >> "IV" >> _action >> "type"))) in keys (missionNamespace getVariable ["ACME_infusion_premixedByType", createHashMap])} && {(_sets findIf {(_x select 0) == (_staged select 0)}) >= 0};
 };
-// A single fresh infusion cannot silently replace another provider's bag on this access.
-private _occupied = ((_patient getVariable ["ACM_circulation_IV_Bags", createHashMap]) getOrDefault [_part, []]) findIf {
-    (_x param [3, -1]) == _site && {(_x param [4, true]) == _iv} && {(_x param [1, 0]) > 0.01}
-};
-_ok = _ok && {_occupied < 0} && {
+// Recheck occupancy on the owner, including a clamped/stopped or empty real bag.
+private _blocked = [_patient, _part, _iv, _site] call ACME_fnc_preparedAttachBlockReason;
+if (_blocked != "") then {_ok = false; _reason = _blocked;};
+_ok = _ok && {
     (_components findIf {
         private _class = (missionNamespace getVariable ["ACME_infusion_deliveryClassOverride", createHashMap]) getOrDefault [_x select 0, format ["%1_IV", _x select 0]];
         !((_x select 1) > 0) || {!finite (_x select 1)} || {!(isClass (configFile >> "ACM_Medication" >> "Medications" >> _class) || {(_x select 0) in (missionNamespace getVariable ["ACME_infusion_osmoticAgents", []])})}
     }) < 0
 };
+if (_epoch != ([_patient] call ACME_fnc_clinicalEpoch)) then {_reason = "patient-changed";};
+if (_medic distance _patient > 5 && {isNull objectParent _medic || {objectParent _medic != objectParent _patient}}) then {_reason = "out-of-range";};
+if (!alive _medic || {_medic getVariable ["ACE_isUnconscious", false]}) then {_reason = "provider-unavailable";};
 // A new request ID cannot duplicate an already accepted set while its ACK is in flight.
 private _alreadyAttached = (values _results) findIf {
     private _f = _x param [3, []];

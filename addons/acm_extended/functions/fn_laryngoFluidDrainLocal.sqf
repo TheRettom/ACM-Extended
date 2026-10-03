@@ -36,6 +36,14 @@ if (count _totals > 64) then {_totals deleteAt 0;};
 _patient setVariable ["ACME_suctionTotals", _totals, true];
 // Persist partial secretion debits in their compartment as well as the active
 // ledger, so a later native blood/vomit event cannot restore already-suctioned fluid.
+if (_removed > 0 && {_kind in ["b", "s"]}) then {
+    private _field = if (_kind == "b") then {"ACME_airwayBloodRefillAt"} else {"ACME_airwaySecretionRefillAt"};
+    _patient setVariable [_field, CBA_missionTime + 30, true];
+};
+// Blood has its own partial-volume ledger, even when vomit temporarily covers it.
+if (_kind == "b") then {
+    _patient setVariable ["ACME_laryngo_bloodRemaining", [_patient getVariable ["ACM_airway_AirwayObstructionBlood_State", 0], _remaining], true];
+};
 if (_kind == "s") then {
     private _secretions = _patient getVariable ["ACME_laryngo_secretions", []];
     _patient setVariable ["ACME_laryngo_secretions", [_secretions param [0, ""], _remaining], true];
@@ -45,7 +53,10 @@ if (_remaining <= 0) then {
         [_patient, [["vomit", 0], ["vomitGrace", CBA_missionTime]], true] call ACM_airway_fnc_setAirwayState;
         _patient setVariable ["ACME_laryngo_emesis", [], true];
     } else {
-        if (_kind == "b") then {[_patient, [["blood", 0]], true] call ACM_airway_fnc_setAirwayState;};
+        if (_kind == "b") then {
+            [_patient, [["blood", 0]], true] call ACM_airway_fnc_setAirwayState;
+            _patient setVariable ["ACME_laryngo_bloodRemaining", [], true];
+        };
         if (_kind == "s") then {_patient setVariable ["ACME_laryngo_secretions", [], true];};
     };
     [_patient, true] call ACM_airway_fnc_clearAirwayCheckedTime;

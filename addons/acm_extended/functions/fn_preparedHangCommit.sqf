@@ -81,19 +81,19 @@ if ((_patient getVariable ["ACME_yFlushJobs",createHashMap]) getOrDefault [_line
 };
 if (!_isSingle) then {
     if (_lineYd) then {_refuse = "This IV spot already has a Y line.";};
-    if (_refuse == "" && {_activeOther}) then {_refuse = "This IV/IO already has a line running.";};
+    if (_refuse == "" && {_activeOther}) then {_refuse = "There is already a bag on this line.";};
 } else {
     if (_lineYd) then {
         if (_kind != "blood") then {_refuse = "This IV spot already has a Y line.";}
         else {
-            if (_activeBlood) then {_refuse = "A unit is still running on this Y line.";};
+            if (_activeBlood) then {_refuse = "There is already a bag on this line.";};
             if (_refuse == "" && {_dirty}) then {_refuse = "Flush the Y line before hanging the next unit.";};
         };
     } else {
-        if (_activeOther) then {_refuse = "This IV/IO already has a line running.";};
+        if (_activeOther) then {_refuse = "There is already a bag on this line.";};
     };
 };
-if (_refuse != "") exitWith {[false, _refuse + " The prepared set was not consumed."] call _finish;};
+if (_refuse != "") exitWith {[false, _refuse] call _finish;};
 
 private _pi = ACME_infusion_bodyParts find toLowerANSI _part;
 private _access = if (_pi >= 0) then {[_patient, _iv, _pi, _site] call ACM_circulation_fnc_getAccessType} else {0};

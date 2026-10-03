@@ -87,18 +87,18 @@ private _refuse = "";
 if (!_isSingle) then {
     // a y set needs a clear site: no existing y line and no running single line.
     if (_lineYd) then { _refuse = "This IV spot already has a Y line."; };
-    if (_refuse == "" && _activeOther) then { _refuse = "This IV/IO already has a line running."; };
+    if (_refuse == "" && _activeOther) then { _refuse = "There is already a bag on this line."; };
 } else {
     if (_lineYd) then {
         // an existing y line: only a blood unit can refill it, because the clamped saline reserve stays.
         if (_kind != "blood") then { _refuse = "This IV spot already has a Y line."; }
         else {
-            if (_activeBlood) then { _refuse = "A unit is still running on this Y line."; };
+            if (_activeBlood) then { _refuse = "There is already a bag on this line."; };
             if (_refuse == "" && _dirty) then { _refuse = "Flush the line (Flush Line) before hanging the next unit."; };
         };
     } else {
         // a non-y site: refuse only if a unit is actively running. an empty slot or a fresh site is fine to hang on.
-        if (_activeOther) then { _refuse = "This IV/IO already has a line running."; };
+        if (_activeOther) then { _refuse = "There is already a bag on this line."; };
     };
 };
 if (_refuse != "") exitWith {
