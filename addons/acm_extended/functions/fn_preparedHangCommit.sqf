@@ -32,7 +32,7 @@ private _finish = {
     if (!isNull _medic) then {["ACME_preparedHangResult", [_requestId, _ok, _message], _medic] call CBA_fnc_targetEvent;};
 };
 
-if (isNull _medic || {!alive _medic}) exitWith {[false, "Provider is no longer available. The prepared set was not consumed."] call _finish;};
+if (isNull _medic || {!alive _medic} || {_medic getVariable ["ACE_isUnconscious",false]}) exitWith {[false, "Provider is no longer available. The prepared set was not consumed."] call _finish;};
 if (_epoch != ([_patient] call ACME_fnc_clinicalEpoch)) exitWith {[false, "Patient state changed. The prepared set was not consumed."] call _finish;};
 private _sameVehicle = !isNull objectParent _medic && {(objectParent _medic) isEqualTo (objectParent _patient)};
 if ((_medic distance _patient) > 5 && {!_sameVehicle}) exitWith {[false, "Move back within treatment range. The prepared set was not consumed."] call _finish;};

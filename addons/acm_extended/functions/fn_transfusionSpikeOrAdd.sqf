@@ -59,8 +59,11 @@ if (_fromUsed) exitWith {
     _used deleteAt _ui; ACE_player setVariable ["ACME_usedBags",_used,true];
     private _requestId=format ["rehang:%1:%2:%3",clientOwner,diag_frameNo,floor(diag_tickTime*1000)];
     private _pending=uiNamespace getVariable ["ACME_usedRehangPending",createHashMap]; _pending set [_requestId,_record]; uiNamespace setVariable ["ACME_usedRehangPending",_pending]; uiNamespace setVariable ["ACME_usedRowSig","__force__"];
+    private _contexts = uiNamespace getVariable ["ACME_usedRehangContext",createHashMap];
+    _contexts set [_requestId,[ACE_player,_target2,_usedId]];
+    uiNamespace setVariable ["ACME_usedRehangContext",_contexts];
     private _warmer=([ACE_player,_target2,"ACME_BloodWarmer"] call ACME_fnc_treatmentSupplyCount)>=1;
-    [_target2,"rehangUsedBag",[_target2,ACE_player,_bp2,_iv2,_site2,_usedId,_record,[_target2] call ACME_fnc_clinicalEpoch,_requestId,_warmer]] call ACME_fnc_ownerDispatch;
+    [_target2,"rehangUsedBag",[_target2,ACE_player,_bp2,_iv2,_site2,_usedId,_record,[_target2] call ACME_fnc_clinicalEpoch,_requestId,_warmer,serverTime]] call ACME_fnc_ownerDispatch;
 };
 
 private _isBlood  = ((toLowerANSI _class) find "blood")  >= 0;

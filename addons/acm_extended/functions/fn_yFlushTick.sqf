@@ -1,5 +1,5 @@
 /* B227: existing owner maintenance cadence; no per-click scheduler. Legacy jobs are cancelled on upgrade.
- * Prime volume fills/discards into tubing (no patient fluid credit). Flush volume follows access admission. */
+ * Both priming and flushing follow actual patient admission and the same saline ledger. */
 params ["_p"];
 if (isNull _p || {!local _p}) exitWith {};
 private _jobs = _p getVariable ["ACME_yFlushJobs", createHashMap];
@@ -8,7 +8,7 @@ private _map = _p getVariable ["ACM_circulation_IV_Bags", createHashMap];
 private _changed = false; private _topology = false;
 {
     private _key = _x; private _job = _jobs get _key;
-    if (count _job < 13) then {_jobs deleteAt _key; _topology = true; continue;};
+    if !([_job,_key] call ACME_fnc_yServiceJobValid) then {_jobs deleteAt _key; _topology = true; continue;};
     _job params ["_part","_iv","_site","_id","_remaining","_rate","_last","_medic","_epoch","_queue","_kind","_total","_delivered"];
     if (!alive _p || {_epoch != ([_p] call ACME_fnc_clinicalEpoch)}
         || {!([_p,_part,_iv,_site] call ACME_fnc_isYLineAccess)}
@@ -17,16 +17,24 @@ private _changed = false; private _topology = false;
     private _idx = _arr findIf {(_x param [8, ""]) == _id && {(_x param [3,-1]) == _site} && {(_x param [4,true]) isEqualTo _iv}};
     if (_idx < 0) then {_jobs deleteAt _key; _topology = true; continue;};
     private _e = +(_arr select _idx);
-    if ((_e param [1,0]) <= 0.001) then {_jobs deleteAt _key; _topology = true; continue;};
+    if ((_e param [1,0]) <= 0.001 || {!((_e param [0, ""]) in ["Saline","ACME_SalineY"])}
+        || {((_p getVariable ["ACME_infusion_BagMedications", []]) findIf {(_x param [23, ""]) == _id}) >= 0}) then {_jobs deleteAt _key; _topology = true; continue;};
     private _dt = ((serverTime - _last) max 0) min 1;
     private _pi = ACME_infusion_bodyParts find _part;
     private _drain = (_rate * _dt) min _remaining min (_e select 1);
     private _pass = 1;
-    if (_kind == "flush") then {
+    // Priming is also patient fluid now; it cannot bypass an occluded/stopped access or zero perfusion.
+    call {
         // A late blood attach cannot bypass empty-blood-only servicing.
         private _blood = (_arr findIf {(_x param [0, ""]) in ["Blood","FreshBlood"] && {(_x param [1,0]) > 0.01} && {(_x param [3,-1]) == _site} && {(_x param [4,true]) isEqualTo _iv}}) >= 0;
         private _flow = if (_iv) then {((_p getVariable ["ACM_circulation_FluidBagsFlow_IV", [[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1]]]) select _pi) param [_site,0]} else {(_p getVariable ["ACM_circulation_FluidBagsFlow_IO", [1,1,1,1,1,1]]) param [_pi,0]};
-        if (_blood || {_flow <= 0} || {([_p,_pi,_iv,_site,-1] call ACM_circulation_fnc_getIVFlowRate) <= 0}) then {_drain = 0;};
+        if ((_kind == "flush" && {_blood}) || {_flow <= 0} || {([_p,_pi,_iv,_site,-1] call ACM_circulation_fnc_getIVFlowRate) <= 0}) then {_drain = 0;};
+        private _co = [_p] call ace_medical_status_fnc_getCardiacOutput;
+        if !(_co isEqualType 0 && {finite _co}) then {_co = 0;};
+        private _perfusing = ([_p] call ACM_core_fnc_cprActive) || {
+            !(_p getVariable ["ace_medical_inCardiacArrest", false]) && {_co > 0.0001}
+        };
+        if (!_perfusing) then {_drain = 0;};
         _pass = [_p,_part,if (_iv) then {_site} else {-1}] call ACME_fnc_medicationLineFraction;
         if (_iv && {missionNamespace getVariable ["ACM_circulation_IVComplications", false]}) then {
             private _rows = _p getVariable ["ACM_circulation_IV_Complication_Placement_Flow", [[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]];
@@ -35,10 +43,11 @@ private _changed = false; private _topology = false;
         };
     };
     if (_drain > 0) then {
-        if (_kind == "flush") then {
+        call {
             private _admitted = _drain * _pass;
             [_p,_part,_idx,_e,_drain,_admitted,_dt,true] call ACME_fnc_fluidCommit;
             [_p,[["salineVolume",(_p getVariable ["ACM_circulation_Saline_Volume",0]) + _admitted / 1000]],true] call ACM_circulation_fnc_setRuntimeState;
+            if (!_iv && {_admitted > 0}) then {[_p,_part,"fluid"] call ACME_fnc_ioPainResponse;};
         };
         _e set [1,((_e select 1)-_drain) max 0];
         if ((_e select 1) <= 0.001) then {_e set [0,"ACME_EmptySaline"];};
@@ -69,7 +78,9 @@ private _changed = false; private _topology = false;
 if (_changed) then {[_p,_map,true] call ACME_fnc_ivBagsCommit;};
 _p setVariable ["ACME_yFlushJobs", _jobs, false];
 private _lastNet = _p getVariable ["ACME_yFlushJobsNetAt",-1];
-if (_topology || {_lastNet < 0} || {diag_tickTime - _lastNet >= 1}) then {
+// Publish remaining work with EVERY debit, not just once a second. On locality transfer a
+// newer bag volume must not be paired with an older job remainder and repeat part of a flush.
+if (_changed || {_topology} || {_lastNet < 0} || {diag_tickTime - _lastNet >= 1}) then {
     _p setVariable ["ACME_yFlushJobsNetAt",diag_tickTime,false];
     [_p,"ACME_yFlushJobs",_jobs] call ACME_fnc_setVarNet;
 };

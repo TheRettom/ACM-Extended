@@ -122,11 +122,12 @@ private _number = {params ["_v"]; !isNil "_v" && {_v isEqualType 0} && {finite _
                     && {(_job select 1) isEqualType true} && {(_job select 3) isEqualType ""}
                     && {(_job select 7) isEqualType objNull}
                     && {([2,4,5,6,8] findIf {!([_job select _x] call _number)}) < 0}
-                    && {count _job == 9 || {count _job == 13
+                    && {count _job == 9 || {count _job in [13,14]
                         && {(_job select 9) isEqualType []} && {count (_job select 9) <= 100}
                         && {((_job select 9) findIf {!([_x] call _number) || {_x <= 0} || {_x > 50}}) < 0}
                         && {(_job select 10) in ["prime", "flush"]}
-                        && {([11,12] findIf {!([_job select _x] call _number) || {(_job select _x) < 0}}) < 0}}})
+                        && {([11,12] findIf {!([_job select _x] call _number) || {(_job select _x) < 0}}) < 0}
+                        && {[_job,_x] call ACME_fnc_yServiceJobValid}}})
             }) >= 0;
         };
         case "ACME_bagMoves": {

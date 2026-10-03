@@ -158,23 +158,18 @@ def test_manual_carrier_corpse_without_unconscious_flag_remains_mechanically_acc
 
 @pytest.mark.parametrize('invalid,accepted', [('',True),('_alive=false;',False),('_medic setVariable ["ACE_isUnconscious",true];',False),('_distance=6;',False),('_epoch=2;',False)])
 def test_pressure_cuff_corpse_commit_keeps_provider_epoch_and_distance_guards(invalid,accepted):
-    from test_b156_procedure_supplies import primitives
-    source=primitives(adapt(read('pressureInfuserCommit')).replace('serverTime', 'CBA_missionTime')).replace('_receipts getOrDefault [_id, []]', '(if (_id in _receipts) then {_receipts get _id} else {[]})')
-    # SQF-VM lacks hashmap forEach; enumerate its real keys/values while preserving the production loop body.
-    source=source.replace('private _i = _y findIf', 'private _y = _x select 1; private _i = _y findIf')
-    source=source.replace('forEach (_patient getVariable ["ACM_circulation_IV_Bags", createHashMap])', 'forEach ((keys (_patient getVariable ["ACM_circulation_IV_Bags", createHashMap])) apply {[_x, (_patient getVariable "ACM_circulation_IV_Bags") get _x]})')
-    execute('private _mapDefault={params ["_m","_args"];_args params ["_k","_d"];if (_k in _m) then {_m get _k} else {_d}};'+
-        'ACME_fnc_pressureLevel={'+adapt(read('pressureLevel')).replace('serverTime','CBA_missionTime')+'};'+
-        'private _commit={'+source+'};' + '''
+    from test_b227_line_service_and_assessments import basic, fn
+    # B228 requires the current shared-clock pump protocol; corpse placement itself remains valid.
+    execute(basic()+fn('pressureLevel')+fn('pressureInfuserCommit') + "private _commit=ACME_fnc_pressureInfuserCommit;" + '''
         _patientAlive=false;private _epoch=1;private _acks=[];private _writes=[];
         ACME_fnc_clinicalEpoch={1};ACME_fnc_treatmentSupplyCount={1};
         ACME_fnc_pressureInfuserStateCommit={params ["_p","_key","_value"];_writes pushBack _key;
             _p setVariable [["ACME_piCuffs","ACME_piReceipts"] select (_key=="receipts"),_value];};
         CBA_fnc_targetEvent={_acks pushBack _this;};
-        _patient setVariable ["ACM_circulation_IV_Bags",createHashMapFromArray [["leftarm",[["Saline",500,0,0,0,0,0,0,"bag-one"]]]]];
+        _patient setVariable ["ACM_circulation_IV_Bags",createHashMapFromArray [["leftarm",[["Saline",500,0,0,true,0,0,0,"bag-one"]]]]];
     '''+invalid+'''
-        [_patient,_medic,"bag-one",_epoch,"request-one",0,true] call _commit;
-        [_patient,_medic,"bag-one",_epoch,"request-one",0,true] call _commit;
+        [_patient,_medic,"bag-one",_epoch,"request-one",_serverTime,true,false,"pump-b227"] call _commit;
+        [_patient,_medic,"bag-one",_epoch,"request-one",_serverTime,true,false,"pump-b227"] call _commit;
     '''+f'''
         [count _acks==2 && {{(((_acks select 0) select 1) select 1) isEqualTo {str(accepted).lower()}}},"wrong corpse cuff acknowledgement"] call _check;
         [({{_x=="cuffs"}} count _writes)=={int(accepted)},"cuff accepted twice or guard bypassed"] call _check;

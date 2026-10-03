@@ -17,6 +17,7 @@ _disp setVariable ["ACME_RmbGuard_Installed", true];
 
 private _eh = _disp displayAddEventHandler ["MouseButtonDown", {
     params ["_d", "_button"];
+    if (call ACME_fnc_transfusionInputOwned) exitWith {false};
     private _u = ACE_player;
     if (isNull _u || {!local _u} || {!alive _u}) exitWith { false };
 
@@ -54,6 +55,7 @@ private _eh = _disp displayAddEventHandler ["MouseButtonDown", {
         params ["_u", "_hangStart", "_dpToken", "_cancelHang", "_cancelDP", "_claimToken", "_claimEpoch", "_localityEpoch", "_canCancelDP"];
         if (isNull _u || {!local _u} || {!(_u isEqualTo ACE_player)}
             || {(_u getVariable ["ACME_providerLocalityEpoch", 0]) != _localityEpoch}) exitWith {};
+        if (call ACME_fnc_transfusionInputOwned) exitWith {};
         if (_cancelHang && {_u getVariable ["ACME_hang_Active", false]}
             && {(_u getVariable ["ACME_hang_Start", -2]) == _hangStart}) exitWith {
             [false] call ACME_fnc_hangBagStop;

@@ -112,6 +112,9 @@ if (isNull _display) exitWith {
     };
 };
 
+// The foreground menu consumes RMB without cancelling background holds. The hold's own
+// input guard also checks this display, so it does not depend on engine EH ordering.
+{_display displayAddEventHandler [_x, {(_this param [1, -1]) == 1}];} forEach ["MouseButtonDown", "MouseButtonUp"];
 _display setVariable ["ACM_TX_Generation", _menuGeneration];
 _display setVariable ["ACM_TX_CloseID", _closeID];
 
@@ -416,22 +419,6 @@ private _pfh = [{
         _siteFlowRate = [(GET_IO_FLOW_X(_patient,_partIndex)), (GET_IV_FLOW_X(_patient,_partIndex,_selectedSite))] select GVAR(TransfusionMenu_SelectIV);
     };
     private _typeString = [LLSTRING(Intraosseous_Short), LLSTRING(Intravenous_Short)] select GVAR(TransfusionMenu_SelectIV);
-    private _physicalBlock = "";
-    if (_hasSelectedAccess && {_partIndex >= 0}) then {
-        if (GVAR(TransfusionMenu_SelectIV)
-            && {_patient getVariable [format ["ACME_IV_BandOnPart_%1", _partIndex], false]}) then {
-            _physicalBlock = "IV placement band is still applied. Remove the band before this IV can flow.";
-        };
-        if (_physicalBlock == "" && {!isNil "ACME_fnc_aajtOccludes"}
-            && {[_patient, _partIndex] call ACME_fnc_aajtOccludes}) then {
-            _physicalBlock = "AAJT-S compression is physically occluding this vascular territory.";
-        };
-        if (_physicalBlock == "" && {_patient getVariable ["ace_medical_inCardiacArrest", false]}
-            && {!([_patient] call ACM_core_fnc_cprActive)}) then {
-            _physicalBlock = "No forward perfusion during cardiac arrest. Start CPR for IV/IO flow.";
-        };
-    };
-
     if (!_hasSelectedAccess) then {
         _ctrlStopTransfusionButton ctrlSetText "No IV / IO access";
         _ctrlStopTransfusionButton ctrlSetTooltip "Establish and select an IV or IO before starting a transfusion";
@@ -439,19 +426,15 @@ private _pfh = [{
         if (!isNull _ctrlAddBagButton) then {_ctrlAddBagButton ctrlEnable false;};
     } else {
         if (!isNull _ctrlAddBagButton) then {_ctrlAddBagButton ctrlEnable true;};
-        if (_physicalBlock != "") then {
-            _ctrlStopTransfusionButton ctrlSetText "Flow physically blocked";
-            _ctrlStopTransfusionButton ctrlSetTooltip _physicalBlock;
-            _ctrlStopTransfusionButton ctrlEnable false;
+        // This button is the user's clamp switch, not an unearned diagnosis. Physical
+        // occlusion and perfusion still gate the owner-side drainer, never this label.
+        _ctrlStopTransfusionButton ctrlEnable true;
+        if (_siteFlowRate > 0) then {
+            _ctrlStopTransfusionButton ctrlSetText (format [LLSTRING(TransfusionMenu_StopTransfusion_Display), _typeString]);
+            _ctrlStopTransfusionButton ctrlSetTooltip (format [LLSTRING(TransfusionMenu_StopTransfusion_ToolTip), _typeString]);
         } else {
-            _ctrlStopTransfusionButton ctrlEnable true;
-            if (_siteFlowRate > 0) then {
-                _ctrlStopTransfusionButton ctrlSetText (format [LLSTRING(TransfusionMenu_StopTransfusion_Display), _typeString]);
-                _ctrlStopTransfusionButton ctrlSetTooltip (format [LLSTRING(TransfusionMenu_StopTransfusion_ToolTip), _typeString]);
-            } else {
-                _ctrlStopTransfusionButton ctrlSetText (format [LLSTRING(TransfusionMenu_StartTransfusion_Display), _typeString]);
-                _ctrlStopTransfusionButton ctrlSetTooltip (format [LLSTRING(TransfusionMenu_StartTransfusion_ToolTip), _typeString]);
-            };
+            _ctrlStopTransfusionButton ctrlSetText (format [LLSTRING(TransfusionMenu_StartTransfusion_Display), _typeString]);
+            _ctrlStopTransfusionButton ctrlSetTooltip (format [LLSTRING(TransfusionMenu_StartTransfusion_ToolTip), _typeString]);
         };
     };
 

@@ -419,5 +419,5 @@ def test_b204_network_audit_identity():
     startup = function("initForkStartupRuntime")
     config = read("addons/acm_extended/config.cpp")
     assert 'version = "1.2.4.1";' in config
-    assert 'ACME_buildBatch = "B227";' in startup
-    assert 'ACME_networkAuditRevision = "NA8-B227-1.2.4.1-candidate";' in startup
+    assert 'ACME_buildBatch = "B228";' in startup
+    assert 'ACME_networkAuditRevision = "NA8-B228-1.2.4.1-candidate";' in startup

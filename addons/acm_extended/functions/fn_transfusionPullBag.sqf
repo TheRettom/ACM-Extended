@@ -37,4 +37,7 @@ if (_type == "FBTK") exitWith {call ACM_circulation_fnc_TransfusionMenu_RemoveBa
 private _uid = _bag param [8,"",[""]];
 private _sig = +(_bag select [0,8]);
 private _requestId = format ["txpull:%1:%2:%3",clientOwner,diag_frameNo,floor(diag_tickTime*1000)];
-[_target,"transfusionPull",[_target,ACE_player,_part,_uid,_idx,_sig,[_target] call ACME_fnc_clinicalEpoch,_requestId]] call ACME_fnc_ownerDispatch;
+private _pending=uiNamespace getVariable ["ACME_txPullPending",createHashMap];
+_pending set [_requestId,[ACE_player,_target]];
+uiNamespace setVariable ["ACME_txPullPending",_pending];
+[_target,"transfusionPull",[_target,ACE_player,_part,_uid,_idx,_sig,[_target] call ACME_fnc_clinicalEpoch,_requestId,serverTime]] call ACME_fnc_ownerDispatch;

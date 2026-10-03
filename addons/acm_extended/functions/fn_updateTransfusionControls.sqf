@@ -13,44 +13,30 @@ if (!isNull (findDisplay 86200)) exitWith {};
 // closes.
 if (!isNull (findDisplay 84000)) exitWith {};
 
-// keep ACME_YLines honest, under the discard-only teardown model. a y line persists until the medic explicitly
-// discards it, because ACME_fnc_discardYTubing removes the key, whatever happens to the bags on it. pulling
-// bags leaves empty markers. if any path nonetheless strips a keyed site bare, from a race, an ACM-side cleanup
-// or a legacy flow, this self-heals it by recreating the empty blood bag and empty saline bag pair, so the line
-// stays visible in the transfusion list and structurally intact until it is discarded. keys are never
-// auto-dropped now. that auto-drop was the pre-discard rule, and it was how a fully pulled y could vanish from
-// the menu.
+// UI never writes a remote patient's complete bag map. Ask the owner to repair empty slots
+// from its current topology instead, at most once a second per open display.
 private _yTarget = missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Target", objNull];
-if (!isNull _yTarget) then {
-    private _yl = _yTarget getVariable ["ACME_YLines", []];
-    if (count _yl > 0) then {
-        private _ivBags = _yTarget getVariable ["ACM_circulation_IV_Bags", createHashMap];
-        private _healed = false;
-        {
-            (_x splitString "#") params [["_bp", ""], ["_ivStr", "true"], ["_siteStr", "-1"]];
-            private _site = parseNumber _siteStr;
-            private _ivB = _ivStr == "true";
-            private _arr = _ivBags getOrDefault [_bp, []];
-            private _held = (_arr findIf {
-                (
-                    ((_x param [0, ""]) in ["ACME_SalineY", "ACME_EmptySaline", "ACME_Empty", "Saline"])
-                    || {((_x param [0, ""]) in ["Blood", "FreshBlood"]) && {(_x param [1, 0]) > 0.01}}
-                )
-                && {(_x param [3, -1]) isEqualTo _site}
-                && {(str (_x param [4, true])) == _ivStr}
-            }) > -1;
-            if (!_held) then {
-                _arr pushBack ["ACME_Empty", 0, 0, _site, _ivB, -1, 1000, -1];
-                _arr pushBack ["ACME_EmptySaline", 0, 0, _site, _ivB, -1, 1000, -1];
-                _ivBags set [_bp, _arr];
-                _healed = true;
-            };
-        } forEach _yl;
-        if (_healed) then {
-            [_yTarget, _ivBags] call ACME_fnc_ivBagsCommit;
-            if (!isNil "ACM_circulation_fnc_TransfusionMenu_UpdateBagList") then { [false] call ACM_circulation_fnc_TransfusionMenu_UpdateBagList; };
-        };
-    };
+if (!isNull _yTarget && {count (_yTarget getVariable ["ACME_YLines", []]) > 0}
+    && {diag_tickTime >= (_display getVariable ["ACME_ySlotsNextCheck", 0])}) then {
+    _display setVariable ["ACME_ySlotsNextCheck", diag_tickTime + 1];
+    private _bagsNow = _yTarget getVariable ["ACM_circulation_IV_Bags", createHashMap];
+    private _needsSlots = ((_yTarget getVariable ["ACME_YLines", []]) findIf {
+        private _bits = (toLowerANSI _x) splitString "#";
+        if (count _bits != 3) exitWith {false};
+        _bits params ["_part", "_ivText", "_siteText"];
+        private _iv = _ivText == "true"; private _site = parseNumber _siteText;
+        private _arr = _bagsNow getOrDefault [_part, []];
+        !(["Blood","FreshBlood","ACME_Empty"] findIf {
+            private _type = _x;
+            (_arr findIf {(_x param [0, ""]) == _type && {(_x param [3,-1]) == _site} && {(_x param [4,true]) isEqualTo _iv}}) >= 0
+        } >= 0) || {
+            (["Saline","ACME_SalineY","ACME_EmptySaline"] findIf {
+                private _type = _x;
+                (_arr findIf {(_x param [0, ""]) == _type && {(_x param [3,-1]) == _site} && {(_x param [4,true]) isEqualTo _iv}}) >= 0
+            }) < 0
+        }
+    }) >= 0;
+    if (_needsSlots) then {[_yTarget, "yEnsureSlots", []] call ACME_fnc_ownerDispatch;};
 };
 
 // compatible-saline cue, shown only during the mid-y-line "Select Flush Saline" step, where a blood unit is
@@ -418,7 +404,7 @@ if (!isNull _ctrlPreparedList) then {
 
 // B227: line service first, then bag movement/removal. Original anchor geometry is immutable.
 private _ctrlFlush = _display displayCtrl 86143;
-private _ctrlPrime = _display displayCtrl 86150;
+// Prime and Flush share the single service control (86143).
 private _ctrlHang = _display displayCtrl 86134;
 private _flTarget = missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Target",objNull];
 private _flPart = missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_BodyPart",""];
@@ -429,7 +415,7 @@ private _flLineYd = !isNull _flTarget && {[_flTarget,_flPart,_flIV,_flSite] call
 if (_moveBase isNotEqualTo [] && {_removeBase isNotEqualTo []}) then {
     _moveBase params ["_mx","_my","_mw","_mh"];
     private _pitch = ((_removeBase select 1) - _my) max (_mh * 1.15);
-    private _stack = if (_flLineYd) then {[_ctrlFlush,_ctrlPrime]} else {[]};
+    private _stack = if (_flLineYd) then {[_ctrlFlush]} else {[]};
     _stack append [_ctrlMove,_ctrlPullBag,_ctrlInject,_ctrlInfuse,_ctrlHang,(_display displayCtrl 86148)];
     {
         if (!isNull _x) then {
@@ -1044,9 +1030,11 @@ if (!isNull _ctrlActive) then {
                         if (_lineYd && {(_cur find "[Y]") < 0}) then {_cur = _cur + " [Y]";};
                         if ([_targetPatient, missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_BodyPart", ""], missionNamespace getVariable ["ACM_circulation_TransfusionMenu_SelectIV", true], missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_AccessSite", -1]] call ACME_fnc_lineWarmer) then {
                             _cur = _cur + " [Warmed]";
-                            _ctrlActive lbSetTooltip [_r, "LifeWarmer Quantum inline: warming this blood line. No measured bag temperature is available."];
+                            _ctrlActive lbSetTooltip [_r, format ["LifeWarmer Quantum inline: %1 mL remaining.", round _bVol]];
                             _ctrlActive lbSetColor [_r, [1, 0.55, 0.13, 1]];
                         } else {
+                            // Do not retain a warmer tooltip after selecting a different/unwarmed line.
+                            _ctrlActive lbSetTooltip [_r, format ["%1 mL remaining", round _bVol]];
                             if (_targetPatient getVariable ["ACME_coldBlood", false]) then {
                                 _cur = _cur + " [Cooled]";
                                 _ctrlActive lbSetColor [_r, [0.45, 0.72, 1, 1]];

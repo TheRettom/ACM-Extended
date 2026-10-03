@@ -2752,6 +2752,9 @@ class CfgFunctions {
             class pressureLevel {};
             class pressureInfuserPaint {};
             class transfusionServicePaint {};
+            class transfusionInputOwned {};
+            class yServiceJobValid {};
+            class yEnsureSlots {};
 
             class manualSuctionSound {};
             class isTorsoBandage {};
@@ -4681,14 +4684,8 @@ class ACM_circulation_TransfusionMenu_Dialog {
         class ACME_FlushLineButton: ACME_SpikeBagButton {
             text = "Flush Line";
             idc = 86143;
-            action = "['flush'] call ACME_fnc_transfusionFlushLine";
+            action = "['auto'] call ACME_fnc_transfusionFlushLine";
             tooltip = "Flush the blood line with its paired saline so the next unit is ready to hang.";
-        };
-        class ACME_PrimeLineButton: ACME_FlushLineButton {
-            idc = 86150;
-            text = "Prime Line (25 mL)";
-            action = "['prime'] call ACME_fnc_transfusionFlushLine";
-            tooltip = "Prime this Y set with 25 mL from its saline reserve before allowing blood flow.";
         };
         // the prepared iv sets button. it toggles the right-hand fluid list between the normal loose and cooler bags
         // and the stored prepared iv sets of the provider. the updater positions it directly above the fluid list, and

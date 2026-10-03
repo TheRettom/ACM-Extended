@@ -14,6 +14,8 @@ from test_historical_medication_rows import iteration_scopes
 
 def src(name):
     s=read(name).replace('serverTime','_serverTime')
+    # SQF-VM has no finite command; emulate finite scalar samples at the engine boundary.
+    s=re.sub(r'\bfinite (\(_job select _x\)|_\w+)',r'(\1 call _finite)',s)
     if name=='pressureInfuserCommit':
         # SQF-VM lacks Arma's forEach HASHMAP overload. Preserve key/value iteration,
         # body and exitWith, only adapting the container enumeration engine boundary.
@@ -31,6 +33,7 @@ def fn(name):
 def basic():
     return '''
     private _mapDefault={params ["_map","_args"];_args params ["_key","_default"];if (_key in _map) then {_map get _key} else {_default}};
+    private _finite={_this isEqualType 0 && {_this > -1e30} && {_this < 1e30}};
     private _serverTime=100;
     private _liveEpoch=1;private _accessValid=true;private _hasY=true;private _notices=[];
     ACME_fnc_clinicalEpoch={_liveEpoch};
@@ -39,7 +42,7 @@ def basic():
     ACME_fnc_clinicalNotice={_notices pushBack _this;};
     ACME_fnc_transfusionAccessValid={_accessValid};
     ACME_fnc_isYLineAccess={_hasY};
-    '''
+    '''+fn('yServiceJobValid')
 
 
 @pytest.mark.parametrize('elapsed,duration,previous,want',[
@@ -82,7 +85,8 @@ def test_service_planner_same_predicate_for_ui_and_owner(available,dirty,primed,
 def service_setup():
     return basic()+'''
       ACME_infusion_bodyParts=["head","body","leftarm","rightarm","leftleg","rightleg"];
-      private _credited=0;private _waste=0;private _admissionRate=1;private _fraction=1;
+      private _ioCalls=0;ACME_fnc_ioPainResponse={_ioCalls=_ioCalls+1;};private _credited=0;private _waste=0;private _admissionRate=1;private _fraction=1; private _co=5; private _cpr=false;
+      ace_medical_status_fnc_getCardiacOutput={_co}; ACM_core_fnc_cprActive={_cpr};
       ACM_circulation_fnc_getIVFlowRate={_admissionRate};ACME_fnc_medicationLineFraction={_fraction};
       ACME_fnc_fluidCommit={_credited=_credited+(_this select 5);};
       ACM_circulation_fnc_setRuntimeState={params ["_p","_rows"];{_p setVariable ["ACM_circulation_Saline_Volume",_x select 1];} forEach _rows;};
@@ -102,7 +106,7 @@ def service_setup():
         _patient setVariable ["ACME_yServiceReceipts",createHashMap];
         _patient setVariable ["ACM_circulation_Saline_Volume",0];
       };
-      private _request={params ["_mode","_id"];[_patient,_medic,"body",false,0,_liveEpoch,_mode,_id,_serverTime] call ACME_fnc_yFlushStart;};
+      private _request={params ["_mode","_id"];private _j=(_patient getVariable "ACME_yFlushJobs") get _key; private _jid=if (isNil "_j") then {""} else {_j param [13,""]}; [_patient,_medic,"body",false,0,_liveEpoch,_mode,_id,_serverTime,"reserve",_jid] call ACME_fnc_yFlushStart;};
       private _advance={params ["_seconds"];for "_i" from 1 to _seconds do {
         _serverTime=_serverTime+1;_nowTime=_nowTime+1;[_patient] call ACME_fnc_yFlushTick;
       };};
@@ -150,13 +154,13 @@ def test_right_click_cancels_only_unstarted_tail_and_never_refunds_delivered_flu
 
 
 @pytest.mark.parametrize('blood',[0,500])
-def test_prime_takes_twenty_five_into_tubing_not_patient_and_cannot_be_repeated(blood):
+def test_prime_credits_twenty_five_to_patient_and_cannot_be_repeated(blood):
     execute(service_setup()+f'''
       [100,false,false,{blood}] call _init;
       ["prime","prime1"] call _request;["prime","prime2"] call _request;
       [7] call _advance;
       [(_patient getVariable "ACME_YLinePrimed") get _key,"priming did not finish"] call _check;
-      [abs (call _stock-75)<.01 && {{_credited==0}},"prime credited patient or took incorrect fluid"] call _check;
+      [abs (call _stock-75)<.01 && {{_credited==25}},"prime patient credit or debit incorrect"] call _check;
       ["prime","prime3"] call _request;[7] call _advance;
       [abs (call _stock-75)<.01,"primed line drained again"] call _check;
     ''')
@@ -172,11 +176,11 @@ def test_invalid_or_duplicate_service_does_not_mutate_queue(reject):
       'down':'_medic setVariable ["ACE_isUnconscious",true];',
       'noaccess':'_accessValid=false;',
       'noy':'_hasY=false;',
-      'refill':'_patient setVariable ["ACME_yRefillClaims",createHashMapFromArray [[_key,[_medic,"refill","blood",CBA_missionTime,_liveEpoch]]]];'
+      'refill':'_patient setVariable ["ACME_yRefillClaims",createHashMapFromArray [[_key,[_medic,"refill","blood",_serverTime,_liveEpoch]]]];'
     }[reject]
     execute(service_setup()+f'''
       [500] call _init;private _issued=_serverTime;private _sendEpoch=_liveEpoch;{change}
-      [_patient,_medic,"body",false,0,_sendEpoch,"flush","id",_issued] call ACME_fnc_yFlushStart;
+      [_patient,_medic,"body",false,0,_sendEpoch,"flush","id",_issued,"reserve"] call ACME_fnc_yFlushStart;
       [8] call _advance;
       [_credited=={50 if reject=='duplicate' else 0},"invalid/duplicate request delivered extra fluid"] call _check;
     ''')
@@ -287,7 +291,8 @@ def test_crouch_return_flag_is_consumed_before_old_menu_pose_clears_it():
 
 def test_flush_placement_mouse_semantics_and_disabled_styles():
     s=read('updateTransfusionControls')
-    assert '[_ctrlFlush,_ctrlPrime]' in s.replace(' ','')
+    assert 'then{[_ctrlFlush]}' in s.replace(' ','')
+    assert 'private _ctrlPrime' not in s
     assert '_stack append [_ctrlMove,_ctrlPullBag' in s
     assert '_bagRowSelected' in s[s.index('if (!isNull _ctrlMove) then {',s.index('// ACM\'s native move')):]
     cfg=(ROOT/'addons/acm_extended/config.cpp').read_text()

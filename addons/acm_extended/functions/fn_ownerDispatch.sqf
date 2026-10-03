@@ -403,6 +403,8 @@ switch (_operation) do {
     case "rehangUsedBag": {_args call ACME_fnc_rehangUsedBagCommit;};
     case "yRefill": {_args call ACME_fnc_yRefillCommit;};
     case "discardYTubing": {_args call ACME_fnc_discardYTubingCommit;};
+    case "yEnsureSlots": {[_patient] call ACME_fnc_yEnsureSlots;};
+    case "ySalineSetup": {_args call ACME_fnc_ySalineSetup;};
     case "yFlush": {_args call ACME_fnc_yFlushStart;};
     case "bagMove": {_args call ACME_fnc_clinicalBagMove;};
     case "hangBagClaim": {isNil {[_patient, "claim", _args] call ACME_fnc_hangBagClaimLocal;};};

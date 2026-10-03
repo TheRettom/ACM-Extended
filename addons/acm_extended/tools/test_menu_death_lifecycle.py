@@ -459,3 +459,6 @@ def test_carry_assist_releases_after_provider_death():
         [!(_patient getVariable "ACM_core_CarryAssist_State"),"carry assist stranded after provider death"] call _check;
         [!ACM_core_ContinuousAction_Active && {count _removed == 2},"carry assist cleanup aborted"] call _check;
     ''')
+
+# Transfusion display presence is an engine UI boundary; dedicated B228 tests execute its predicate.
+PREAMBLE += "\nACME_fnc_transfusionInputOwned={false};"
