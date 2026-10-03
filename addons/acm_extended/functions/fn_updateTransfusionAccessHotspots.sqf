@@ -67,6 +67,7 @@ private _partLabel = {
     _part
 };
 
+private _placedLabels = [];
 {
     _x params ["_key", "_part", "_site", "_nativeImageIDC", "_unusedInputIDC", "_uv"];
     private _isIO = _site < 0;
@@ -154,6 +155,9 @@ private _partLabel = {
             private _match = (_remaining > 0.01) && {if (_isIO) then {!_bIV} else {_bIV && {_bSite == _site}}};
             if (_match && {!(_bType in ["ACME_Empty","ACME_EmptySaline"])}) then {
                 private _a = [_bType] call _fluidAbbrev;
+                private _uid = _x param [8, ""];
+                private _drugs = (_patient getVariable ["ACME_infusion_BagMedications", []]) select {(_x param [23, ""]) == _uid && {_uid != ""}};
+                if (_drugs isNotEqualTo []) then {_a = (_drugs apply {[_x select 11] call ACME_fnc_infusionName}) joinString "/";};
                 if (_a != "") then {_abbr pushBackUnique _a;};
             };
         } forEach _arr;
@@ -169,13 +173,18 @@ private _partLabel = {
     private _showLabel = _has && {!(_abbr isEqualTo [])};
     if (_showLabel) then {
         private _labelH = (_drawH * 0.035) max (14 * pixelH);
-        private _labelW = (_drawW * 0.22) max (54 * pixelW);
-        private _lx = (_hx + _hw + (2 * pixelW)) min (_outerX + _outerW - _labelW);
-        private _ly = (_hy + ((_hh - _labelH) / 2)) max _outerY;
-        _label ctrlSetPosition [_lx,_ly,_labelW,_labelH];
+        private _text = _abbr joinString "+";
         _label ctrlSetFontHeight (_labelH * 0.68);
-        _label ctrlSetText (_abbr joinString "+");
-        _label ctrlCommit 0;
+        _label ctrlSetText _text;
+        private _labelW = ((ctrlTextWidth _label) + 8 * pixelW) max (22 * pixelW);
+        _labelW = _labelW min (_drawW * 0.18);
+        private _left = (_hx + _hw / 2) < (_drawX + _drawW / 2);
+        private _rect = [[_hx,_hy,_hw,_hh],[_labelW,_labelH],[_outerX,_outerY,_outerW,_outerH],_placedLabels,3 * pixelH,_left] call ACME_fnc_transfusionTagRect;
+        if (_rect isEqualTo []) then {_showLabel = false;} else {
+            _placedLabels pushBack _rect;
+            _label ctrlSetPosition _rect;
+            _label ctrlCommit 0;
+        };
     };
     _label ctrlShow _showLabel;
 } forEach _geometry;

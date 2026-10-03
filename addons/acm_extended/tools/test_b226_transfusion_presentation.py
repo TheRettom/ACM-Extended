@@ -298,8 +298,8 @@ def test_actual_thermal_paint_clears_empty_red_and_uses_patient_temperature(warm
     s=s[a:b].replace('private _ctrlActive = _display displayCtrl 86004;','private _ctrlActive = missionNamespace;')
     s=s.replace('lbSize _ctrlActive','count _labels').replace('_ctrlActive lbValue _r','_r').replace('_ctrlActive lbText _r','(_labels select _r)')
     s=s.replace('_ctrlActive lbSetColor','_colors set').replace('_ctrlActive lbSetText','_labels set')
-    s=re.sub(r'_ctrlActive lbSetPicture \[[^;]+;','',s)
-    execute('''
+    s=re.sub(r'_ctrlActive lbSet(?:Picture|Tooltip) \[[^;]+;','',s)
+    execute('private _mapDefault={params ["_m","_args"];_args params ["_k","_d"];if (_k in _m) then {_m get _k} else {_d}};'+compiled('lineWarmer')+'''
       private _labels=["Blood O- (498ml) [Y] [Cooled]"];private _colors=[[1,0,0,1]];
       private _targetPatient=_patient;private _lineYd=true;
       missionNamespace setVariable ["ACM_circulation_TransfusionMenu_Selection_IVBags",[["Blood",498]]];

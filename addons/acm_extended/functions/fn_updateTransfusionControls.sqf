@@ -416,63 +416,27 @@ if (!isNull _ctrlPreparedList) then {
     _ctrlPreparedList ctrlCommit 0;
 };
 
-// the left-column stack. move and remove are ACM's. below remove we reserve a row for flush line whenever the
-// selected access line carries y tubing, and push infuse and hang bag down one row so nothing overlaps, which
-// fixes the remove and flush line overlap. with no y line, infuse sits directly below remove as before and
-// flush line is hidden.
+// B227: line service first, then bag movement/removal. Original anchor geometry is immutable.
 private _ctrlFlush = _display displayCtrl 86143;
-private _ctrlHang  = _display displayCtrl 86134;
-private _flTarget = missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Target", objNull];
-private _flLineKey = format ["%1#%2#%3",
-    missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_BodyPart", ""],
-    missionNamespace getVariable ["ACM_circulation_TransfusionMenu_SelectIV", true],
-    missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_AccessSite", -1]];
-private _flLineYd = if (isNull _flTarget) then {false} else {_flLineKey in (_flTarget getVariable ["ACME_YLines", []])};
-
-if (!isNull _ctrlInject) then {
-    if (_moveBase isNotEqualTo [] && {_removeBase isNotEqualTo []}) then {
-        private _mx = _moveBase select 0;
-        private _my = _moveBase select 1;
-        private _mw = _moveBase select 2;
-        private _mh = _moveBase select 3;
-        private _ry = _removeBase select 1;
-        private _gap1 = _ry - _my;  // the move to remove row pitch.
-        private _row1 = _ry + _gap1;  // the row directly below remove.
-        // discard y tubing sits below pull bag, or one row lower when the flush line row is in play. the restored infuse
-        // follows one row below it, then hang bag.
-        private _infY = if (_flLineYd) then { _row1 + _gap1 } else { _row1 };
-        _ctrlInject ctrlSetPosition [_mx, _infY, _mw, _mh];
-        if (_flLineYd && {!isNull _ctrlFlush}) then {
-            _ctrlFlush ctrlSetPosition [_mx, _row1, _mw, _mh];  // below pull bag and above discard.
-            _ctrlFlush ctrlSetFontHeight _fontH;
-            _ctrlFlush ctrlCommit 0;
+private _ctrlPrime = _display displayCtrl 86150;
+private _ctrlHang = _display displayCtrl 86134;
+private _flTarget = missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Target",objNull];
+private _flPart = missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_BodyPart",""];
+private _flIV = missionNamespace getVariable ["ACM_circulation_TransfusionMenu_SelectIV",true];
+private _flSite = missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_AccessSite",-1];
+private _flLineKey = toLowerANSI format ["%1#%2#%3",_flPart,_flIV,_flSite];
+private _flLineYd = !isNull _flTarget && {[_flTarget,_flPart,_flIV,_flSite] call ACME_fnc_isYLineAccess};
+if (_moveBase isNotEqualTo [] && {_removeBase isNotEqualTo []}) then {
+    _moveBase params ["_mx","_my","_mw","_mh"];
+    private _pitch = ((_removeBase select 1) - _my) max (_mh * 1.15);
+    private _stack = if (_flLineYd) then {[_ctrlFlush,_ctrlPrime]} else {[]};
+    _stack append [_ctrlMove,_ctrlPullBag,_ctrlInject,_ctrlInfuse,_ctrlHang,(_display displayCtrl 86148)];
+    {
+        if (!isNull _x) then {
+            _x ctrlSetPosition [_mx,_my + _forEachIndex * _pitch,_mw,_mh];
+            _x ctrlSetFontHeight _fontH; _x ctrlCommit 0;
         };
-        if (!isNull _ctrlInfuse) then {
-            _ctrlInfuse ctrlSetPosition [_mx, _infY + _gap1, _mw, _mh];
-            _ctrlInfuse ctrlSetFontHeight _fontH;
-            _ctrlInfuse ctrlCommit 0;
-            _ctrlInfuse ctrlShow true;
-        };
-        // hang bag follows one row below infuse, and preserves its own width and height.
-        if (!isNull _ctrlHang) then {
-            private _hp = ctrlPosition _ctrlHang;
-            _ctrlHang ctrlSetPosition [_mx, _infY + (_gap1 * 2), _mw, (_hp select 3)];
-            _ctrlHang ctrlCommit 0;
-
-            // pressure infuse sits one row below hang bag, on the same pitch as the whole column. it is driven from the
-            // resolved geometry of hang bag rather than from a config y, because every button in this stack is positioned
-            // at runtime and a config y would be overwritten the moment this pass ran.
-            private _ctrlPI = _display displayCtrl 86148;
-            if (!isNull _ctrlPI) then {
-                _ctrlPI ctrlSetPosition [_mx, _infY + (_gap1 * 3), _mw, (_hp select 3)];
-                _ctrlPI ctrlCommit 0;
-                _ctrlPI ctrlShow true;
-            };
-        };
-    } else {
-        _ctrlInject ctrlSetPosition [_uiX + (_uiW / 2) - (_uiW / 8), safeZoneY + (safeZoneH / 2) - (safeZoneH / 10), _uiW / 22, safeZoneH / 40];
-    };
-    _ctrlInject ctrlCommit 0;
+    } forEach _stack;
 };
 
 if !(_activeContext isEqualTo []) then {
@@ -774,7 +738,7 @@ if (!isNull _ctrlPreparedList) then {
 if (!isNull _ctrlPrep) then {_ctrlPrep ctrlEnable _canPrep;};
 // pull bag operates on the selected hung bag. it must never resolve to an infusion, and it must gray out
 // entirely when no bag row is selected in the transfusion list.
-if (!isNull _ctrlPullBag) then {_ctrlPullBag ctrlEnable _bagRowSelected;};
+if (!isNull _ctrlPullBag) then {_ctrlPullBag ctrlEnable (_selectedAccessValid && {_bagRowSelected});};
 private _preparedLineIsY = [
     missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Target", objNull],
     missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_BodyPart", ""],
@@ -818,7 +782,7 @@ if (!isNull _ctrlRateText) then {
 if (!isNull _ctrlMove) then {
     private _nativeSelMedicated = _hasInfusion && {!isNull _ctrlLeftList} && {(lbCurSel _ctrlLeftList) >= 0};
     private _acmMoveBusy = (missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Move_Active", false]) || {missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Move_Active_Moving", false]};
-    _ctrlMove ctrlEnable !(_nativeSelMedicated && {!_acmMoveBusy});
+    _ctrlMove ctrlEnable (_acmMoveBusy || {_selectedAccessValid && {_bagRowSelected} && {!_nativeSelMedicated}});
 };
 
 // infusions-specific move and remove. it is a vertical stack to the right of the infusions list, mirroring ACM's
@@ -1036,23 +1000,7 @@ if (!isNull _ctrlY) then {
     };
 };
 
-// flush line, 86143. it is visible on a y'd line, and enabled and pulsing once a unit has run, so a dirty line
-// means a flush is needed.
-private _ctrlFlush2 = _display displayCtrl 86143;
-if (!isNull _ctrlFlush2) then {
-    _ctrlFlush2 ctrlShow _lineYd;
-    _ctrlFlush2 ctrlEnable _lineDirty;
-    if (_lineYd) then {
-        if (_lineDirty) then {
-            private _p = 0.5 + (0.5 * sin (360 * ((diag_tickTime * 1.1) % 1)));  // a pulse at about 1.1 hz.
-            _ctrlFlush2 ctrlSetBackgroundColor (["danger", 0.55 + (0.4 * _p)] call ACME_fnc_a11yColor);
-            _ctrlFlush2 ctrlSetTextColor (["danger2", 1] call ACME_fnc_a11yColor);
-        } else {
-            _ctrlFlush2 ctrlSetBackgroundColor [0, 0, 0, 1];
-            _ctrlFlush2 ctrlSetTextColor [1, 1, 1, 1];
-        };
-    };
-};
+[_display,_flTarget,_flPart,_flIV,_flSite,_flLineYd] call ACME_fnc_transfusionServicePaint;
 
 // relabel the active list, 86004, so y-tubing rows read clearly.
 // persisted markers render blank from ACM, so they become "[Empty Bag]".
@@ -1094,8 +1042,9 @@ if (!isNull _ctrlActive) then {
                         _cur = [_cur, " [Warmed]", ""] call CBA_fnc_replace;
                         _cur = [_cur, " [Cooled]", ""] call CBA_fnc_replace;
                         if (_lineYd && {(_cur find "[Y]") < 0}) then {_cur = _cur + " [Y]";};
-                        if (_targetPatient getVariable ["ACME_warmedBlood", false]) then {
+                        if ([_targetPatient, missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_BodyPart", ""], missionNamespace getVariable ["ACM_circulation_TransfusionMenu_SelectIV", true], missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_AccessSite", -1]] call ACME_fnc_lineWarmer) then {
                             _cur = _cur + " [Warmed]";
+                            _ctrlActive lbSetTooltip [_r, "LifeWarmer Quantum inline: warming this blood line. No measured bag temperature is available."];
                             _ctrlActive lbSetColor [_r, [1, 0.55, 0.13, 1]];
                         } else {
                             if (_targetPatient getVariable ["ACME_coldBlood", false]) then {
@@ -1260,3 +1209,7 @@ if (!isNull _ctrlSetsList) then {
 };
 
 // temporary diagnostic. it reached the end without aborting.
+
+// B227: paint live cuff levels after control positioning, without an extra refresh worker.
+[_display,(_display displayCtrl 86148),["transfusion"] call ACME_fnc_getSelectedActiveBagContext,86151] call ACME_fnc_pressureInfuserPaint;
+[_display,(_display displayCtrl 86149),["infusion"] call ACME_fnc_getSelectedActiveBagContext,86152] call ACME_fnc_pressureInfuserPaint;

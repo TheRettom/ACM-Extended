@@ -12,7 +12,7 @@ params ["_patient", "_lineKey", "_iv"];
 if (isNull _patient) exitWith {};
 
 // 1. make sure the y line is registered on the owner, both locally and globally.
-private _yl = _patient getVariable ["ACME_YLines", []];
+private _yl = +(_patient getVariable ["ACME_YLines", []]);
 if (!(_lineKey in _yl)) then {
     _yl pushBack _lineKey;
     [_patient, _yl] call ACME_fnc_yLinesCommit;

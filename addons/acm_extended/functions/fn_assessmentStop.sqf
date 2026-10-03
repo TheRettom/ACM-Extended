@@ -13,6 +13,15 @@ if (_pfh >= 0) then {[_pfh] call CBA_fnc_removePerFrameHandler;};
 {[_x, "keydown"] call CBA_fnc_removeKeyHandler;} forEach _keys;
 [false, _medic, _patient, _token] call ACME_fnc_chestAccessPreparing;
 [_medic, "", _ownedEpoch, _reopen] call ACME_fnc_treatmentPoseStop;
+if (_reopen && {local _medic} && {alive _medic} && {!(_medic getVariable ["ACE_isUnconscious", false])}
+    && {isNull objectParent _medic} && {stance _medic != "PRONE"}
+    && {(_medic getVariable ["ACME_treatmentPoseEpoch", -1]) == _ownedEpoch}
+    && {!([_medic] call ACME_fnc_providerStanceOwned)}) then {
+    // No native end-move may restore the weapon or stand between the assessment and menu.
+    [_medic, [["treatmentEndInAnim"]]] call ACM_core_fnc_setAceMedicalState;
+    _medic setUnitPos "MIDDLE";
+    [_medic, "ACM_GenericContinuous", 1] call ACME_fnc_doAnim;
+};
 // An aborted assessment preflight has not emitted ace_treatmentFailed. Release its exact carrier lease here.
 if (_phase == 0 && {!(_record param [10, false])} && {local _medic}) then {
     if ((_medic getVariable ["ACME_DP_PauseTreatmentClass", ""]) == toLowerANSI _classname) then {

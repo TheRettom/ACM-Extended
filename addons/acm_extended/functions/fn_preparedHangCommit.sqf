@@ -76,6 +76,9 @@ private _activeOther = (_arr findIf {
 }) >= 0;
 private _dirty = (_patient getVariable ["ACME_YLineDirty", createHashMap]) getOrDefault [_lineKeyLower, false];
 private _refuse = "";
+if ((_patient getVariable ["ACME_yFlushJobs",createHashMap]) getOrDefault [_lineKeyLower,[]] isNotEqualTo []) exitWith {
+    [false, "Finish priming/flushing before replacing a bag on this line."] call _finish;
+};
 if (!_isSingle) then {
     if (_lineYd) then {_refuse = "This IV spot already has a Y line.";};
     if (_refuse == "" && {_activeOther}) then {_refuse = "This IV/IO already has a line running.";};
@@ -165,6 +168,7 @@ if (!_isSingle) then {
 [_patient, _part, _iv, _site] call ACME_fnc_resumeSiteFlow;
 
 if (_kind == "blood" || {!_isSingle}) then {
+    _warmer = [_patient, _part, _iv, _site, _warmer, _medic] call ACME_fnc_lineWarmer;
     if (_warmer) then {
         [_patient, true, false, objNull, CBA_missionTime + 15, true] call ACME_fnc_bloodThermalStateCommit;
     } else {

@@ -1,6 +1,9 @@
 /* NA4 patient fields: [name, clock-kind, clear-on-full-heal, persist=true].
    Supplier transaction ledgers and runtime handler ownership are not saved patient state. */
 [
+  ["ACME_lineWarmers", "", true, true],
+  ["ACME_YLinePrimed", "", true, true],
+  ["ACME_yServiceReceipts", "", false, false],
   // Wake injury history may survive saves; pose records, PFH IDs and cross-owner tokens never do.
   ["ACME_wakeHadArmFracture", "", true, true],
   ["ACME_wakeHadTBI", "", true, true],

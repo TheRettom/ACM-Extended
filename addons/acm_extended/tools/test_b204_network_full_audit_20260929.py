@@ -261,7 +261,7 @@ def test_iv_and_y_flush_structured_state_are_bounded():
 
     assert '_p setVariable ["ACME_yFlushJobs", _jobs, false];' in y
     assert "ACME_yFlushJobsNetAt" in y
-    assert "(_jobsNow - _jobsLast) >= 1" in y
+    assert "diag_tickTime - _lastNet >= 1" in y
 
 
 def test_continuously_changing_telemetry_uses_threshold_publication():
@@ -419,5 +419,5 @@ def test_b204_network_audit_identity():
     startup = function("initForkStartupRuntime")
     config = read("addons/acm_extended/config.cpp")
     assert 'version = "1.2.4.1";' in config
-    assert 'ACME_buildBatch = "B226";' in startup
-    assert 'ACME_networkAuditRevision = "NA8-B226-1.2.4.1-candidate";' in startup
+    assert 'ACME_buildBatch = "B227";' in startup
+    assert 'ACME_networkAuditRevision = "NA8-B227-1.2.4.1-candidate";' in startup

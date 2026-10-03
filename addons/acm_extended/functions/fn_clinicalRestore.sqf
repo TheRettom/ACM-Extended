@@ -245,7 +245,7 @@ if (_toxicityFiredRestoreSet && {_toxicityFiredRestore isEqualType createHashMap
 };
 // Work resumes with fresh ownership, epochs and clocks; no old network request is replayed.
 private _jobs = _patient getVariable ["ACME_yFlushJobs", createHashMap];
-{private _j = _jobs get _x; _j set [6, CBA_missionTime]; _j set [8, _epoch];} forEach keys _jobs;
+{private _j = _jobs get _x; _j set [6, if (count _j >= 13) then {serverTime} else {CBA_missionTime}]; _j set [8, _epoch];} forEach keys _jobs;
 _patient setVariable ["ACME_yFlushJobs", _jobs, true];
 private _moves = _patient getVariable ["ACME_bagMoves", createHashMap];
 {private _m = _moves get _x; _m set [3, CBA_missionTime - 121]; _m set [4, _epoch];} forEach keys _moves;

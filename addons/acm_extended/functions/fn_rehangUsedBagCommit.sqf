@@ -16,6 +16,13 @@ if (!_hasAccess) exitWith {[false,"That access is no longer available."] call _r
 
 _record params ["",["_type","",[""]],["_remVol",0,[0]],["_oldAccessType",0,[0]],["_bloodType",-1,[0]],["_origVol",1000,[0]],["_name","",[""]],["_freshBloodID",-1,[0]]];
 if (_remVol <= 0 || {_type in ["","ACME_Empty","ACME_EmptySaline"]}) exitWith {[false,"That used bag is empty."] call _reply};
+private _serviceKey=toLowerANSI format ["%1#%2#%3",_part,_iv,_site];
+if ((_patient getVariable ["ACME_yFlushJobs",createHashMap]) getOrDefault [_serviceKey,[]] isNotEqualTo []) exitWith {[false,"Finish priming/flushing this line first."] call _reply;};
+// A pulled/used bag must not bypass the same post-two-unit Y flush gate as a new blood bag.
+if (_type in ["Blood","FreshBlood"] && {[_patient,_part,_iv,_site] call ACME_fnc_isYLineAccess}
+    && {(_patient getVariable ["ACME_YLineDirty",createHashMap]) getOrDefault [_serviceKey,false]}) exitWith {
+    [false,"Flush this Y line before hanging more blood."] call _reply
+};
 private _pi=ACME_infusion_bodyParts find toLowerANSI _part;
 if (_pi<0) exitWith {[false,"Invalid access location."] call _reply};
 
@@ -34,6 +41,7 @@ private _wantMarker=["ACME_EmptySaline","ACME_Empty"] select (_type in ["Blood",
 private _slot=_arr findIf {(_x param [0,""])==_wantMarker && {(_x param [3,-1])==_site} && {(_x param [4,true])==_iv}};
 if (_slot>=0) then {_arr set [_slot,_entry]} else {_arr pushBack _entry};
 _map set [_part,_arr]; [_patient,_map,true] call ACME_fnc_ivBagsCommit; [_patient,_part] call ACM_circulation_fnc_updateActiveFluidBags; [_patient,_part,_iv,_site] call ACME_fnc_resumeSiteFlow;
+if (_type in ["Blood","FreshBlood"]) then {_warmer = [_patient,_part,_iv,_site,_warmer,_medic] call ACME_fnc_lineWarmer;};
 if (_type in ["Blood","FreshBlood"] && {_warmer}) then {[_patient,true,false,objNull,CBA_missionTime+15,true] call ACME_fnc_bloodThermalStateCommit;};
 if (!isNil "ace_medical_treatment_fnc_addToLog") then {[_patient,"activity","%1 re-hung a used %2 (%3 mL)",[[_medic,false,true] call ace_common_fnc_getName,_name,round _remVol]] call ace_medical_treatment_fnc_addToLog;};
 [true,"",_bagUid] call _reply

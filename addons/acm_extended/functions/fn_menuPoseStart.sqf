@@ -13,6 +13,7 @@ if (isNull _display) exitWith {false};
 private _oldState = _medic getVariable ["ACME_menuPose", []];
 private _oldGeneric = (_oldState isNotEqualTo [] && {(_oldState select 0) == (_medic getVariable ["ACME_menuPoseGenericEpoch", -1])})
     || {(toLowerANSI animationState _medic) in ["acm_genericcontinuous", "acm_pronecontinuous"]};
+private _requestedAfterTreatment = (_medic getVariable ["ACME_menuPoseAfterTreatment", objNull]) isEqualTo _patient;
 [_medic, true] call ACME_fnc_menuPoseStop;
 // A menu reopened during a carrier/head/roll sequence must not replace that animation.
 if ([_medic] call ACME_fnc_providerStanceOwned) exitWith {false};
@@ -21,7 +22,7 @@ private _epoch = (_medic getVariable ["ACME_menuPoseEpoch", 0]) + 1;
 _medic setVariable ["ACME_menuPoseEpoch", _epoch];
 _medic setVariable ["ACME_menuPose", [_epoch, _display, _patient]];
 _display setVariable ["ACME_menuPoseOwner", [_medic, _epoch]];
-private _afterTreatment = (_medic getVariable ["ACME_menuPoseAfterTreatment", objNull]) isEqualTo _patient;
+private _afterTreatment = _requestedAfterTreatment;
 if (!_afterTreatment) then {_medic setVariable ["ACME_menuPoseAfterTreatment", objNull];};
 _medic setVariable ["ACME_menuPoseGenericEpoch", [-1, _epoch] select _afterTreatment];
 

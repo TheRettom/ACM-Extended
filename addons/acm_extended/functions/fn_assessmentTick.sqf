@@ -41,7 +41,10 @@ if (_phase == 2 || {_breathing && {_phase == 1}}) exitWith {
             _record set [8, _duration];
             // Track the full remaining authored movement, including any real entry/interpolation delay.
             _record set [12, (CBA_missionTime - (_record select 11)) + ((_duration - _elapsed) max 0)];
-            if (_elapsed >= _duration) then {_record set [2, 3];};
+            if (_elapsed >= _duration) then {
+                _record set [2, 3];
+                [_medic, "ACM_GenericContinuous", 1] call ACME_fnc_doAnim;
+            };
         };
     } else {
         // Normal finite RTMs can leave their state between owner frames. Only accept that exit once an

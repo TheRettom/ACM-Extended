@@ -150,7 +150,9 @@ _ctrlPos set [1, ((0 + 29 * ace_common_settingProgressBarLocation) * ((((safeZon
         };
     } else {
         //Update Progress Bar (ratio of elepased:total)
-        private _ratio = _elapsedTime / _totalTime;
+        private _readout = [_elapsedTime, _totalTime, (_this select 0) param [11, [-1,0]]] call ACME_fnc_assessmentReadout;
+        (_this select 0) set [11, _readout];
+        private _ratio = _readout select 1;
         (uiNamespace getVariable "ace_common_ctrlProgressBar") progressSetPosition _ratio;
         switch (ace_common_progressBarInfo) do {
             case 0: {};
@@ -158,7 +160,7 @@ _ctrlPos set [1, ((0 + 29 * ace_common_settingProgressBarLocation) * ((((safeZon
                 (uiNamespace getVariable "ace_common_ctrlProgressBarTitle") ctrlSetText (_title + format [" (%1", floor (_ratio * 100)] + "%)");
             };
             case 2: {
-                (uiNamespace getVariable "ace_common_ctrlProgressBarTitle") ctrlSetText (_title + " " + format [localize "STR_ACE_Common_TimeLeft", ceil (_totalTime - _elapsedTime)]);
+                (uiNamespace getVariable "ace_common_ctrlProgressBarTitle") ctrlSetText (_title + " " + format [localize "STR_ACE_Common_TimeLeft", _readout select 0]);
             };
         };
     };

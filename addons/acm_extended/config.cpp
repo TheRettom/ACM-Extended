@@ -2743,6 +2743,16 @@ class CfgFunctions {
             class yBagReplaceEmpty {};
             class transfusionTakeSelected {};
             class fluidLabelVolume {};
+            class infusionName {};
+            class assessmentReadout {};
+            class transfusionTagRect {};
+            class lineWarmer {};
+            class yServicePlan {};
+            class yServiceState {};
+            class pressureLevel {};
+            class pressureInfuserPaint {};
+            class transfusionServicePaint {};
+
             class manualSuctionSound {};
             class isTorsoBandage {};
             class torsoBandageStart {};
@@ -4540,6 +4550,8 @@ class ACM_circulation_TransfusionMenu_Dialog {
         // patch, severs its inherited geometry and collapses the layout. that caused two earlier regressions.
         // at runtime fn_updatetransfusioncontrols hides ACM's native remove button and drops this one into its slot.
         class ACME_PullBagButton: StopTransfusionButton {
+            colorDisabled[] = {1,1,1,0.25};
+            colorBackgroundDisabled[] = {0,0,0,0.35};
             idc = 86146;
             text = "Pull Bag";
             x = "safeZoneX - 1";  // parked off-screen until the runtime drops it into the native remove slot.
@@ -4669,8 +4681,14 @@ class ACM_circulation_TransfusionMenu_Dialog {
         class ACME_FlushLineButton: ACME_SpikeBagButton {
             text = "Flush Line";
             idc = 86143;
-            action = "call ACME_fnc_transfusionFlushLine";
+            action = "['flush'] call ACME_fnc_transfusionFlushLine";
             tooltip = "Flush the blood line with its paired saline so the next unit is ready to hang.";
+        };
+        class ACME_PrimeLineButton: ACME_FlushLineButton {
+            idc = 86150;
+            text = "Prime Line (25 mL)";
+            action = "['prime'] call ACME_fnc_transfusionFlushLine";
+            tooltip = "Prime this Y set with 25 mL from its saline reserve before allowing blood flow.";
         };
         // the prepared iv sets button. it toggles the right-hand fluid list between the normal loose and cooler bags
         // and the stored prepared iv sets of the provider. the updater positions it directly above the fluid list, and

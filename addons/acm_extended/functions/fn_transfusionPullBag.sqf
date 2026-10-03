@@ -27,7 +27,8 @@ private _idx = -1;
 if (!isNull _ctrlActive) then {
     private _sel = missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selection_IVBags", []];
     private _row = lbCurSel _ctrlActive;
-    if (_row >= 0 && {_row < count _sel}) then {_idx = (_sel select _row) param [8,-1];};
+    private _value = if (_row >= 0) then {_ctrlActive lbValue _row} else {-1};
+    if (_value >= 0 && {_value < count _sel}) then {_idx = (_sel select _value) param [8,-1];};
 };
 if (_idx < 0 || {_idx >= count _arr}) exitWith {["Select a hung bag to pull.",2,ACE_player,13] call ace_common_fnc_displayTextStructured;};
 private _bag = +(_arr select _idx);

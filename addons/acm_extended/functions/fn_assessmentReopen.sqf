@@ -28,6 +28,10 @@ private _valid = {
         _m setVariable ["ACME_assessmentReturn", [], false];
         // Do not steal focus from a successor dialog. Native progress has already been destroyed.
         if (dialog) exitWith {};
+        if (isNull objectParent _m && {stance _m != "PRONE"}) then {
+            [_m, [["treatmentEndInAnim"]]] call ACM_core_fnc_setAceMedicalState;
+            [_m, "ACM_GenericContinuous", 1] call ACME_fnc_doAnim;
+        };
         _m setVariable ["ACME_menuPoseAfterTreatment", _p];
         ace_medical_gui_pendingReopen = false;
         ["ACM_core_openMedicalMenu", _p] call CBA_fnc_localEvent;

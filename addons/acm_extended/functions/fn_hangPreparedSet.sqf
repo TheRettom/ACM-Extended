@@ -41,6 +41,9 @@ if !([_target,_bodyPart,_iv,_site] call ACME_fnc_transfusionAccessValid) exitWit
     ["Establish and select an IV/IO before hanging this set.",2.5,ACE_player,13] call ace_common_fnc_displayTextStructured;
 };
 private _lineKey  = format ["%1#%2#%3", _bodyPart, _iv, _site];
+if ((_target getVariable ["ACME_yFlushJobs",createHashMap]) getOrDefault [toLowerANSI _lineKey,[]] isNotEqualTo []) exitWith {
+    ["Finish priming/flushing this line first.",2.5,ACE_player,13] call ace_common_fnc_displayTextStructured;
+};
 
 // a set that came off a patient, through remove-to-list, is tied to that patient. untied sets hang on anyone.
 if (_tied != "" && {_tied != (netId _target)}) exitWith {

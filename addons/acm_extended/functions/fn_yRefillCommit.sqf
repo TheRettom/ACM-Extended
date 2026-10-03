@@ -60,6 +60,9 @@ switch (_operation) do {
         private _lines = (_patient getVariable ["ACME_YLines",[]]) apply {toLowerANSI _x};
         if !(_key in _lines) exitWith {["claim",false,"That access no longer has Y tubing."] call _send};
 
+        if ((_patient getVariable ["ACME_yFlushJobs",createHashMap]) getOrDefault [_key,[]] isNotEqualTo []) exitWith {
+            ["claim",false,"Finish priming/flushing before replacing a bag on this line."] call _send
+        };
         private _existing = _claims getOrDefault [_key,[]];
         if !(count _existing isEqualTo 0) then {
             if (count _existing >= 2 && {(_existing select 0) isEqualTo _medic} && {(_existing select 1) == _requestId}) exitWith {
@@ -204,6 +207,7 @@ switch (_operation) do {
             [_patient,_part,_iv,_site] call ACME_fnc_resumeSiteFlow;
 
             if (_mode == "blood") then {
+                _warmer = [_patient, _part, _iv, _site, _warmer, _medic] call ACME_fnc_lineWarmer;
                 if (_warmer) then {
                     [_patient,true,false,objNull,CBA_missionTime + 15,true] call ACME_fnc_bloodThermalStateCommit;
                 } else {

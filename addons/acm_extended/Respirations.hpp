@@ -36,12 +36,12 @@ class ACME_Respiration_Display {
             h = 0.05;
         };
         class WatchBackground: RscText {
-            idc = -1;
+            idc = 71597;
             text = "";
             colorBackground[] = {0.015,0.02,0.03,0.82};
-            x = "safezoneX + safezoneW * 0.40";
+            x = "safezoneX + safezoneW * 0.435";
             y = "safezoneY + safezoneH * 0.68";
-            w = "safezoneW * 0.20";
+            w = "safezoneW * 0.13";
             h = "safezoneH * 0.14";
         };
         class WatchLabel: Title {
