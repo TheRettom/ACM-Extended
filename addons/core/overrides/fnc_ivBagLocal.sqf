@@ -11,9 +11,12 @@
  * 4: Is IV? <BOOL>
  * 5: Access Site <NUMBER>
  * 6: Is Fresh Blood? <BOOL>
+ * 7: Stage prepared carrier without publishing/activating it? <BOOL>
+ * 8: Optional fresh-blood registry entry <ARRAY>
  *
  * Return Value:
- * None
+ * Stable bag UID <STRING> on the owner; remote calls dispatch an event.
+ * A staged carrier must be completed or rolled back by its prepared-attach caller.
  *
  * Example:
  * [player, "RightArm", "BloodIV", 1, true, 0, false] call ace_medical_treatment_fnc_ivBagLocal
@@ -87,7 +90,10 @@ _newBag set [8, format ["%1:%2:%3:%4", netId _patient, [_patient] call ACME_fnc_
 _IVBagsBodyPart = [_IVBagsBodyPart, (count _IVBagsBodyPart) - 1] call ACME_fnc_yBagReplaceEmpty;
 _IVBags set [_bodyPart, _IVBagsBodyPart];
 
-[_patient, _IVBags, true] call EFUNC(circulation,setIVBagsState);
+// Prepared medication attachment stages the carrier owner-locally. It must not
+// publish or activate a plain saline bag before its medication records exist.
+[_patient, _IVBags, !_deferPremixed] call EFUNC(circulation,setIVBagsState);
+if (_deferPremixed) exitWith {_newBag select 8};
 _patient setVariable [QEGVAR(circulation,IV_Bags_Active), true, true];
 
 [_patient, _bodyPart] call EFUNC(circulation,updateActiveFluidBags);

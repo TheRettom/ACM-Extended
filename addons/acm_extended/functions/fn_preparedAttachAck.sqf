@@ -1,4 +1,4 @@
-params ["_id", "_ok", "_doseId"];
+params ["_id", "_ok", "_doseId", ["_reason", "", [""]]];
 private _pending = missionNamespace getVariable ["ACME_preparedPending", createHashMap];
 private _p = _pending getOrDefault [_id, []];
 if (_p isEqualTo [] || {_p select 2}) exitWith {};
@@ -7,7 +7,13 @@ private _args = _p select 0;
 _args params ["_medic", "_patient", "_target", "_item", "_action", "_vehicle", "_part", "_iv", "_site", "_volume", "_prepared", "_index", "_label", ["_staged", []]];
 if (!_ok) exitWith {
     if (!(_staged isEqualTo []) || {(_prepared param [15, ""]) != ""}) exitWith {
-        [_medic, "The prepared set was not attached. It remains in Prepared IV sets."] call ACME_fnc_clinicalNotice;
+        private _message = switch (_reason) do {
+            case "carrier-identity": {"Infusion attachment failed: carrier identity mismatch. The prepared set was retained; no carrier was committed."};
+            case "medication-registration": {"Infusion attachment failed: medication registration was rejected. The prepared set was retained; no carrier was committed."};
+            case "set-already-attached": {"This prepared set has already been attached. Refresh the transfusion menu."};
+            default {"The prepared set was not attached: the selected access or prepared set changed. It remains in Prepared IV sets."};
+        };
+        [_medic, _message] call ACME_fnc_clinicalNotice;
         [[_medic, _patient, _part, _iv, _site]] call ACME_fnc_reopenTransfusion;
     };
     private _mode = _prepared param [11, 0];

@@ -2110,6 +2110,7 @@ class CfgFunctions {
             class clinicalBagRecover {};
             class preparedAttachRequest {};
             class preparedAttachLocal {};
+            class preparedCarrierResolve {};
             class preparedAttachAck {};
             class preparedHangCommit {};
             class preparedHangResult {};

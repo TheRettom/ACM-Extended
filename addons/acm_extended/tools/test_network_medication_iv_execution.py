@@ -151,7 +151,7 @@ def test_native_iv_writers_share_cache_and_final_nil_explicitly_invalidates_it()
         C / "fnc_getBloodVolumeChange.sqf": "[_unit, _fluidBags, _acmeBagUiPublish] call FUNC(setIVBagsState);",
         C / "fnc_resetVariables.sqf": "[_patient, createHashMap, true] call FUNC(setIVBagsState);",
         C / "fnc_setIVLocal.sqf": "[_patient, _map, true] call FUNC(setIVBagsState);",
-        ROOT / "addons/core/overrides/fnc_ivBagLocal.sqf": "[_patient, _IVBags, true] call EFUNC(circulation,setIVBagsState);",
+        ROOT / "addons/core/overrides/fnc_ivBagLocal.sqf": "[_patient, _IVBags, !_deferPremixed] call EFUNC(circulation,setIVBagsState);",
     }
     for path, call in expected.items():
         assert call in path.read_text(), path
