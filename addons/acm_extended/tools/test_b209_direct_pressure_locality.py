@@ -15,6 +15,8 @@ from test_menu_death_lifecycle import execute, read
 def source(name, text=None):
     text = read(name) if text is None else text
     text = text.replace('currentWeapon _medic', '_dpWeapon')
+    text = text.replace('_medic getUnitMovesInfo 0', '0')
+    text = text.replace('_medic switchMove [_main, _phase, 1, false];', '_moves pushBack [_medic,_main];')
     text = text.replace('_m getUnitMovesInfo 1', '_dpNativeElapsed').replace('_m getUnitMovesInfo 2', '_dpNativeDuration')
     text = text.replace('getNumber (configFile >> "CfgMovesMaleSdr" >> "States" >> _anim >> "speed")', '_dpExitNativeSpeed')
     for command, value in {
@@ -52,7 +54,7 @@ def setup():
         ace_interaction_fnc_hideMouseHint={_hints=_hints-1;};
         ACM_damage_fnc_clotWoundsOnBodyPart={_clots=_clots+1;};
     '''
-    for name in ('providerAnimation', 'directPressurePoseBusy', 'directPressurePoseRetire', 'directPressurePoseEnter', 'directPressurePoseExit', 'doAnimHeld', 'directPressureStop', 'directPressurePose', 'directPressureTick',
+    for name in ('treatmentPoseSync', 'treatmentPoseStop', 'directPressureExitSpeedRelease', 'providerAnimation', 'directPressurePoseBusy', 'directPressurePoseRetire', 'directPressurePoseEnter', 'directPressurePoseExit', 'doAnimHeld', 'directPressureStop', 'directPressurePose', 'directPressureTick',
                  'directPressureLimb', 'directPressureTorso', 'directPressureSelf', 'directPressureRetire'):
         text += f'ACME_fnc_{name}={{' + source(name) + '};'
     # Execute the real Local event's generation/registry prefix. The following unrelated

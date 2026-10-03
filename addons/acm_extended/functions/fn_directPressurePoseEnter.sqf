@@ -15,6 +15,9 @@ if (_exit isNotEqualTo []) exitWith {false};
 private _now = CBA_missionTime;
 private _prep = _medic getVariable ["ACME_DP_PosePrep", []];
 if (_prep isEqualTo []) then {
+    // Retire any old accelerated medical exit before holstering as well as before the hold.
+    [_medic, "", -1, true] call ACME_fnc_treatmentPoseStop;
+    if !([_medic] call ACME_fnc_providerAnimSpeedOwned) then {_medic setAnimSpeedCoef 1;};
     private _delay = [_medic] call ACME_fnc_medicAnimationPrep;
     _prep = [_now + (_delay max 0), _now];
     _medic setVariable ["ACME_DP_PosePrep", _prep, false];

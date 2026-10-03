@@ -210,7 +210,12 @@ if (_dpSamePatient) then {
                 || {(objectParent _medic) isNotEqualTo (objectParent _patient)}
                 || {isNull objectParent _medic && {(_medic distance2D _patient) > ACEGVAR(medical_gui,maxDistance)}}) exitWith {};
             [LLSTRING(BVM_SwappedToCPR), 1.5, _medic] call ACEFUNC(common,displayTextStructured);
-            [_medic, _patient] call EFUNC(circulation,beginCPR);
+            if (vest _patient != "" && {isNull objectParent _patient}) then {
+                // Only CPR needs the carrier removed. Existing open-chest swaps keep their direct path.
+                [_medic, _patient, "Body", "CPR"] call ACEFUNC(medical_treatment,treatment);
+            } else {
+                [_medic, _patient] call EFUNC(circulation,beginCPR);
+            };
         }, [_medic, _patient, _epoch], 0.1] call CBA_fnc_waitAndExecute;
     } else {
         [LLSTRING(BVM_Stopped), 1.5, _medic] call ACEFUNC(common,displayTextStructured);

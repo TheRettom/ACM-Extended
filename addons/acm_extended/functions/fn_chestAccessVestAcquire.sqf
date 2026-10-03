@@ -19,6 +19,7 @@ if (isNull _patient || {!local _patient}) exitWith {false};
 _context = toLowerANSI _context;
 if !(_context in ["access","chestseal"]) then {_context = "access";};
 _treatmentClass = toLowerANSI _treatmentClass;
+if (_treatmentClass in ["usebvm","usebvm_oxygen","usebvm_vehicleoxygen","usebvm_portableoxygen"]) exitWith {true};
 private _preserveHeadElevation = _treatmentClass in ["usebvm","usebvm_oxygen","usebvm_vehicleoxygen","usebvm_portableoxygen"];
 
 private _savedVar = ["ACME_chestAccess_vestLoadout","ACME_CS_vestLoadout"] select (_context == "chestseal");

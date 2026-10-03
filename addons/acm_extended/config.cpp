@@ -341,10 +341,13 @@ class CfgMovesMaleSdr: CfgMovesBasic {
             looped = 1;
             disableWeapons = 1;
             disableWeaponsLong = 1;
+            disableWeaponsShort = 1;
+            disableReload = 1;
             canPullTrigger = 0;
-            connectTo[] = {};
-            interpolateFrom[] = {"AmovPknlMstpSnonWnonDnon", 0.2};
-            interpolateTo[] = {"AmovPknlMstpSnonWnonDnon", 0.2, "Unconscious", 0.02};
+            connectFrom[] = {"ACM_GenericContinuous", 0.15, "ACME_DirectPressureHold", 0.15, "ACME_ChestSealWorkspace", 0.15};
+            connectTo[] = {"AinvPknlMstpSnonWnonDnon_medic3", 0.15};
+            interpolateFrom[] = {"AmovPknlMstpSnonWnonDnon", 0.2, "ACM_GenericContinuous", 0.15, "ACME_DirectPressureHold", 0.15, "ACME_ChestSealWorkspace", 0.15};
+            interpolateTo[] = {"AinvPknlMstpSnonWnonDnon_medic3", 0.15, "AmovPknlMstpSnonWnonDnon", 0.2, "Unconscious", 0.02};
         };
         // B40 animation audit: direct pressure gets its own held state instead of hard switchMove into
         // ACM_CPR_Stop. The RTM is inherited from ACM, but the graph is connected to the normal unarmed
@@ -525,6 +528,7 @@ class CfgPatches {
         requiredAddons[] = {
             "A3_Data_F",
             "A3_Anims_F",
+            "A3_Weapons_F_Ammoboxes",
             "cba_main",
             "ace_main",
             "ace_fastroping",
@@ -2550,6 +2554,7 @@ class CfgFunctions {
             class aajtPainTick {};
             class junctionalWrapDone {};
             class junctionalRollSpawn {};
+            class priorityJunctionalCandidate {};
             class junctionalStartBleed {};
             class junctionalWrapSfxStart {};
             class junctionalWrapSfxStop {};
@@ -2562,6 +2567,7 @@ class CfgFunctions {
             class directPressurePoseEnter {};
             class directPressurePoseRetire {};
             class directPressurePoseExit {};
+            class directPressureExitSpeedRelease {};
             class directPressurePoseExitSync {};
             class directPressurePoseBusy {};
             class patientAnimRequest {};
@@ -2954,6 +2960,8 @@ class CfgFunctions {
             class ventMaskSelected {};
             class ventSyncMask {};
             class ventSetMaskCPAP {};
+            class ventMaskApplyStart {};
+            class ventMaskApplyReply {};
             class ventConnectPatient {};
             class ventDisconnectPatient {};
             class ventAirwayLoss {};
@@ -6943,12 +6951,17 @@ class CfgVehicles {
     class ReammoBox_F;
     // A native ground container, paired with the exact removed vest mesh. There is no wearable duplicate
     // to take; its live supplies use vanilla Gear, including world access and multiplayer inventory.
-    class ACME_RemovedCarrierCargo: ReammoBox_F {
+    class GroundWeaponHolder_Scripted;
+    class ACME_RemovedCarrierCargo: GroundWeaponHolder_Scripted {
         scope = 1;
         scopeCurator = 0;
         displayName = "Plate carrier";
         model = "\A3\Weapons_F\DummyWeapon.p3d";
-        simulation = "thing";
+        simulation = "WeaponHolder";
+        showWeaponCargo = 0;
+        // The separately parked original vest mesh is the visual representation.
+        // Cargo contains supplies only: a manually removed carrier cannot be stolen as a wearable.
+        forceSupply = 0;
         transportMaxWeapons = 10000;
         transportMaxMagazines = 10000;
         transportMaxBackpacks = 10000;
@@ -7856,6 +7869,11 @@ ACME_LBTN(ACME_Ventilator);
 #undef ACME_LBTN
 
 class ace_medical_treatment_actions {
+    class OpenTransfusionMenu {
+        icon = "\z\ace\addons\medical_treatment\data\IVBag_saline_500ml_ca.paa";
+        ACM_menuIcon = "ACE_salineIV_500";
+    };
+
     // PARALLEL PROVIDER RULE:
     // Active BVM, CPR and other continuous roles reserve only that same role. They do not globally
     // disable unrelated treatment actions for another provider. The provider actually performing a
@@ -8250,8 +8268,8 @@ class ace_medical_treatment_actions {
     class ACME_OpenPlateCarrierInventory: ACME_ManualRemovePlateCarrier {
         displayName = "Open Plate Carrier Inventory";
         category = "examine";
-        allowedSelections[] = {"Head", "Body"};
-        condition = "!isNull ([_patient] call ACME_fnc_carrierInventoryGet)";
+        allowedSelections[] = {};
+        condition = "false";
         callbackSuccess = "[_medic, _patient] call ACME_fnc_carrierInventoryOpen";
         ACME_neverRollToBack = 1;
     };
@@ -8941,7 +8959,7 @@ class ace_medical_treatment_actions {
     class ACME_VentMaskCPAP: ACME_ConnectETVent {
         displayName = "Use NIV / CPAP Mask";
         condition = "([_medic, 'ACME_VentMaskCPAP'] call ACME_fnc_procedureActionAllowed) && {_patient getVariable ['ACME_vent_onPatient', false]} && {_patient getVariable ['ACME_vent_circuit', false]} && {!(_patient getVariable ['ACME_vent_recovering', false])}";
-        callbackSuccess = "[_patient, _medic, _patient getVariable ['ACME_vent_custodyId', ''], [_patient] call ACME_fnc_clinicalEpoch, serverTime + 3] call ACME_fnc_ventSetMaskCPAP";
+        callbackSuccess = "[_medic, _patient] call ACME_fnc_ventMaskApplyStart";
     };
 
     // disconnect ventilator. there was no explicit way to take the machine off a casualty. the only route was to
@@ -9382,7 +9400,7 @@ class ace_medical_treatment_actions {
         medicRequired = 0;
         allowSelfTreatment = 1;
         treatmentTime = 0.5;
-        allowedSelections[] = {"Head","Body","LeftArm","RightArm","LeftLeg","RightLeg"};
+        allowedSelections[] = {"Head"};
         condition = "!(_medic getVariable ['ACME_emma_bvmAttached', false]) && {([_medic, _patient, 'ACM_EMMA'] call ACME_fnc_treatmentSupplyCount) > 0}";
         callbackStart = "params ['_medic']; if (!isNull _medic) then {[_medic, 'ACME_EMMA_Attach'] call ACME_fnc_worldSfxNearby}";
         callbackSuccess = "_this call ACME_fnc_emmaAttach";
@@ -9423,6 +9441,7 @@ class ace_medical_treatment_actions {
         condition = "(_patient isNotEqualTo _medic) && {_patient getVariable ['ACME_ETT_Inserted', false]} && {[_medic, _patient] call ACME_fnc_emmaCanRemoveIGel}";
         callbackStart = "params ['_medic']; if (!isNull _medic) then {[_medic, 'ACME_EMMA_Detach'] call ACME_fnc_worldSfxNearby}";
         callbackSuccess = "_this call ACME_fnc_emmaRemoveIGel";
+        allowedSelections[] = {"Head"};
     };
     class ACME_AttachEMMAIGel: CheckPulse {
         displayName = "Attach EMMA to their i-gel";
@@ -9468,7 +9487,7 @@ class ace_medical_treatment_actions {
         medicRequired = 0;
         allowSelfTreatment = 1;
         treatmentTime = 0.5;
-        allowedSelections[] = {"Head","Body","LeftArm","RightArm","LeftLeg","RightLeg"};
+        allowedSelections[] = {"Head"};
         condition = "_medic getVariable ['ACME_emma_bvmAttached', false]";
         callbackStart = "params ['_medic']; if (!isNull _medic) then {[_medic, 'ACME_EMMA_Detach'] call ACME_fnc_worldSfxNearby}";
         callbackSuccess = "_this call ACME_fnc_emmaRemove";
@@ -9879,10 +9898,11 @@ class ace_medical_treatment_actions {
         displayNameProgress = "Flushing IV/IO site...";
         category = "medication";
         treatmentTime = 3;
-        condition = "(([_medic, _patient, 'ACM_SalineFlush_10'] call ACME_fnc_treatmentSupplyCount) > 0) && {([_patient, _bodyPart, 0] call ACM_circulation_fnc_hasIV) || {[_patient, _bodyPart, 0] call ACM_circulation_fnc_hasIO}}";
+        condition = "false";
         callbackStart = "playSound 'ACME_SyringeDraw'";
         callbackSuccess = "[_this select 0, _this select 1, _this select 2, ['flushLine']] call ACME_fnc_salineFlush";
         items[] = {};
+        allowedSelections[] = {};
     };
     // osmotherapy, pushed rather than hung.
     // fn_tbiosmobolus has existed and been complete since it was written, and nothing ever called it. its own

@@ -78,7 +78,7 @@ def adapt(s, component='core'):
         'alive _patient': '_patientAlive', 'alive _target': '_patientAlive', 'alive _custodyTarget': '_patientAlive', 'alive _provider': '_alive', 'alive _p': '_patientAlive',
         'local _medic': 'true', 'local _m': 'true', 'local _patient': 'true', 'local _p': 'true',
         'owner _medic': '_ownerNum',
-        'objectParent _medic': 'objNull', 'objectParent _patient': 'objNull', 'objectParent _p': 'objNull',
+        'vest _patient': '""', 'objectParent _medic': 'objNull', 'objectParent _patient': 'objNull', 'objectParent _p': 'objNull',
         '_patient distance2D _medic': '_distance', '_medic distance _patient': '_distance',
         'stance _medic': '"CROUCH"', 'stance _patient': '"PRONE"', 'stance _p': '"PRONE"',
         'animationState _patient': '"unconscious"', 'lifeState _p': '"DEAD"',

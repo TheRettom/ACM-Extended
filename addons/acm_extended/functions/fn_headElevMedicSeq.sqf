@@ -12,7 +12,7 @@ params [
 ];
 if (isNull _medic || {!alive _medic} || {_medic getVariable ["ACE_isUnconscious", false]}) exitWith {};
 _mode = toLowerANSI _mode;
-if !(_mode in ["elevate", "lower", "contactexit", "chestsealexit"]) exitWith {};
+if !(_mode in ["elevate", "lower", "contactexit", "chestsealexit", "mask"]) exitWith {};
 if (!local _medic) exitWith {
     [_medic, "headElevMedicSeq", [_medic, _mode, _exitSession, _presentation]] call ACME_fnc_ownerDispatch;
 };

@@ -17,11 +17,11 @@ if (!_active && {_record isNotEqualTo []} && {(_record select 0) isEqualTo _epis
 };
 if (_active && {_record isNotEqualTo []} && {(_record select 0) isEqualTo _episode}) exitWith {};
 private _inheritedOwnership = _record isNotEqualTo [] && {_record select 3};
-private _priorRate = getAnimSpeedCoef _medic;
-if (_record isNotEqualTo [] && {_record select 3} && {abs (_priorRate - 1.5) < 0.01}) then {_priorRate = _record select 4;};
+private _priorRate = 1;
+// No inherited locomotion coefficient: a retired medical exit always releases to 1.
 // A newer stop may overtake its start while the preceding observer still owns1.5.
 // Carry that ownership into a bounded tombstone cleanup; dropping the old record alone would leak its rate.
-_record = [_episode, _active, -1, !_active && {_inheritedOwnership}, _priorRate];
+_record = [_episode, _active, -1, _inheritedOwnership, _priorRate];
 _medic setVariable ["ACME_DP_ExitRemote", _record, false];
 private _pfh = [{
     params ["_args", "_pfh"];
@@ -51,17 +51,16 @@ private _pfh = [{
     if (_newer || {_poseChanged} || {_transferred} || {_expired} || {_inactive} || {_unavailable} || {_left}) exitWith {
         _record set [1, false];
         [_pfh] call CBA_fnc_removePerFrameHandler;
-        // A different medical RTM is a new controller even if its public state has not replicated yet.
-        // Restore only our tagged rate, on our end or ordinary empty-hands movement; never over a new freeze/RTM.
-        private _safeState = _inExit || {(_current find "amov") == 0 && {(_current find "wnon") >= 0}};
-        if ((_record select 3) && {!_newer || {!_inExit} || {_publicExpired}} && {!_poseChanged} && {!_transferred} && {_safeState}
+        // Restore the exact tagged rate even when the next state is armed locomotion.
+        // A newer explicit rate/freeze owner wins; never restore a captured acceleration.
+        if ((_record select 3) && {!_newer || {!_inExit} || {_publicExpired} || {_transferred} || {_unavailable}} && {!([_m] call ACME_fnc_providerAnimSpeedOwned)}
             && {abs ((getAnimSpeedCoef _m) - 1.5) < 0.01}) then {
-            _m setAnimSpeedCoef ((_record select 4) max 1);
+            _m setAnimSpeedCoef 1;
         };
         _record set [3, false];
     };
     // Unknown public state is pending replication, not authorization to touch the provider yet.
-    if (_known && {_inExit}) then {
+    if (_known && {_inExit} && {!([_m] call ACME_fnc_providerAnimSpeedOwned)}) then {
         _record set [3, true];
         if (abs ((getAnimSpeedCoef _m) - 1.5) > 0.01) then {_m setAnimSpeedCoef 1.5;};
     };

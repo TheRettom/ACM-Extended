@@ -51,6 +51,8 @@ def setup(name):
 @pytest.mark.parametrize('mode,trained,allowed', [(0,False,True), (1,False,True), (2,False,False), (3,False,True), (3,True,True)])
 def test_patient_only_supplies_follow_the_actual_ace_equipment_mode(name, mode, trained, allowed):
     condition = adapt(ACTIONS[name]['props']['condition'])
+    if name == 'ACME_FlushLine':
+        allowed = False  # B229: obsolete syringe-flush menu action removed for every equipment mode.
     execute(setup(name) + f'ace_medical_treatment_allowSharedEquipment={mode}; _trained={str(trained).lower()};' +
         'private _condition={' + condition + '};' +
         f'[(call _condition)=={str(allowed).lower()},"patient-only config gate disagrees with equipment mode"] call _check;' + '''

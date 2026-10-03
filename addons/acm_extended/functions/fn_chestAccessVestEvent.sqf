@@ -10,6 +10,8 @@ params [
 if (isNull _patient || {_id == ""}) exitWith {};
 if (!local _patient) exitWith {[_patient, "chestAccessVestEvent", _this] call ACME_fnc_ownerDispatch;};
 
+// New BVM sessions never remove a carrier, even through a stale class registry.
+if (_start && {toLowerANSI _classname in ["usebvm","usebvm_oxygen","usebvm_vehicleoxygen","usebvm_portableoxygen"]}) exitWith {};
 private _leases = _patient getVariable ["ACME_chestAccess_leases", createHashMap];
 if (_start) then {
     _leases set [_id, [_medic, CBA_missionTime, toLowerANSI _classname]];

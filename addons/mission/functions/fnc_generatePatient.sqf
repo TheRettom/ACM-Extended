@@ -121,13 +121,13 @@ _patient setVariable [QACEGVAR(medical_statemachine,AIUnconsciousness), true, tr
 _patient setVariable [QEGVAR(damage,InstantDeathImmune), true, true];
 
 private _injuryArray = [];
+_patient setVariable ["ACME_trainingSpawnInProgress", true, false];
 
 if (_severity == 0) then { // Random
     _severity =  1 + (round (random 3));
 };
-// Preserve the legacy random-case junctional cap (requested tier 0). Explicit
-// triage/case selections expose their requested tier to synchronous wound hooks.
-_patient setVariable ["ACME_spawnSeverity", _acmeRequestedSeverity, true];
+// Stamp the resolved triage tier before synchronous wound hooks, including random Priority.
+_patient setVariable ["ACME_spawnSeverity", _severity, true];
 
 private _damageMultiplier = 1;
 
@@ -162,10 +162,18 @@ for "_i" from 1 to _woundCount do {
     [_patient, _damageAmount, _targetPart, _mechanism, objNull] call ACEFUNC(medical,addDamageToUnit);
 } forEach _injuryArray;
 
+// Evaluate Priority only after ALL random hits have settled, not at the first hit.
+_patient setVariable ["ACME_trainingSpawnFinalize", true, false];
+if (_severity == 2) then {
+    [_patient, _patient getVariable ["ace_medical_openWounds", createHashMap]] call ACME_fnc_junctionalRollSpawn;
+};
+_patient setVariable ["ACME_trainingSpawnInProgress", false, false];
+_patient setVariable ["ACME_trainingSpawnFinalize", false, false];
+
 if (_singlePatient) then {
     _object setVariable [QGVAR(ActivePatients), [_patient], true];
 };
 
 missionNamespace setVariable ["ACME_pendingSpawnSeverity", -1];
-_patient setVariable ["ACME_spawnSeverity", _acmeRequestedSeverity, true];
+_patient setVariable ["ACME_spawnSeverity", _severity, true];
 _patient;

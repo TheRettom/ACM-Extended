@@ -79,7 +79,7 @@ def test_exit_runs_exact_medic_end_at_one_point_five_with_no_early_resume(operat
         _moves=[];
     ''' + trigger + f'''
         [count _moves==1 && {{((_moves select 0) select 1)=="AinvPknlMstpSnonWnonDnon_medicEnd"}},"wrong pressure exit animation"] call _check;
-        [_testAnimationSpeed==1.5,"exit did not start at1.5"] call _check;
+        [_testAnimationSpeed==1,"pending exit accelerated movement before its RTM"] call _check;
         private _exitId=count _handlers-1;
         _inputActions=[]; _look=[0,1,0];
         _animation="ainvpknlmstpsnonwnondnon_medicend";
@@ -257,7 +257,8 @@ def test_observer_late_stop_never_resets_replacement_or_new_owner(change):
         _animation="ainvpknlmstpsnonwnondnon_medicend"; _id call _tick;
         [_testAnimationSpeed==1.5,"observer never acquired exit rate"] call _check;
     '''+change+'''
-        private _expected=_testAnimationSpeed;
+        // Local speed is not inherited from the old remote exit on owner transfer.
+        private _expected=if ((_medic getVariable ["TEST_owner",8])==7) then {1} else {_testAnimationSpeed};
         [false] call _sync; _id call _tick;
         [_testAnimationSpeed==_expected,"old observer stop altered replacement rate"] call _check;
         if (((_medic getVariable ["ACME_DP_ExitEpisode",[]]) param [0,0]) > _networkTime) then {
@@ -380,6 +381,7 @@ def test_actual_medical_menu_bridge_stops_pressure_before_native_started_hook(po
         private _registered=[]; private _nativeEvents=0; private _canTreatCalls=0; private _respStops=0;
         CBA_fnc_addEventHandler={_registered pushBack _this;};
         ACME_fnc_respirationStop={_respStops=_respStops+1;};
+        ACME_fnc_feelSkinStop={};
         ace_medical_treatment_fnc_canTreatCached={_canTreatCalls=_canTreatCalls+1; true};
     ''' + hooks + '''
         CBA_fnc_localEvent={
@@ -410,7 +412,9 @@ def test_actual_medical_menu_bridge_stops_pressure_before_native_started_hook(po
         [!(_medic getVariable ["ACME_DP_TreatmentBusy",true]),"menu stop manufactured successor Busy"] call _check;
     ''' + ('''
         [count _moves==1 && {((_moves select 0) select 1)=="AinvPknlMstpSnonWnonDnon_medicEnd"},"menu stop skipped requested medicEnd"] call _check;
-        [_testAnimationSpeed==1.5,"menu stop medicEnd missed1.5 rate"] call _check;
+        [_testAnimationSpeed==1,"menu stop accelerated before visible exit"] call _check;
+        _animation="ainvpknlmstpsnonwnondnon_medicend";(count _handlers-1) call _tick;
+        [_testAnimationSpeed==1.5,"observed menu stop exit missed1.5 rate"] call _check;
     ''' if posture == 'kneeling' else '''
         [count _moves==1 && {((_moves select 0) select 1)=="AmovPpneMstpSnonWnonDnon"},"menu stop raised prone provider"] call _check;
     ''' if posture == 'prone' else '''

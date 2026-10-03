@@ -283,5 +283,7 @@ def test_blufor_and_civilian_both_retain_junctional_caps_before_wounds():
     assert 'ACM_mission_TrainingBluforGroup' in s
     assert '_cap = [2, 4] select (_sev >= 4);' in s
     s = source('generatePatient')
-    resolved = s.index('// Preserve the legacy random-case junctional cap')
+    resolved = s.index('// Stamp the resolved triage tier')
     assert resolved < s.index('call ACEFUNC(medical,addDamageToUnit)')
+    assert 'ACME_trainingSpawnFinalize' in s
+    assert '_cap = 1;' in (ROOT/'addons/acm_extended/functions/fn_junctionalRollSpawn.sqf').read_text()

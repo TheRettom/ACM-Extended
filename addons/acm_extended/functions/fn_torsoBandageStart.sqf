@@ -3,7 +3,9 @@ params ["_medic", "_patient", "_part", "_class", ["_duration", 15, [0]]];
 if (isNull _medic || {!local _medic} || {!alive _medic} || {!isNull objectParent _medic}) exitWith {-1};
 private _serial = (_medic getVariable ["ACME_torsoBandageSerial", 0]) + 1;
 _medic setVariable ["ACME_torsoBandageSerial", _serial, false];
-private _epoch = [_medic, "torsoBandage", -1, _patient] call ACME_fnc_treatmentPoseStart;
+private _visible = toLowerANSI animationState _medic;
+private _emptyHandoff = _visible in ["acm_genericcontinuous","acme_junctionalwork","acme_chestsealworkspace","acme_directpressurehold"];
+private _epoch = [_medic, "torsoBandage", -1, _patient, _emptyHandoff] call ACME_fnc_treatmentPoseStart;
 _medic setVariable ["ACME_torsoBandage", [_serial, _patient, _part, _class, _epoch], false];
 // Finite orphan fallback if a progress display is destroyed without either native completion.
 // The serial plus pose epoch protect any successor; failure never plays a placement motion.

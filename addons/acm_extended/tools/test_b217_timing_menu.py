@@ -112,6 +112,14 @@ def test_own_bvm_emma_is_pinned_immediately_below_carrier(part,view,tab):
         call _collect;
     '''
     if view=='open': code+='_display setVariable ["ACME_menuOpen",["adjuncts","ventilation","capno"]];'
+    if part != 0:
+        code+='''
+            private _rows=call _render;
+            [(_rows findIf {(_x param [8,""])=="ACME_AttachEMMA"})<0,"off-head EMMA row retained"] call _check;
+            [(_rows select 0 select 8)=="ACME_ManualRemovePlateCarrier","carrier pin lost"] call _check;
+        '''
+        execute(code)
+        return
     code+='''
         private _rows=call _render;
         [(_rows select 0 select 8)=="ACME_ManualRemovePlateCarrier" && {(_rows select 1 select 8)=="ACME_AttachEMMA"},"pin order changed"] call _check;

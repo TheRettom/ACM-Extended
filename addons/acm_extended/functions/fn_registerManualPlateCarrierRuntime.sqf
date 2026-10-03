@@ -1,9 +1,4 @@
-// Native inventory is available from the removed carrier in the world, on every client including JIP.
-if (hasInterface && {isNil "ACME_carrierWorldInitEH"}) then {
-    ACME_carrierWorldInitEH = ["ACME_RemovedCarrierCargo","init", {
-        [_this select 0] call ACME_fnc_carrierInventoryWorld;
-    },true,[],true] call CBA_fnc_addClassEventHandler;
-};
+// B229: native ground-inventory discovery; no custom carrier menu action.
 // B218 server-only carrier capacity initialization; bounded for cross-client variable propagation.
 if (isServer && {isNil "ACME_carrierInventoryCapacityEH"}) then {
     ACME_carrierInventoryCapacityEH = ["ACME_carrierInventoryCapacity", {

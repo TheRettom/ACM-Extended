@@ -188,9 +188,8 @@ def test_native_world_inventory_action_is_idempotent_and_preserves_cargo_patient
         private _actions=[];ACME_test_addAction={_actions pushBack (_this select 0);count _actions};
     '''+'ACME_fnc_carrierInventoryWorld={'+adapt(s)+'};'+'''
         [_worldCargo] call ACME_fnc_carrierInventoryWorld;[_worldCargo] call ACME_fnc_carrierInventoryWorld;
-        [count _actions==1 && {(_actions select 0 select 8)==2.5},"world action missing, duplicated or out of range"] call _check;
-        [_worldCargo,_medic] call (_actions select 0 select 1);[_jobs select 0] call _deliver;
-        [_opened isEqualTo [[_medic,["Gear",_worldCargo]]],"world action lost exact native cargo"] call _check;
+        [count _actions==0 && {count _opened==0},"custom action or forced Gear open remains"] call _check;
+        [(_worldCargo getVariable ["ACME_carrierPatient",objNull]) isEqualTo _patient,"native holder lost patient binding"] call _check;
     ''')
 
 

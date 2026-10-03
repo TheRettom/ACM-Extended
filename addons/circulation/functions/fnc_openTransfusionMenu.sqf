@@ -38,10 +38,9 @@ if (!(_previousCloseID isEqualTo -1) && {!(_previousCloseID isEqualTo "")}) then
 
 private _medicalMenuKeybind = (["ACE3 Common", QACEGVAR(medical_gui,openMedicalMenuKey)] call CBA_FUNC(getKeybind) select 5) select 0;
 
-private _closeID = [_medicalMenuKeybind, [false, false, false], { // H to close and open medical menu
-    closeDialog 0;
-    [ACEFUNC(medical_gui,openMenu), GVAR(TransfusionMenu_Target)] call CBA_fnc_execNextFrame;
-}, "keydown", "", false, 0] call CBA_fnc_addKeyHandler;
+// Mouse wheel bindings must never become a close-menu shortcut. Only real keyboard
+// KeyDown from this display may close it; no global CBA virtual-mouse handler is installed.
+private _closeID = -1;
 GVAR(TransfusionMenu_CloseID) = _closeID;
 
 GVAR(TransfusionMenu_Target) = _patient;
@@ -115,6 +114,19 @@ if (isNull _display) exitWith {
 // The foreground menu consumes RMB without cancelling background holds. The hold's own
 // input guard also checks this display, so it does not depend on engine EH ordering.
 {_display displayAddEventHandler [_x, {(_this param [1, -1]) == 1}];} forEach ["MouseButtonDown", "MouseButtonUp"];
+_display setVariable ["ACME_TX_CloseKey", _medicalMenuKeybind];
+_display setVariable ["ACME_TX_CloseTarget", _patient];
+_display displayAddEventHandler ["KeyDown", {
+    params ["_dialog", "_key", "_shift", "_ctrl", "_alt"];
+    private _bound = _dialog getVariable ["ACME_TX_CloseKey", -1];
+    if !(_bound isEqualType 0 && {_bound >= 0} && {_bound < 0xF0}
+        && {_key == _bound} && {!_shift && {!_ctrl && {!_alt}}}) exitWith {false};
+    private _target = _dialog getVariable ["ACME_TX_CloseTarget", objNull];
+    _dialog closeDisplay 0;
+    if (!isNull _target) then {[ace_medical_gui_fnc_openMenu, _target] call CBA_fnc_execNextFrame;};
+    true
+}];
+_display displayAddEventHandler ["MouseZChanged", {true}];
 _display setVariable ["ACM_TX_Generation", _menuGeneration];
 _display setVariable ["ACM_TX_CloseID", _closeID];
 

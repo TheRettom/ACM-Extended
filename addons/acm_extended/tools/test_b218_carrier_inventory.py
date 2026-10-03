@@ -228,7 +228,7 @@ def test_magazine_supply_uses_existing_ace_dose_semantics():
 
 def test_nonpickup_and_shared_custody_are_wired_through_all_three_removal_contexts():
     config=(ROOT/'addons/acm_extended/config.cpp').read_text()
-    assert 'class ACME_RemovedCarrierCargo: ReammoBox_F' in config
+    assert 'class ACME_RemovedCarrierCargo: GroundWeaponHolder_Scripted' in config
     assert 'class ACME_OpenPlateCarrierInventory:' in config
     assert 'ace_dragging_canCarry = 0;' in config
     for name in ['chestAccessVestAcquire','headElevateStart']:
@@ -274,9 +274,10 @@ def test_cargo_comparison_allows_reordering_but_rejects_lost_duplicate_or_ammo()
 
 def test_inventory_launcher_bypasses_clinical_progress_and_pending_reopen():
     treatment=(ROOT/'addons/core/overrides/fnc_treatment.sqf').read_text()
-    block=treatment.split('if (_classname == "ACME_OpenPlateCarrierInventory") exitWith {',1)[1].split('// Opening a shared workspace',1)[0]
-    assert 'ACME_fnc_carrierInventoryOpen' in block
-    assert 'canTreatCached' in block and 'canInteractWith' in block
-    assert 'treatmentNative' not in block and 'progressBar' not in block
-    assert 'ace_medical_gui_pendingReopen = false;' in read('carrierInventoryOpen')
-    assert 'ace_medical_gui_menuDisplay' in read('carrierInventoryOpen')
+    assert 'if (_classname in ["ACME_OpenPlateCarrierInventory", "ACME_FlushLine"]) exitWith {false};' in treatment
+    config=(ROOT/'addons/acm_extended/config.cpp').read_text()
+    from medication_inventory import subtree
+    action=subtree(config,'ace_medical_treatment_actions')['classes']['ACME_OpenPlateCarrierInventory']
+    assert action['props']['condition']=='false'
+    assert action['props']['allowedSelections']==[]
+    assert 'addAction' not in read('carrierInventoryWorld')

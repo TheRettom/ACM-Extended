@@ -23,9 +23,14 @@ private _tip = if (!_primed) then {"Prime with 25 mL from this line's saline res
 _flush ctrlSetTooltip _tip;
 // A dirty, empty blood limb needs attention, even if its reserve must be replaced first.
 private _indicated = _primed && {_dirty} && {!_blood} && {_kind == ""};
+private _primeIndicated = !_primed && {_kind == ""};
 private _pulse = 0.5 + 0.5 * sin (360 * ((diag_tickTime * 1.1) % 1));
-_flush ctrlSetTextColor (if (_indicated) then {[1,0.2 + 0.2 * _pulse,0.2 + 0.2 * _pulse,0.65 + 0.35 * _pulse]} else {[1,1,1,1]});
-_flush ctrlSetBackgroundColor (if (_indicated) then {[0.25 + 0.45 * _pulse,0,0,0.7]} else {[0,0,0,1]});
+_flush ctrlSetTextColor (if (_indicated) then {[1,0.2 + 0.2 * _pulse,0.2 + 0.2 * _pulse,0.65 + 0.35 * _pulse]} else {
+    if (_primeIndicated) then {[0.35,1,0.45,0.65 + 0.35 * _pulse]} else {[1,1,1,1]}
+});
+_flush ctrlSetBackgroundColor (if (_indicated) then {[0.25 + 0.45 * _pulse,0,0,0.7]} else {
+    if (_primeIndicated) then {[0,0.15 + 0.35 * _pulse,0,0.8]} else {[0,0,0,1]}
+});
 if !(_flush getVariable ["ACME_serviceRightClick",false]) then {
     _flush setVariable ["ACME_serviceRightClick",true];
     _flush ctrlAddEventHandler ["MouseButtonDown", {

@@ -167,7 +167,7 @@ if (_medic isNotEqualTo player || {!_isInZeus}) then {
         _medicAnim = ["AinvPpneMstpSlayW[wpn]Dnon_medicOther", "AinvPpneMstpSlayW[wpn]Dnon_medic"] select _isSelf;
     };
 
-    _medic setVariable [QACEGVAR(medical_treatment,selectedWeaponOnTreatment), weaponState _medic];
+    _medic setVariable [QACEGVAR(medical_treatment,selectedWeaponOnTreatment), if (_torsoDressing) then {[]} else {weaponState _medic}];
 
     // Direct Pressure is already an authored empty-hands hold. currentWeapon still reports the player's selected
     // rifle while that Wnon pose is visible, which previously made the next bandage pick a rifle animation/end pose.

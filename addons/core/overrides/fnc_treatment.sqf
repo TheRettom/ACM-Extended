@@ -121,13 +121,8 @@ if (_classname in ["ACME_ManualRemovePlateCarrier", "ACME_ManualReplacePlateCarr
     true
 };
 
-// Inventory is a UI handoff, not a clinical timer. Native treatment completion must not reopen
-// the medical menu over the Gear display or claim a fresh provider animation.
-if (_classname == "ACME_OpenPlateCarrierInventory") exitWith {
-    if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
-    if !([_medic, _patient, _interactionChecks] call ace_common_fnc_canInteractWith) exitWith {false};
-    [_medic, _patient] call ACME_fnc_carrierInventoryOpen
-};
+// Retired UI actions must stay inert even when another addon holds their old cached config.
+if (_classname in ["ACME_OpenPlateCarrierInventory", "ACME_FlushLine"]) exitWith {false};
 
 // Opening a shared workspace must not wait for a free kneeling/holster animation.
 // Each actual intervention inside the panel retains its own checks and animation.
@@ -160,9 +155,7 @@ if (_classname in [
 if (_classname == "ACME_VentMaskCPAP") exitWith {
     if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
     if !([_medic, _patient, _interactionChecks] call ace_common_fnc_canInteractWith) exitWith {false};
-    [_patient, _medic, _patient getVariable ["ACME_vent_custodyId", ""],
-        [_patient] call ACME_fnc_clinicalEpoch, serverTime + 3] call ACME_fnc_ventSetMaskCPAP;
-    true
+    [_medic, _patient] call ACME_fnc_ventMaskApplyStart
 };
 if !(_classname in ["ACME_ConnectETVent", "ACME_ConnectNIVVent"]) exitWith {
     // Preserve ACM/ACE cursor-menu deferral before ACME starts its one-shot stance/weapon preflight.
@@ -203,7 +196,8 @@ if !(_classname in ["ACME_ConnectETVent", "ACME_ConnectNIVVent"]) exitWith {
         "ACME_chestAccess_maneuverClasses",
         ["cpr","usebvm","usebvm_oxygen","usebvm_vehicleoxygen","usebvm_portableoxygen"]
     ];
-    private _needsChestAccess = _nativeContinuousClass in _chestClasses;
+    private _needsChestAccess = _nativeContinuousClass in _chestClasses
+        && {!(_nativeContinuousClass in ["usebvm","usebvm_oxygen","usebvm_vehicleoxygen","usebvm_portableoxygen"])};
     private _chestSaved = +(_patient getVariable ["ACME_chestAccess_vestLoadout", []]);
     private _existingChest = _medic getVariable ["ACME_chestAccess_treatment", []];
     private _existingChestClass = _existingChest param [1,""];
