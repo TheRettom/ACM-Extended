@@ -620,7 +620,7 @@ if !(_classname in ["ACME_ConnectETVent", "ACME_ConnectNIVVent"]) exitWith {
             _medic setVariable ["ACME_nativeTreatmentRateSerial", _serial, false];
             _nativeRateRecord = [_serial, _patient, _bodyPart, _classname, _medic getVariable ["ACME_treatmentPoseEpoch", -1]];
             _medic setVariable ["ACME_nativeTreatmentRate", _nativeRateRecord, true];
-            private _rate = call ACME_fnc_choreographyRate;
+            private _rate = if (getNumber (_cfg >> "ACME_normalSpeedAnimation") > 0) then {1} else {call ACME_fnc_choreographyRate};
             _medic setAnimSpeedCoef _rate;
             ["ace_common_setAnimSpeedCoef", [_medic, _rate]] call CBA_fnc_globalEvent;
         };

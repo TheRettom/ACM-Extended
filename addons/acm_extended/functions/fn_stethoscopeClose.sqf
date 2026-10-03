@@ -40,6 +40,9 @@ if (_flipWasActive) then {
         [_patient,"front"] call ACME_fnc_patientRollCancel;
     };
 };
+private _temporaryCarrier = !isNull _patient
+    && {(_patient getVariable ["ACME_manualPlateCarrierState", ""]) == ""}
+    && {count (_patient getVariable ["ACME_chestAccess_vestLoadout", []]) == 2};
 private _poseEpoch = _display getVariable ["ACME_stethPoseEpoch",-1];
 private _continuousEpoch = _display getVariable ["ACME_continuousEpoch",-1];
 private _poseStateAtClose = if (isNull _medic) then {[]} else {_medic getVariable ["ACME_treatmentPoseState", []]};
@@ -93,11 +96,11 @@ if (_continuousEpoch >= 0
     };
 };
 
-// Release only this stethoscope pose as a handoff. The requested exit is not the generic treatment blend:
-// play the exact Semi-Fowler provider Putdown/inventory pair and finish in the normal unarmed crouch.
+// Only a temporarily removed carrier warrants the reaching-out replacement theatre.
+// Bare chests and manually parked carriers use the normal scoped treatment exit.
 if (!isNull _medic && {_poseEpoch >= 0}
     && {(_medic getVariable ["ACME_treatmentPoseEpoch",-2]) == _poseEpoch}) then {
-    [_medic,"stethoscope",_poseEpoch,true] call ACME_fnc_treatmentPoseStop;
+    [_medic,"stethoscope",_poseEpoch,_temporaryCarrier] call ACME_fnc_treatmentPoseStop;
 
     if (local _medic && {getAnimSpeedCoef _medic == 0}) then {
         _medic setAnimSpeedCoef 1;
@@ -106,7 +109,7 @@ if (!isNull _medic && {_poseEpoch >= 0}
 
 // A superseded display must not start its exit over a newer continuous action.
 // Use the scope generation here: an active Flip legitimately owns a newer roll pose epoch.
-if (_continuousEpoch >= 0
+if (_temporaryCarrier && {_continuousEpoch >= 0}
     && {(missionNamespace getVariable ["ACM_core_ContinuousAction_Epoch",-2]) == _continuousEpoch}
     && {!isNull _medic} && {local _medic} && {alive _medic}
     && {!(_medic getVariable ["ACE_isUnconscious",false])}

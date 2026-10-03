@@ -24,6 +24,7 @@ if (_patient getVariable ["ACE_isUnconscious",false]
     || {_patient call ace_common_fnc_isBeingDragged}
     || {_patient call ace_common_fnc_isBeingCarried}
     || {((_patient getVariable ["ACME_patientAnimLock",[]]) param [4,-1]) > serverTime}
+    || {((_patient getVariable ["ACME_wakeVisualToken",[]]) param [1,-1]) > serverTime}
     || {_patient getVariable ["ACME_headElevated",false]}
     || {_patient getVariable ["ACM_airway_RecoveryPosition_State",false]}
     || {(_patient getVariable ["ACME_lido_seizureState",""]) == "active"}) exitWith {true};

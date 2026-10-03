@@ -48,6 +48,8 @@ if (_active) then {
     _rejected = !_sameOwner && {_oldPriority >= _lockPriority};
 };
 if (_rejected) exitWith {""};
+// An accepted clinical body controller preempts decorative waking, never the other way round.
+if (!isNil "ACME_fnc_wakeAnimationStop") then {[_patient] call ACME_fnc_wakeAnimationStop;};
 
 // B220: invalidate recovery only AFTER this roll wins arbitration, and BEFORE
 // changing the pose. Release of a pending recovery token cannot clear the new roll.

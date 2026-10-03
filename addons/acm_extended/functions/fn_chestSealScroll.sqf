@@ -1,5 +1,4 @@
-/* B223: wheel direction is locked for the whole hover. Full lift stays at frame 5.
-   Leaving the seal (chestSealTick) restores the flat frame and permits a fresh corner/direction. */
+/* B224: reversible same-corner peeling. Hover exit alone unlocks the corner. */
 params [["_src", displayNull], ["_scroll", 0]];
 if (!hasInterface || {_scroll == 0}
     || {(uiNamespace getVariable ["ACME_CS_FlipLockedUntil", 0]) > diag_tickTime}
@@ -13,7 +12,7 @@ private _frame = uiNamespace getVariable ["ACME_CS_BurpFrame", 0];
 private _direction = uiNamespace getVariable ["ACME_CS_BurpDir", 0];
 private _fired = uiNamespace getVariable ["ACME_CS_BurpFired", false];
 if (_oldIndex != _onSeal) then {_frame = 0; _direction = 0; _fired = false;};
-if (_frame == 0 && {!([_patient] call ACME_fnc_chestSealBurpReady)}) exitWith {false};
+if (_frame == 0 && {_direction == 0 || {([1, -1] select (_scroll < 0)) == _direction}} && {!([_patient] call ACME_fnc_chestSealBurpReady)}) exitWith {false};
 ([_frame, _direction, _fired, _scroll] call ACME_fnc_chestSealScrollStep) params ["_next", "_locked", "_done", "_complete"];
 if (_next == _frame) exitWith {true};
 uiNamespace setVariable ["ACME_CS_BurpIdx", _onSeal];

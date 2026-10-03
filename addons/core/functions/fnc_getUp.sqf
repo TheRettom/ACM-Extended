@@ -93,6 +93,10 @@ private _canRelease = _wasLying
     || {(!(_patient getVariable ["ACE_isUnconscious", false])) && {(stance _patient == "PRONE") || {lifeState _patient == "INCAPACITATED"}}};
 if (!_canRelease) exitWith {};
 
+// An early Get Up owns the exit; cancel the one-shot without a stale resting-pose callback.
+private _wakeExit = (_as find "acme_wake") == 0;
+if (!isNil "ACME_fnc_wakeAnimationStop") then {[_patient] call ACME_fnc_wakeAnimationStop;};
+
 // Retire any stale ACME held/queued animation owner before the release. A stale reassert worker must never be able
 // to put ACM_LyingState back after the user has accepted Get Up.
 _patient setVariable ["ACME_animQ", [], false];
@@ -133,7 +137,9 @@ if (_obtunded) then {
 
 // IMPORTANT: priority 2 is required here. ACM_LyingState has ConnectTo[] = {} and InterpolateTo[] = {}, so
 // priority-1 playMoveNow can never leave it. ACE priority 2 tries playMoveNow and then switchMove only if necessary.
-[_patient, _roll, 2] call ACME_fnc_doAnim;
+if (_wakeExit) then {
+    _patient playMoveNow _roll;
+} else {[_patient, _roll, 2] call ACME_fnc_doAnim;};
 
 // First repair backstop: if a different unconscious/dead-state controller won the same frame, clear the engine lock
 // and re-run the exact stock ACM release. This is intentionally short so the action never appears to vanish silently.
@@ -157,7 +163,7 @@ if (_obtunded) then {
     if (isNull _p || {!alive _p} || {!local _p} || {_p getVariable ["ACE_isUnconscious", false]}) exitWith {};
     private _state = toLower animationState _p;
     private _stuck = _state in ["acm_lyingstate", "unconscious", "deadstate"]
-        || {(_state find "ace_medical_engine_uncon_anim") >= 0};
+        || {(_state find "ace_medical_engine_uncon_anim") >= 0} || {(_state find "acme_wake") == 0};
     if (!_stuck) exitWith {};
     _p setUnconscious false;
     _p setUnitPos "AUTO";

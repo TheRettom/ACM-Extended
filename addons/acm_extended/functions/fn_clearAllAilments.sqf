@@ -4,6 +4,8 @@
 private _patient = if (_this isEqualType []) then { _this param [0, objNull] } else { _this };
 if (isNull _patient) exitWith {};
 if (!local _patient) exitWith {};
+if (!isNil "ACME_fnc_wakeAnimationStop") then {[_patient,-1,true] call ACME_fnc_wakeAnimationStop;};
+{_patient setVariable [_x,false,true];} forEach ["ACME_wakeVisualArmed","ACME_wakeHadArmFracture","ACME_wakeHadTBI","ACME_wakeHadTorsoDamage"];
 private _preserveDeathInterventions = false;  // Full heal/respawn are real resets; death uses fn_deathFreeze instead.
 
 if (!alive _patient && {

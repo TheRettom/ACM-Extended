@@ -107,6 +107,138 @@ class CfgMovesMaleSdr: CfgMovesBasic {
             };
         };
 
+        // B224: one-shot wake RTMs. Native speed inherited; dedicated graphs cannot re-enter unconsciousness on completion.
+        class UnconsciousReviveDefault_A;
+        class ACME_WakeDefaultA: UnconsciousReviveDefault_A {
+            looped = 0;
+            minPlayTime = 0;
+            terminal = 0;
+            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            connectTo[] = {"ACM_LyingState",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
+        };
+        class ACME_WakeDefaultA_Prone: ACME_WakeDefaultA {
+            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+        };
+        class UnconsciousReviveDefault_B;
+        class ACME_WakeDefaultB: UnconsciousReviveDefault_B {
+            looped = 0;
+            minPlayTime = 0;
+            terminal = 0;
+            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            connectTo[] = {"ACM_LyingState",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
+        };
+        class ACME_WakeDefaultB_Prone: ACME_WakeDefaultB {
+            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+        };
+        class UnconsciousReviveBody_A;
+        class ACME_WakeBodyA: UnconsciousReviveBody_A {
+            looped = 0;
+            minPlayTime = 0;
+            terminal = 0;
+            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            connectTo[] = {"ACM_LyingState",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
+        };
+        class ACME_WakeBodyA_Prone: ACME_WakeBodyA {
+            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+        };
+        class UnconsciousReviveBody_B;
+        class ACME_WakeBodyB: UnconsciousReviveBody_B {
+            looped = 0;
+            minPlayTime = 0;
+            terminal = 0;
+            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            connectTo[] = {"ACM_LyingState",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
+        };
+        class ACME_WakeBodyB_Prone: ACME_WakeBodyB {
+            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+        };
+        class UnconsciousReviveArms_A;
+        class ACME_WakeArmsA: UnconsciousReviveArms_A {
+            looped = 0;
+            minPlayTime = 0;
+            terminal = 0;
+            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            connectTo[] = {"ACM_LyingState",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
+        };
+        class ACME_WakeArmsA_Prone: ACME_WakeArmsA {
+            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+        };
+        class UnconsciousReviveArms_B;
+        class ACME_WakeArmsB: UnconsciousReviveArms_B {
+            looped = 0;
+            minPlayTime = 0;
+            terminal = 0;
+            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            connectTo[] = {"ACM_LyingState",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
+        };
+        class ACME_WakeArmsB_Prone: ACME_WakeArmsB {
+            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+        };
+        class UnconsciousReviveArms_C;
+        class ACME_WakeArmsC: UnconsciousReviveArms_C {
+            looped = 0;
+            minPlayTime = 0;
+            terminal = 0;
+            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            connectTo[] = {"ACM_LyingState",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
+        };
+        class ACME_WakeArmsC_Prone: ACME_WakeArmsC {
+            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+        };
+        class UnconsciousReviveHead_A;
+        class ACME_WakeHeadA: UnconsciousReviveHead_A {
+            looped = 0;
+            minPlayTime = 0;
+            terminal = 0;
+            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            connectTo[] = {"ACM_LyingState",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
+        };
+        class ACME_WakeHeadA_Prone: ACME_WakeHeadA {
+            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+        };
+        class UnconsciousReviveHead_B;
+        class ACME_WakeHeadB: UnconsciousReviveHead_B {
+            looped = 0;
+            minPlayTime = 0;
+            terminal = 0;
+            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            connectTo[] = {"ACM_LyingState",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
+        };
+        class ACME_WakeHeadB_Prone: ACME_WakeHeadB {
+            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+        };
+        class UnconsciousReviveHead_C;
+        class ACME_WakeHeadC: UnconsciousReviveHead_C {
+            looped = 0;
+            minPlayTime = 0;
+            terminal = 0;
+            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            connectTo[] = {"ACM_LyingState",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
+        };
+        class ACME_WakeHeadC_Prone: ACME_WakeHeadC {
+            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+        };
+
         // Semi-Fowler states.
         //
         // THE RULE THAT DRIVES ALL OF THIS, MEASURED IN GAME ON 2026-09-11.
@@ -2441,6 +2573,12 @@ class CfgFunctions {
             class aajtTqHideInjury {};
             class cyanosisHideInjury {};
             class xstatApply {};
+            class nativeAnimationTime {};
+            class wakeAnimationChoice {};
+            class wakeAnimationEvent {};
+            class wakeAnimationTick {};
+            class wakeAnimationStop {};
+            class bvmOxygenSourceAllowed {};
             class junctionalFullHeal {};
             class bloodColdChainTick {};
             class bloodColdChainNudge {};
@@ -9011,15 +9149,16 @@ class ace_medical_treatment_actions {
     // it is an extreme-case, one-way device. it is offered only on a fresh open inguinal, or leg, junctional wound,
     // with no inguinal AAJT in place and the item carried. it therefore cannot be stacked on any other treatment,
     // cannot be used on arms, and cannot be reapplied, because once seated the state is xstat rather than open.
-    // there is no remove action. it is permanent until surgery or a full heal. the insert takes about 3 s and
-    // fn_xstatapply does the rest.
+    // There is no remove action. It remains until surgery/full heal. The insertion follows the native
+    // medic1 duration, rounded to a whole second; fn_xstatApply commits the clinical state.
     class ACME_ApplyXStat: CheckPulse {
         displayName = "Insert XStat 30";
         displayNameProgress = "Inserting XStat...";
         category = "bandage";
         treatmentLocations[] = {"All"};
         medicRequired = 0;
-        treatmentTime = 3;
+        treatmentTime = "round (['AinvPknlMstpSnonWnonDnon_medic1'] call ACME_fnc_nativeAnimationTime)";
+        ACME_normalSpeedAnimation = 1;
         // arms are included. an axillary wound is junctional and is exactly the kind of bleed XStat is for, because it
         // is one you cannot tourniquet and cannot reliably pack by hand. the wound state already lives on LeftArm and
         // RightArm, as ACME_Junc_leftarm and _rightarm, so the condition below already resolved correctly for them.
@@ -9033,7 +9172,7 @@ class ace_medical_treatment_actions {
         callbackSuccess = "_this call ACME_fnc_xstatApply";
         callbackFailure = "";
         callbackProgress = "";
-        animationMedic = "AinvPknlMstpSnonWnonDr_medic4";
+        animationMedic = "AinvPknlMstpSnonWnonDnon_medic1";
         // keep the real item in items[], so ACM and ACE inventory gating, the tooltip count and medical-menu filtering
         // all recognize the treatment as XStat-backed. consumeitem=0 below stops ACE deleting the carried applicator
         // after insertion, so the same pack can still gate additional sites.

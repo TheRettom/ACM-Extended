@@ -16,3 +16,16 @@ addMissionEventHandler ["EntityKilled", { params ["_unit"]; if (local _unit) the
 // and the ACME_YLines registration happen on the machine that owns IV_Bags and runs the bag drainer. that
 // defeats the race between the medic and the owner.
 ["ACME_ySalineSetup", {_this call ACME_fnc_ySalineSetup}] call CBA_fnc_addEventHandler;
+
+// B224: transferred wake clips are never restarted, and cannot leave the training AI keeper paused.
+["CAManBase", "Local", {
+    params ["_patient","_local"];
+    if (!_local || {(_patient getVariable ["ACME_wakeVisualToken",[]]) isEqualTo []}) exitWith {};
+    _patient setVariable ["ACME_wakeVisual",[],false];
+    _patient setVariable ["ACME_wakeVisualToken",[],true];
+    if (alive _patient && {!(_patient getVariable ["ACE_isUnconscious",false])}
+        && {isNull objectParent _patient} && {isNull attachedTo _patient}
+        && {((toLowerANSI animationState _patient) find "acme_wake") == 0}) then {
+        _patient playMoveNow (["AmovPpneMstpSnonWnonDnon","ACM_LyingState"] select (_patient getVariable ["ACM_core_Lying_State",false]));
+    };
+}, true, [], true] call CBA_fnc_addClassEventHandler;

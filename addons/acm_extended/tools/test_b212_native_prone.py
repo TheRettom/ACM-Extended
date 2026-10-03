@@ -116,6 +116,7 @@ def native_provider_source():
     text = re.sub(r'getText \(_config >> (\[[^\n]+?\] select \([^\n]+?\))\)', r'(_configValues getVariable [\1, ""])', text)
     text = text.replace('isNumber (_config >> "ACME_suppressNativeTreatmentAnim")', '_suppressConfig')
     text = text.replace('getNumber (_config >> "ACME_suppressNativeTreatmentAnim")', '1')
+    text = text.replace('getNumber (_config >> "ACME_normalSpeedAnimation")', '(_configValues getVariable ["ACME_normalSpeedAnimation",0])')
     text = text.replace('weaponState _medic', '[]').replace('animationState _medic', '_providerAnimation')
     text = text.replace('binocular _medic', '""').replace('weaponLowered _medic', 'false')
     for command in ('primaryWeapon', 'secondaryWeapon', 'handgunWeapon'):

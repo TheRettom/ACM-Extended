@@ -26,7 +26,7 @@ def test_actual_scroll_step_latches_direction_stops_at_last_frame_and_never_repe
       [_state isEqualTo [5,{direction},true],"peel did not stop at final frame"] call _check;
       [_completed==1,"repeated wheel triggered multiple burps"] call _check;
       private _reverse=(_state+[{direction*-1}]) call ACME_fnc_chestSealScrollStep;
-      [(_reverse select [0,3]) isEqualTo _state,"reversing wheel reset completed hover"] call _check;
+      [(_reverse select [0,3]) isEqualTo [4,{direction},true],"reverse did not reseal the selected corner"] call _check;
       private _fresh=[0,0,false,{direction*-1}] call ACME_fnc_chestSealScrollStep;
       [_fresh isEqualTo [1,{direction*-1},false,false],"new hover did not rearm direction"] call _check;
     ''')
@@ -34,10 +34,10 @@ def test_actual_scroll_step_latches_direction_stops_at_last_frame_and_never_repe
 
 @pytest.mark.parametrize('frame',range(1,5))
 @pytest.mark.parametrize('direction',[-1,1])
-def test_opposite_scroll_is_ignored_until_actual_hover_exit(frame,direction):
+def test_opposite_scroll_reseals_without_changing_corner_until_hover_exit(frame,direction):
     execute(function('chestSealScrollStep')+f'''
       private _result=[{frame},{direction},false,{direction*-1}] call ACME_fnc_chestSealScrollStep;
-      [_result isEqualTo [{frame},{direction},false,false],"reverse wheel advanced or rewound peel"] call _check;
+      [_result isEqualTo [{frame-1},{direction},false,false],"reverse wheel did not reseal fixed corner"] call _check;
     ''')
 
 
@@ -220,7 +220,7 @@ def test_refused_native_cpr_reports_failure_not_false_success():
 
 @pytest.mark.parametrize('handler',['chestSealScroll','thoraSealScroll'])
 @pytest.mark.parametrize('direction',[-1,1])
-def test_actual_wheel_handler_dispatches_only_one_burp_per_hover(handler,direction):
+def test_actual_wheel_handler_dispatches_once_at_open_and_allows_resealing(handler,direction):
     setup='''
       private _lifts=0;private _renders=0;private _sounds=0;
       ACME_fnc_chestSealSealAt={0};ACME_fnc_thoraSealAt={true};
@@ -237,10 +237,10 @@ def test_actual_wheel_handler_dispatches_only_one_burp_per_hover(handler,directi
       for "_i" from 1 to 100 do {{[objNull,{direction}] call ACME_fnc_{handler};}};
       [_lifts==1 && {{_renders==5}},"full peel repeated or re-rendered after end"] call _check;
       [objNull,{direction*-1}] call ACME_fnc_{handler};
-      [_lifts==1 && {{_renders==5}},"reverse scroll changed completed hover"] call _check;
+      [_lifts==1 && {{_renders==6}},"reverse scroll did not reseal completed hover"] call _check;
     '''+reset+f'''
       for "_i" from 1 to 5 do {{[objNull,{direction*-1}] call ACME_fnc_{handler};}};
-      [_lifts==2 && {{_renders==10}},"hover exit did not permit next burp"] call _check;
+      [_lifts==2 && {{_renders==11}},"hover exit did not permit next burp"] call _check;
     ''')
 
 

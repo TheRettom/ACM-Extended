@@ -1,6 +1,14 @@
 /* NA4 patient fields: [name, clock-kind, clear-on-full-heal, persist=true].
    Supplier transaction ledgers and runtime handler ownership are not saved patient state. */
 [
+  // Wake injury history may survive saves; pose records, PFH IDs and cross-owner tokens never do.
+  ["ACME_wakeHadArmFracture", "", true, true],
+  ["ACME_wakeHadTBI", "", true, true],
+  ["ACME_wakeHadTorsoDamage", "", true, true],
+  ["ACME_wakeVisualArmed", "", true, true],
+  ["ACME_wakeVisual", "", true, false],
+  ["ACME_wakeVisualToken", "", true, false],
+  ["ACME_wakeVisualSerial", "", true, false],
   ["ACME_seizure_arrestStartedAt", "", true, false],
   // The PTX model stores elapsed durations, never an owner's raw scheduler clock.
   ["ACME_ptx_state", "", true, true],

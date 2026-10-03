@@ -209,7 +209,9 @@ if (_medic isNotEqualTo player || {!_isInZeus}) then {
     // for ACME-owned modal actions such as Chest Seal, Inspect Chest, Thoracostomy and the IV minigame.
     private _animDuration = 0;
     if (_medicAnim != "") then {
-        _animDuration = ACEGVAR(medical_treatment,animDurations) get toLowerANSI _medicAnim;
+        _animDuration = if (getNumber (_config >> "ACME_normalSpeedAnimation") > 0) then {
+            [_medicAnim] call ACME_fnc_nativeAnimationTime
+        } else {ACEGVAR(medical_treatment,animDurations) get toLowerANSI _medicAnim};
         if (isNil "_animDuration") then {
             WARNING_2("animation [%1] for [%2] has no duration defined",_medicAnim,_classname);
             _animDuration = 10;
@@ -233,7 +235,7 @@ if (_medic isNotEqualTo player || {!_isInZeus}) then {
     // Play treatment animation for medic and determine the ending animation
     if (isNull objectParent _medic && {_medicAnim != ""}) then {
         // Speed up animation based on treatment time (but cap max to prevent odd animiations/cam shake)
-        private _animRatio = _animDuration / _treatmentTime;
+        private _animRatio = if (getNumber (_config >> "ACME_normalSpeedAnimation") > 0) then {1} else {_animDuration / _treatmentTime};
         TRACE_3("setAnimSpeedCoef",_animRatio,_animDuration,_treatmentTime);
 
         // Don't slow down animation too much to prevent it looking funny.
@@ -253,7 +255,7 @@ if (_medic isNotEqualTo player || {!_isInZeus}) then {
             && {(_rateLease select 2) == _bodyPart}
             && {(_rateLease select 3) == _classname}
             && {(_rateLease select 4) == (_medic getVariable ["ACME_treatmentPoseEpoch", -1])}) then {
-            _animRatio = call ACME_fnc_choreographyRate;
+            _animRatio = if (getNumber (_config >> "ACME_normalSpeedAnimation") > 0) then {1} else {call ACME_fnc_choreographyRate};
             _medic setAnimSpeedCoef _animRatio;
         };
         [QACEGVAR(common,setAnimSpeedCoef), [_medic, _animRatio]] call CBA_fnc_globalEvent;
@@ -297,7 +299,7 @@ if (_medic isNotEqualTo player || {!_isInZeus}) then {
     };
 };
 
-if (_isInZeus) then {
+if (_isInZeus && {getNumber (_config >> "ACME_normalSpeedAnimation") == 0}) then {
     _treatmentTime = _treatmentTime * ACEGVAR(medical_treatment,treatmentTimeCoeffZeus);
 };
 

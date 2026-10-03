@@ -18,6 +18,6 @@ if (_epoch >= 0) then {[_medic, "", _epoch] call ACME_fnc_treatmentPoseStop;};
 if (_success && {local _medic} && {alive _medic}
     && {(_record select 7) == (_medic getVariable ["ACME_providerLocalityEpoch", 0])}
     && {!(_medic getVariable ["ACE_isUnconscious", false])}
-    && {(_record select 4) >= 0} && {CBA_missionTime - (_record select 4) >= 2}) then {
+    && {(_record select 4) >= 0} && {CBA_missionTime - (_record select 4) >= 1.5}) then {
     (_record select 1) call ACME_fnc_feelSkin;
 };

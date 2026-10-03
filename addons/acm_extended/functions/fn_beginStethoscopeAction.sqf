@@ -103,7 +103,9 @@ private _worker = {
         if ((_medic getVariable ["ACM_core_ContinuousAction_Session", []]) isEqualTo [_patient, _epoch]) then {
             [_medic, [["session", []]], true] call ACM_core_fnc_setContinuousActionState;
         };
-        if (_poseEpoch >= 0) then {[_medic, "stethoscope", _poseEpoch, true] call ACME_fnc_treatmentPoseStop;};
+        // A live display's Unload owns the appropriate normal-vs-carrier exit. Do not retire its
+        // pose first in handoff mode, which leaves a no-carrier provider with no exit to execute.
+        if (_poseEpoch >= 0 && {isNull _scopeDisplay}) then {[_medic, "stethoscope", _poseEpoch, false] call ACME_fnc_treatmentPoseStop;};
         [_medic, _patient, _bodyPart, _extraArgs, _notInVehicle] call _onCancel;
 
         ["ace_treatmentFailed", [_medic, _patient, _bodyPart, "ACM_ContinuousAction", "", "", false]] call CBA_fnc_localEvent;

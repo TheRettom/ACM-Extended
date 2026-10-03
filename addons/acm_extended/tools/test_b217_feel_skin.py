@@ -60,6 +60,9 @@ def setup():
             if (_h select 2) then {[_h select 1,_id] call (_h select 0);};
         };
         private _hold={
+            if ((_medic getVariable "ACME_feelSkinAction" select 3)==-1) then {
+                (_medic getVariable "ACME_treatmentPoseState") set [3,2]; call _frame;
+            };
             private _pose=_medic getVariable "ACME_treatmentPoseState";
             _pose set [3,3]; _pose set [14,CBA_missionTime]; _testAnimationSpeed=0; call _frame;
         };
@@ -78,29 +81,27 @@ def test_menu_stays_open_and_contact_clock_excludes_bend_down():
         [(_medic getVariable "ACME_feelSkinAction" select 4)==-1,"entry consumed contact time"] call _check;
         [_dialog && {count _addedDisplay==2},"menu closed or cancellation not hooked"] call _check;
         call _hold;
-        CBA_missionTime=13.499; call _frame;
-        [count _poseStarts==1 && {count _results==0} && {_testAnimationSpeed==0},"hold finished early"] call _check;
-        CBA_missionTime=13.5; call _frame;
-        [count _poseStarts==2 && {(_poseStarts select 1 select 1)=="feelSkinReturn"},"return missing/reach replayed"] call _check;
-        [(_medic getVariable "ACME_feelSkinAction" select 2)==2,"frozen epoch reused"] call _check;
-        call _return;
+        [(_poseStarts select 0 select 1)=="chestSealWorkspace" && {(_poseStarts select 1 select 1)=="feelSkin"},"wrong workspace handoff"] call _check;
+        CBA_missionTime=12.999; call _frame;
+        [count _poseStarts==2 && {count _results==0} && {_testAnimationSpeed==0},"hold finished early"] call _check;
+        CBA_missionTime=13; call _frame;
         [_results isEqualTo [_request],"missing or repeated result"] call _check;
-        [_dialog && {_testAnimationSpeed==1},"menu closed or animation speed stuck"] call _check;
+        [_dialog && {_testAnimationSpeed==1} && {count _poseStarts==2},"menu closed, extra return or animation speed stuck"] call _check;
         [count _removedDisplay==2 && {(_medic getVariable ["ACME_feelSkinAction",[]]) isEqualTo []},"input/worker leaked"] call _check;
         call _frame; [_medic,1,true] call ACME_fnc_feelSkinStop;
         [count _results==1,"late success repeated result"] call _check;
     ''')
 
 
-@pytest.mark.parametrize('elapsed',[0,0.5,1.99,1.999,2,2.01,2.5])
-def test_two_real_seconds_from_observed_hand_hold(elapsed):
+@pytest.mark.parametrize('elapsed',[0,0.5,1.49,1.499,1.5,1.51,2.5])
+def test_one_and_half_seconds_from_observed_hand_hold(elapsed):
     execute(setup()+'''_request call ACME_fnc_feelSkinStart; call _hold;'''+f'''
         CBA_missionTime=10+{elapsed}; call _frame;
-        [count _poseStarts=={2 if elapsed>=2 else 1},"incorrect contact boundary"] call _check;
+        [count _poseStarts==2 && {{count _results=={int(elapsed>=1.5)}}},"incorrect contact boundary"] call _check;
     ''')
 
 
-@pytest.mark.parametrize('phase',['entry','hold','return'])
+@pytest.mark.parametrize('phase',['entry','hold','latehold'])
 @pytest.mark.parametrize('cause',[
     '_inputActions=["MoveForward"];', '_distance=4;', '_unconscious=true;', '_alive=false;',
     '_localMedic=false;', '_clinicalEpoch=1;', '_vehicle=missionNamespace;',
@@ -109,7 +110,7 @@ def test_two_real_seconds_from_observed_hand_hold(elapsed):
 ])
 def test_cancellation_never_reports_or_retains_owned_frame(phase,cause):
     prep='' if phase=='entry' else 'call _hold;'
-    if phase=='return': prep+='CBA_missionTime=12; call _frame;'
+    if phase=='latehold': prep+='CBA_missionTime=11.49; call _frame;'
     execute(setup()+'_request call ACME_fnc_feelSkinStart;'+prep+cause+'''
         call _frame;
         [(_medic getVariable ["ACME_feelSkinAction",[]]) isEqualTo [],"cancel retained episode"] call _check;
@@ -151,11 +152,11 @@ def test_repeated_click_does_not_create_second_worker():
 
 def test_seated_check_keeps_menu_and_does_not_force_kneeling():
     execute(setup()+'''
-        _vehicle=missionNamespace; _patientVehicle=_vehicle;
+        _vehicle=missionNamespace; _patientVehicle=_vehicle; _blocked=true;
         _dialog=true; _request call ACME_fnc_feelSkinStart;
-        CBA_missionTime=11.99; call _frame;
+        CBA_missionTime=11.499; call _frame;
         [count _results==0 && {count _poseStarts==0},"seated check early/forced pose"] call _check;
-        CBA_missionTime=12; call _frame;
+        CBA_missionTime=11.5; call _frame;
         [count _results==1 && {_dialog} && {count _poseStarts==0},"seated completion missing/closed menu"] call _check;
     ''')
 
@@ -163,25 +164,25 @@ def test_seated_check_keeps_menu_and_does_not_force_kneeling():
 def test_prone_check_releases_to_supported_posture_without_return_kneel():
     execute(setup()+'''
         _prone=true; _request call ACME_fnc_feelSkinStart; call _hold;
-        CBA_missionTime=12; call _frame;
-        [count _results==1 && {count _poseStarts==1},"prone check forced kneeling return"] call _check;
+        CBA_missionTime=11.5; call _frame;
+        [count _results==1 && {count _poseStarts==2},"prone check forced additional return"] call _check;
         [count _poseStops==1 && {!((_poseStops select 0) param [3,false])},"prone hold was handed off without exit"] call _check;
     ''')
 
 
-def test_missing_entry_or_missing_return_fails_boundedly():
+def test_missing_workspace_or_hand_contact_fails_boundedly():
     execute(setup()+'''
         _request call ACME_fnc_feelSkinStart;
-        CBA_missionTime=15.1; call _frame;
-        [(_medic getVariable ["ACME_feelSkinAction",[]]) isEqualTo [],"entry timeout stuck"] call _check;
-        _request call ACME_fnc_feelSkinStart; call _hold;
-        CBA_missionTime=17.1; call _frame;
-        CBA_missionTime=21.2; call _frame;
-        [(_medic getVariable ["ACME_feelSkinAction",[]]) isEqualTo [] && {count _results==0},"missing return passed/stuck"] call _check;
+        CBA_missionTime=22.1; call _frame;
+        [(_medic getVariable ["ACME_feelSkinAction",[]]) isEqualTo [],"workspace timeout stuck"] call _check;
+        _request call ACME_fnc_feelSkinStart;
+        (_medic getVariable "ACME_treatmentPoseState") set [3,2]; call _frame;
+        CBA_missionTime=34.2; call _frame;
+        [(_medic getVariable ["ACME_feelSkinAction",[]]) isEqualTo [] && {count _results==0},"missing hand contact passed/stuck"] call _check;
     ''')
 
 
-def test_exact_class_launcher_and_ordered_hold_return_contract():
+def test_exact_class_launcher_and_workspace_to_medic3_contract():
     cfg=(ROOT/'addons/acm_extended/config.cpp').read_text()
     block=cfg.split('class ACME_FeelSkin: CheckPulse {',1)[1].split('\n    };',1)[0]
     assert 'treatmentTime = 0;' in block
@@ -189,9 +190,10 @@ def test_exact_class_launcher_and_ordered_hold_return_contract():
         src=read(name)
         assert 'closeDialog' not in src and 'progressBar' not in src
     start=read('treatmentPoseStart')
-    assert 'case "feelSkin": {"AmovPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_Putdown"};' in start
-    assert 'case "feelSkinReturn": {"AinvPknlMstpSnonWnonDnon_Putdown_AmovPknlMstpSnonWnonDnon"};' in start
-    assert '_holdAt = 0.55;' in start
+    assert 'case "feelSkin": {"AinvPknlMstpSnonWnonDr_medic3"};' in start
+    assert '_holdAt = 1.5;' in start
+    assert '"chestSealWorkspace"' in read('feelSkinStart')
+    assert 'feelSkinReturn' not in read('feelSkinTick')
     bridge=(ROOT/'addons/core/overrides/fnc_treatment.sqf').read_text()
     assert 'if (_classname == "ACME_FeelSkin") exitWith {_this call ACME_fnc_feelSkinStart;};' in bridge
     assert bridge.index('call ACME_fnc_feelSkinStop') < bridge.index('call ACM_core_fnc_treatmentNative')
@@ -204,32 +206,32 @@ def test_real_shared_pose_controller_freezes_unfreezes_and_rejects_old_packets(s
     execute(setup()+real_pose_setup()+f'_stance="{stance}";'+'''
         _prone=(_stance=="PRONE");
         [_request call ACME_fnc_feelSkinStart,"actual pose start denied"] call _check;
+        private _workspace=_medic getVariable "ACME_treatmentPoseState";
+        private _workspaceId=_workspace select 5;
+        CBA_missionTime=12; [_workspaceId] call _poseTick;
+        _animation=toLower (_workspace select 2); _nativeElapsed=0; _duration=4;
+        [_workspaceId] call _poseTick;call _frame;
         private _pose=_medic getVariable "ACME_treatmentPoseState";
+        [(_pose select 1)=="feelSkin" && {(_pose select 0)!=(_workspace select 0)},"workspace not handed off"] call _check;
         private _poseId=_pose select 5;
-        CBA_missionTime=12; [_poseId] call _poseTick;
-        _animation=toLower (_pose select 2); _nativeElapsed=0; _duration=1;
+        _animation=toLower (_pose select 2); _nativeElapsed=0;
         [_poseId] call _poseTick;
-        _nativeElapsed=0.55; [_poseId] call _poseTick; call _frame;
+        _nativeElapsed=1.5; [_poseId] call _poseTick; call _frame;
         [(_pose select 3)==3 && {_speed==0},"actual controller did not freeze contact"] call _check;
     '''+('''
         [_medic,1] call ACME_fnc_feelSkinStop;
         [count _results==0,"cancel produced result"] call _check;
     ''' if cancel else '''
-        CBA_missionTime=14; call _frame;
-        if (_stance!="PRONE") then {
-            private _returnPose=_medic getVariable "ACME_treatmentPoseState";
-            [(_returnPose select 0)==2 && {(_returnPose select 1)=="feelSkinReturn"},"return did not acquire new epoch"] call _check;
-            [_returnPose select 5] call _poseTick;
-            _animation=toLower (_returnPose select 2); [_returnPose select 5] call _poseTick; call _frame;
-            _animation="amovpknlmstpsnonwnondnon"; call _frame;
-        };
+        CBA_missionTime=13.499;call _frame;
+        [count _results==0,"actual hold finished early"] call _check;
+        CBA_missionTime=13.5; call _frame;
         [count _results==1,"actual controller did not finish tactile exam"] call _check;
     ''')+'''
         [(_medic getVariable ["ACME_feelSkinAction",[]]) isEqualTo [],"tactile worker retained"] call _check;
         [(_medic getVariable ["ACME_treatmentPoseState",[]]) isEqualTo [],"pose retained after finish"] call _check;
         {[_x] call _deliver;} forEach +_speedWaits;
         [_speed==1,"actual cleanup left provider frozen/accelerated"] call _check;
-        [_medic,1,"hold","AmovPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_Putdown",0.55,7] call ACME_fnc_treatmentPoseSync;
+        [_medic,_pose select 0,"hold","AinvPknlMstpSnonWnonDr_medic3",0.375,7] call ACME_fnc_treatmentPoseSync;
         [_speed==1,"late hold packet revived retired freeze"] call _check;
-        [_poseId in _removed,"actual shared pose worker not removed"] call _check;
+        [_poseId in _removed && {_workspaceId in _removed},"actual shared pose worker not removed"] call _check;
     ''')
