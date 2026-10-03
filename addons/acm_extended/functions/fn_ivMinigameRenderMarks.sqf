@@ -18,6 +18,7 @@ private _marks = if (isNull _patient) then { [] } else { _patient getVariable ["
 private _anchors = uiNamespace getVariable ["ACME_IV_FrameAnchors", createHashMap];
 private _fades = [];
 private _hubCtrls = [];
+private _finishCtrls = [];
 private _trackKeys = createHashMap;
 // First-seen timestamps survive repaint/rebuilds so a newly-created mark fades once instead of restarting every redraw.
 private _visualFadeStarts = uiNamespace getVariable ["ACME_IV_VisualFadeStarts", createHashMap];
@@ -163,6 +164,14 @@ if (!isNull _patient && {_bp in ["leftarm", "rightarm", "leftleg", "rightleg"]})
             // view, so indexing it by mark number gives the wrong control. the pull needs the exact sprite for the
             // hub it took hold of, which is what this pairing provides.
             _hubCtrls pushBack [_forEachIndex, _c];
+            private _uid=_x param [14,""];
+            if (_uid!="") then {
+                private _accessory=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
+                private _film=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
+                {_x ctrlShow false;_x ctrlEnable false;} forEach [_accessory,_film];
+                _ctrls append [_accessory,_film];
+                _finishCtrls pushBack [_uid,_accessory,_film];
+            };
         } else {
             // the miss-site bruise first, under the hole, gauge-correlated, scaled to fit and faded in.
             if (_mkind == "miss" && {_mgauge > 0}) then {
@@ -319,3 +328,5 @@ uiNamespace setVariable ["ACME_IV_VisualFadeStarts", _visualFadeStarts];
 uiNamespace setVariable ["ACME_IV_MarkCtrls", _ctrls];
 uiNamespace setVariable ["ACME_IV_HubCtrls", _hubCtrls];
 uiNamespace setVariable ["ACME_IV_BruiseFades", _fades];
+
+_dlg setVariable ["ACME_IV_FinishCtrls",_finishCtrls];

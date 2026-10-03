@@ -67,6 +67,8 @@ if (count _ivBase >= 4) then {
     uiNamespace setVariable ["ACME_IV_BodyRect", [_ibx + _ivdx, _iby + _ivdy, _ibw, _ibh]];
 };
 
+[] call ACME_fnc_ivFinishTick;
+
 // the darkness is drawn first, before any branch can bail out.
 // this used to be the last line of this function, below thirteen exitwith branches for the held item, dragging,
 // the mode, palpating and more. so in most states the tick returned long before it ever got here, and the screen
@@ -316,6 +318,21 @@ if (_insStage in ["advance", "thread", "retract"]) exitWith {
 
 // holding the tubing: the floating line sits on the cursor by its connector, which is the end that plugs into
 // the hub. it uses the orientation of the catheter it is going onto.
+if (_display getVariable ["ACME_IV_FinishBusy",false]) exitWith {
+    if (!isNull _heldC) then {_heldC ctrlShow false;};
+    if (!isNull _dot) then {_dot ctrlShow false;};
+};
+if (_held in ["extension","flush","dressing","line"]) exitWith {
+    private _cursor=[] call ACME_fnc_ivMinigameCursor;
+    if (count _cursor==2 && {!isNull _heldC}) then {
+        private _h=safeZoneH*0.10;private _w=_h*_af;
+        _heldC ctrlSetAngle [0,0.5,0.5,false];
+        _heldC ctrlSetText format ["\acm_extended\ui\iv\finish\icon_%1_ca.paa",_held];
+        _heldC ctrlSetPosition [(_cursor select 0)-_w/2,(_cursor select 1)-_h/2,_w,_h];
+        _heldC ctrlCommit 0;_heldC ctrlShow true;
+    };
+    if (!isNull _dot) then {_dot ctrlShow false;};
+};
 if (_held == "line") exitWith {
     if (!isNull _dot) then { _dot ctrlShow false; };
     if (isNull _heldC) exitWith {};

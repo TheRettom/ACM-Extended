@@ -1,0 +1,103 @@
+/* B232. Owner-only extension/aspiration/dressing transaction.
+   A live catheter UID, clinical epoch, provider, token and bounded deadline own
+   every job. There is no whole-array write supplied by a client. */
+params ["_patient","_medic","_phase","_uid","_action","_token","_epoch","_deadline",["_receipt",[]]];
+if (isNull _patient || {!local _patient} || {isNull _medic}) exitWith {};
+if !(_phase in ["begin","finish","cancel"] && {_action in ["extension","flush","dressing","line"]}
+    && {_uid isEqualType ""} && {_uid != ""} && {_token isEqualType ""} && {_token != ""}
+    && {count _token <= 120} && {_deadline isEqualType 0} && {finite _deadline}
+    && {_epoch isEqualType 0}) exitWith {};
+private _reply = {
+    params ["_status","_accepted",["_message",""],["_row",[]]];
+    [_medic,"ivFinishReply",[_medic,_patient,_token,_status,_accepted,_message,_row]] call ACME_fnc_ownerDispatch;
+};
+private _now=serverTime;
+private _history=+(_patient getVariable ["ACME_IV_FinishReceipts",[]]);
+_history=_history select {(_x param [5,0]) + 30 >= _now};
+private _ri=_history findIf {(_x select 0)==_token};
+private _record=if (_ri>=0) then {+(_history select _ri)} else {[]};
+private _same=count _record>=10 && {(_record select 1) isEqualTo _medic}
+    && {(_record select 2)==_uid} && {(_record select 3)==_action} && {(_record select 4)==_epoch}
+    && {(_record select 5)==_deadline || {(_record select 8)=="cancel" && {!(_record select 6)}}};
+if (_ri>=0 && {!_same}) exitWith {};
+private _marks=+(_patient getVariable ["ACME_IV_Marks",[]]);
+private _mi=_marks findIf {(_x param [4,""])=="hub" && {(_x param [14,""])==_uid}};
+private _row=if (_mi>=0) then {+(_marks select _mi)} else {[]};
+private _job=+(_row param [16,[]]);
+private _state=+(_row param [15,[false,false,false,false]]);
+private _publish = {
+    if (_mi>=0) then {
+        _marks set [_mi,_row];
+        _patient setVariable ["ACME_IV_Marks",_marks,true];
+        _patient setVariable ["ACME_IV_MarkVer",(_patient getVariable ["ACME_IV_MarkVer",0])+1,true];
+    };
+    _patient setVariable ["ACME_IV_FinishReceipts",_history,true];
+};
+private _bp=toLower (_row param [0,""]);
+if (_bp=="ej") then {_bp="head";};
+private _site=[_row param [10,""]] call ACME_fnc_ivSiteIndex;
+private _valid=_epoch==([_patient] call ACME_fnc_clinicalEpoch) && {_mi>=0}
+    && {_deadline>=_now} && {_deadline<=_now+40} && {alive _medic}
+    && {!(_medic getVariable ["ACE_isUnconscious",false])}
+    && {([_medic,_patient] call ACME_fnc_patientInteractionDistance)<=3}
+    && {(objectParent _medic) isEqualTo (objectParent _patient)}
+    && {[_patient,_bp,0,_site] call ACM_circulation_fnc_hasIV};
+// Cancellation can precede BEGIN in transit: keep a tombstone so a late BEGIN
+// cannot start a removed display's procedure. It cannot cancel a different job.
+if (_ri<0 && {count _history>=64}) exitWith {["rejected",false,"Please wait for the previous IV request."] call _reply;};
+if (_phase=="cancel") exitWith {
+    if (_same) then {_record set [8,"cancel"];_history set [_ri,_record];} else {
+        _record=[_token,_medic,_uid,_action,_epoch,_now+30,false,"","cancel",""];
+        _history pushBack _record;
+    };
+    if (count _job>0 && {(_job select 0)==_token}) then {_row set [16,[]];};
+    call _publish;
+    ["cancel",_record select 6,"",_row] call _reply;
+};
+if (_same && {(_record select 8)!="begin" || {_phase=="begin"}}) exitWith {
+    // Repeated begin or completed finish: return the receipt, never consume or credit twice.
+    [_record select 8,_record select 6,"",_row] call _reply;
+};
+if (_phase=="begin") exitWith {
+    private _reason="The IV is no longer available.";
+    private _plan=[false,_reason,"",0];
+    if (_valid) then {
+        _plan=[_state,_action,[_patient,_row] call ACME_fnc_ivFinishPatency] call ACME_fnc_ivFinishPlan;
+        if (count _job>0 && {(_job param [6,0])>=_now}) then {_plan=[false,"This IV is already being worked on.","",0];};
+        if (_action=="flush" && {count _receipt!=4 || {(_receipt param [1,""])!="ACM_SalineFlush_10"}}) then {
+            _plan=[false,"A 10 mL saline flush is required.","",0];
+        };
+        if (count _history>=64) then {_plan=[false,"Please wait for the previous IV request.","",0];};
+    };
+    _plan params ["_ok","_message","_sequence","_duration"];
+    _record=[_token,_medic,_uid,_action,_epoch,_deadline,_ok,_sequence,["rejected","begin"] select _ok,_receipt param [3,""]];
+    _history pushBack _record;
+    if (_ok) then {
+        _row set [16,[_token,_medic,_action,_now,_duration,_sequence,_deadline]];
+    };
+    call _publish;
+    [_record select 8,_ok,_message,_row] call _reply;
+};
+if (!_same || {count _job<7} || {(_job select 0)!=_token}) exitWith {["rejected",false,"The IV procedure has expired."] call _reply;};
+if (_valid && {_now<(_job select 3)+(_job select 4)}) exitWith {}; // cannot accelerate clinical completion.
+private _message="";
+if (_action in ["dressing","line"] && {!([_patient,_row] call ACME_fnc_ivFinishPatency)}) then {_valid=false;};
+if (_valid) then {
+    switch (_action) do {
+        case "extension": {_state set [0,true];};
+        case "dressing": {_state set [2,true];};
+        case "line": {_state set [3,true];};
+        case "flush": {
+            private _success=(_job select 5)=="blood_return_flush" && {[_patient,_row] call ACME_fnc_ivFinishPatency};
+            _state set [1,_success];
+            if (_success) then {
+                [_patient,"crystalloidCredit",[0.010]] call ACME_fnc_ownerDispatch;
+                _message="Blood return observed. Flushed 10 mL.";
+            } else {_message="No blood return. No fluid injected.";};
+        };
+    };
+    _row set [15,_state];
+} else {_message="The IV procedure was interrupted.";};
+_row set [16,[]];_record set [8,"done"];_history set [_ri,_record];
+call _publish;
+["done",true,_message,_row] call _reply;

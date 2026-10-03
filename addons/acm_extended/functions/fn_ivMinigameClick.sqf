@@ -11,6 +11,10 @@ if (_display isEqualType controlNull) then {_display = ctrlParent _display;};
 if !([] call ACME_fnc_ivUiValid) exitWith {false};
 if (isNull _display || {_display != (uiNamespace getVariable ["ACME_IV_DLG", displayNull])}) exitWith {false};
 
+if (_display getVariable ["ACME_IV_FinishBusy",false]) exitWith {
+    if (_button in [1,2]) then {[] call ACME_fnc_ivFinishAbort;};
+    true
+};
 if (_button in [1, 2]) exitWith {
     // Controls, their display and the CBA middle-button fallback can see the same
     // press. Consume it once so a band removal cannot also retract the needle.
@@ -81,6 +85,19 @@ if (_held == "needle" && {_lastNeedle isEqualType []} && {count _lastNeedle >= 7
 private _fx = (_ux - _bx) / _bw;
 private _fy = (_uy - _by) / _bh;
 
+private _onFinishTray=false;
+{
+    private _r=ctrlPosition (_x select 3);
+    if (_ux>=(_r select 0) && {_ux<=(_r select 0)+(_r select 2)}
+        && {_uy>=(_r select 1)} && {_uy<=(_r select 1)+(_r select 3)}) exitWith {_onFinishTray=true;};
+} forEach (_display getVariable ["ACME_IV_FinishTray",[]]);
+// Let the native button receive its click; do not also treat its coordinates as a hub.
+if (_onFinishTray) exitWith {false};
+if (_held in ["extension","flush","dressing","line"]) exitWith {
+    uiNamespace setVariable ["ACME_IV_Dragging",false];
+    [_fx,_fy] call ACME_fnc_ivFinishStart;
+    true
+};
 private _inRect = {
     params ["_px", "_py", "_r"];
     if !(_r isEqualType [] && {count _r >= 4}) exitWith { false };

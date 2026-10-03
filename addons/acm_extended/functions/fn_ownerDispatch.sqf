@@ -236,6 +236,8 @@ switch (_operation) do {
             else {_patient setVariable [_key, true, true];};
         };
     };
+    case "ivFinish": {([_patient]+_args) call ACME_fnc_ivFinishCommit;};
+    case "ivFinishReply": {_args call ACME_fnc_ivFinishReply;};
     case "ivSite": {_args call ACME_fnc_ivPlacementLocal;};
     case "preparedAttach": {_args call ACME_fnc_preparedAttachLocal;};
     case "preparedHang": {_args call ACME_fnc_preparedHangCommit;};

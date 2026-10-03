@@ -2341,6 +2341,18 @@ class CfgFunctions {
             class visualBruiseState {};
             class ivMinigameAddMark {};
             class ivMarkCommit {};
+            class ivFinishPlan {};
+            class ivFinishFrame {};
+            class ivFinishPatency {};
+            class ivFinishPose {};
+            class ivFinishCommit {};
+            class ivFinishStart {};
+            class ivFinishReply {};
+            class ivFinishAbort {};
+            class ivFinishGrab {};
+            class ivFinishTick {};
+            class ivFinishTray {};
+            class ivFinishRetry {};
             class ivMinigameClick {};
             class ivMinigameRefreshBandSlot {};
             class ivTrayHover {};

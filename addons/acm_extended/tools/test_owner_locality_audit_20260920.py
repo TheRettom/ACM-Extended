@@ -97,7 +97,12 @@ def test_iv_marks_and_compromise_are_owner_serialized():
     commit = src('functions/fn_ivMarkCommit.sqf')
     register = src('functions/fn_ivMinigameRegister.sqf')
     assert '"ivMarks"' in add and '_patient setVariable ["ACME_IV_Marks"' not in add
-    assert '"connect"' in connect and '_patient setVariable ["ACME_IV_Marks"' not in connect
+    # B232 routes the same public line action through a UID-bound finishing transaction.
+    assert 'call ACME_fnc_ivFinishStart' in connect and '_patient setVariable ["ACME_IV_Marks"' not in connect
+    start = src('functions/fn_ivFinishStart.sqf')
+    finish = src('functions/fn_ivFinishCommit.sqf')
+    assert '"ivFinish"' in start and '_patient setVariable ["ACME_IV_Marks"' not in start
+    assert '!local _patient' in finish and 'ACME_IV_MarkVer' in finish
     assert '"remove"' in pull and '_patient setVariable ["ACME_IV_Marks"' not in pull
     assert 'serverTime' in infiltrated and 'CBA_missionTime' not in infiltrated.split('ivMinigameAddMark', 1)[0].splitlines()[-1]
     assert 'private _e = serverTime - _mmiss;' in render

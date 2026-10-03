@@ -3,6 +3,7 @@
 disableSerialization;
 private _display = uiNamespace getVariable ["ACME_IV_DLG", displayNull];
 if (isNull _display) exitWith {};
+[] call ACME_fnc_ivFinishAbort;
 _display setVariable ["ACME_IV_ViewGeneration", (_display getVariable ["ACME_IV_ViewGeneration", 0]) + 1];
 private _retract = _display getVariable ["ACME_IV_RetractPFH", -1];
 if (_retract >= 0) then {[_retract] call CBA_fnc_removePerFrameHandler;};

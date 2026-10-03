@@ -113,7 +113,7 @@ private _context = [_dlg, +(uiNamespace getVariable ["ACME_IV_Session", []]),
     uiNamespace setVariable ["ACME_IV_Held", "none"];
     // refresh again, because the first refresh ran while the needle was still in hand and hid its slot button.
     [] call ACME_fnc_ivMinigameRefreshBandSlot;
-    if (!isNull _dlg) then { (_dlg displayCtrl 86503) ctrlSetText "Catheter is in. Take the line from the tray."; };
+    if (!isNull _dlg) then { (_dlg displayCtrl 86503) ctrlSetText "Catheter seated. Connect the extension, check with saline, then secure it."; };
     // the catheter is in and the insertion is over, so clear the saved half-done state for this limb.
     [] call ACME_fnc_ivMinigameSaveState;
     playSound "ACE_Sound_Click";

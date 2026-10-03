@@ -1,3 +1,4 @@
+if ((uiNamespace getVariable ["ACME_IV_DLG",displayNull]) getVariable ["ACME_IV_FinishBusy",false]) exitWith {};
 // pick up or put down a needle of the given gauge, on a single click, and click again, or click another gauge, to
 // switch. it recomputes the stick difficulty for the gauge, and grabbing plays the catheter uncap and peel sfx,
 // ACME_IVUncap.
