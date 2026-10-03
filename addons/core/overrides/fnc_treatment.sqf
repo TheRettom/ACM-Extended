@@ -546,6 +546,8 @@ if !(_classname in ["ACME_ConnectETVent", "ACME_ConnectNIVVent"]) exitWith {
             };
         };
     };
+    private _torsoDressing = [_medic, _patient, _bodyPart, _classname] call ACME_fnc_isTorsoBandage;
+    if (_torsoDressing) then {_mode = "torsoBandage"; _exactAnim = "";};
     private _ownsProviderAnim = (_mode != "") || {_exactAnim != ""};
 
     // B177 button-responsiveness invariant: provider presentation NEVER gates clinical treatment start.
@@ -646,7 +648,7 @@ if !(_classname in ["ACME_ConnectETVent", "ACME_ConnectNIVVent"]) exitWith {
         ["ace_common_setAnimSpeedCoef", [_medic, 1]] call CBA_fnc_globalEvent;
     };
 
-    if (_started && {local _medic} && {!isNull _medic} && {isNull objectParent _medic}) then {
+    if (_started && {!_torsoDressing} && {local _medic} && {!isNull _medic} && {isNull objectParent _medic}) then {
         if (_mode != "") then {
             [{
                 params ["_m", "_mode", "_window", "_patient"];

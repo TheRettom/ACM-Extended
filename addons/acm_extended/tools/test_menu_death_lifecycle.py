@@ -121,6 +121,9 @@ private _patient = profileNamespace;
 private _alive = true;
 private _patientAlive = true;
 private _unconscious = false;
+// Extracted native-animation excerpts in historical tests represent non-dressing procedures.
+// Full native treatment computes its own local predicate from the actual class/body part.
+private _torsoDressing = false;
 private _ownerNum = 7;
 private _distance = 1;
 private _dialog = false;
@@ -182,6 +185,11 @@ PREAMBLE += "\nACME_fnc_ventSyncMask={" + adapt(read('ventSyncMask')) + "};"
 
 
 PREAMBLE += "\nACME_fnc_stethoscopePressureRelease={" + adapt(read("stethoscopePressureRelease")) + "};"
+
+# B226 pure production dependencies used by full treatment/IV code in historical fixtures.
+PREAMBLE += "\nACME_fnc_isTorsoBandage={" + adapt(read("isTorsoBandage")) + "};"
+PREAMBLE += "\nACME_fnc_yBagReplaceEmpty={" + adapt(read("yBagReplaceEmpty")) + "};"
+
 
 def execute(code):
     vm = os.environ.get('SQFVM') or shutil.which('sqfvm')

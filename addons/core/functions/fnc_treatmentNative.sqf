@@ -31,6 +31,7 @@ if (uiNamespace getVariable [QACEGVAR(interact_menu,cursorMenuOpened), false]) e
 if !(_this call ACEFUNC(medical_treatment,canTreatCached)) exitWith {false};
 
 private _config = configFile >> QACEGVAR(medical_treatment,actions) >> _classname;
+private _torsoDressing = [_medic, _patient, _bodyPart, _classname] call ACME_fnc_isTorsoBandage;
 
 // Get treatment time from config, exit if treatment time is zero
 private _treatmentTime = if (isText (_config >> "treatmentTime")) then {
@@ -151,7 +152,7 @@ if (_medic isNotEqualTo player || {!_isInZeus}) then {
     // progress bar, item use, callbacks and patient state, but it must not enqueue its generic medic animation or
     // its matching end pose. That generic queue was what overwrote the authored chest/head bandage, NCD and
     // breathing-check motions a frame after ACME started them.
-    private _suppressNativeAnim = (_medic getVariable ["ACME_suppressNativeTreatmentAnim", false])
+    private _suppressNativeAnim = _torsoDressing || {(_medic getVariable ["ACME_suppressNativeTreatmentAnim", false])}
         || {(isNumber (_config >> "ACME_suppressNativeTreatmentAnim")) && {(getNumber (_config >> "ACME_suppressNativeTreatmentAnim")) > 0}};
     if (_suppressNativeAnim) then {
         _medicAnim = "";
@@ -358,11 +359,19 @@ if (toLowerANSI _classname in [
 
 ["ace_treatmentStarted", [_medic, _patient, _bodyPart, _classname, _itemUser, _usedItem, _createLitter]] call CBA_fnc_localEvent;
 
+// Start after treatmentStarted has retired the previous provider generation.
+if (_torsoDressing) then {_callbackArgs pushBack ([_medic, _patient, _bodyPart, _classname, _treatmentTime] call ACME_fnc_torsoBandageStart);};
 [
     _treatmentTime,
     _callbackArgs,
-    ACEFUNC(medical_treatment,treatmentSuccess),
-    ACEFUNC(medical_treatment,treatmentFailure),
+    (if (_torsoDressing) then {{
+        _this call ACEFUNC(medical_treatment,treatmentSuccess);
+        [_this select 0, true] call ACME_fnc_torsoBandageFinish;
+    }} else {ACEFUNC(medical_treatment,treatmentSuccess)}),
+    (if (_torsoDressing) then {{
+        _this call ACEFUNC(medical_treatment,treatmentFailure);
+        [_this select 0, false] call ACME_fnc_torsoBandageFinish;
+    }} else {ACEFUNC(medical_treatment,treatmentFailure)}),
     getText (_config >> "displayNameProgress"),
     _callbackProgress,
     ["isNotInside", "isNotSwimming", "isNotInZeus"]

@@ -55,12 +55,29 @@ _medic setVariable ["ACME_menuPoseGenericEpoch", [-1, _epoch] select _afterTreat
 
 _medic setUnitPos "MIDDLE";
 if (!_afterTreatment) exitWith {
-    // Preserve B155's original first-contact crouch and the weapon in hand.
+    // Small arms retain the original lowered-in-hand first contact. Launchers/binoculars have
+    // no equivalent safe treatment idle here; stow once, then request an unarmed crouch.
+    private _weapon = currentWeapon _medic;
+    if (_weapon != "" && {_weapon in [secondaryWeapon _medic, binocular _medic]}) exitWith {
+        private _settle = [_medic] call ACME_fnc_medicAnimationPrep;
+        [{
+            params ["_medic", "_patient", "_display", "_epoch"];
+            if (isNull _display || {isNull _medic} || {!local _medic} || {!alive _medic}
+                || {_medic getVariable ["ACE_isUnconscious", false]} || {[_medic] call ACME_fnc_animBlocked}
+                || {stance _medic == "PRONE"}
+                || {(_medic getVariable ["ACME_treatmentPoseState", []]) isNotEqualTo []}
+                || {(_medic getVariable ["ACME_nativeTreatmentRate", []]) isNotEqualTo []}
+                || {_medic getVariable ["ACME_treatmentPreflightActive", false]}
+                || {(_medic getVariable ["ACME_menuPose", []]) isNotEqualTo [_epoch, _display, _patient]}) exitWith {};
+            [_medic, "AmovPknlMstpSnonWnonDnon", 1] call ACME_fnc_doAnim;
+        }, [_medic, _patient, _display, _epoch], _settle] call CBA_fnc_waitAndExecute;
+        true
+    };
     if (_oldGeneric) then {
         _medic setAnimSpeedCoef 1;
         ["ace_common_setAnimSpeedCoef", [_medic, 1]] call CBA_fnc_globalEvent;
     };
-    if (_oldGeneric || {stance _medic != "CROUCH"}) then {
+    if (_oldGeneric || {stance _medic != "CROUCH"} || {currentWeapon _medic != "" && {!weaponLowered _medic}}) then {
         private _kneel = ["AmovPknlMstpSnonWnonDnon", "AmovPknlMstpSlowWrflDnon", "AmovPknlMstpSrasWlnrDnon",
             "AmovPknlMstpSlowWpstDnon", "AmovPknlMstpSoptWbinDnon"]
             select ((["", primaryWeapon _medic, secondaryWeapon _medic, handgunWeapon _medic, binocular _medic] find currentWeapon _medic) max 0);

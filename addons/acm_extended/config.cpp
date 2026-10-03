@@ -2740,6 +2740,13 @@ class CfgFunctions {
             class hpmkPickUp {};
             class remoteSay3D {};
             class worldSfxNearby {};
+            class yBagReplaceEmpty {};
+            class transfusionTakeSelected {};
+            class fluidLabelVolume {};
+            class manualSuctionSound {};
+            class isTorsoBandage {};
+            class torsoBandageStart {};
+            class torsoBandageFinish {};
             class remoteDeleteVehicle {};
             class forceWalkLocal {};
             class updateHpmkImage {};
@@ -6656,7 +6663,7 @@ class CfgSounds {
     // manual suction bag: one squeeze of the bulb. it is a mono ogg, as every sound in this addon is.
     class ACME_ManualSuction {
         name = "ACME_ManualSuction";
-        sound[] = {"\acm_extended\sound\manual_suction_sfx.ogg", 1.0, 1};
+        sound[] = {"\acm_extended\sound\manual_suction_sfx.ogg", 1.3, 1, 25};
         titles[] = {};
     };
     class ACME_BloodFridgeDoorOpen {

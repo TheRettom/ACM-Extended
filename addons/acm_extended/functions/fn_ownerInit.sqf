@@ -10,6 +10,7 @@ ACME_NA2_ownerInstalled = true;
     // Re-read owner state after the corresponding replicated flag/animation notification. Never queue a wanted boolean.
     [{_this call ACME_fnc_aiProtectionSync;}, [_unit]] call CBA_fnc_execNextFrame;
 }] call CBA_fnc_addEventHandler;
+["ACME_manualSuctionSound", {_this call ACME_fnc_manualSuctionSound;}] call CBA_fnc_addEventHandler;
 ["ACME_worldSfx", { if (hasInterface) then {_this call ACME_fnc_remoteSay3D;}; }] call CBA_fnc_addEventHandler;
 ["ACME_seizureGestureSync", { _this call ACME_fnc_seizureGestureSync; }] call CBA_fnc_addEventHandler;
 ["ACME_transfusionRemoveResult", {_this call ACME_fnc_transfusionRemoveBagResult;}] call CBA_fnc_addEventHandler;

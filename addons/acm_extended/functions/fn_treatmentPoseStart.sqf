@@ -45,7 +45,7 @@ private _main = switch (_mode) do {
     case "chestSeal": {"AinvPknlMstpSnonWnonDnon_medic3"};
     case "ncdSeat": {"AinvPknlMstpSnonWnonDnon_medic1"};
     case "pulse": {"ACME_StethoscopeWork"};
-    case "torsoBandage": {"AinvPknlMstpSnonWrflDnon_medic4"};
+    case "torsoBandage": {"ACME_JunctionalWork"};
     case "headBandageLeft": {"AinvPknlMstpSnonWrflDnon_medic0"};
     case "headBandageRight": {"AinvPknlMstpSnonWrflDr_medic2_old"};
     case "directPressureAction": {"AinvPknlMstpSnonWrflDnon_medic5"};
@@ -322,7 +322,7 @@ private _pfh = [{
             // The move class is looped, but some Arma animation transitions still fall out to crouch after one
             // native cycle. Reassert only if the junctional state actually exited, never on a fixed timer.
             if (_holdAt < 0) exitWith {
-                if (_mode in ["junctional", "aajt"] && {_current != toLower _main} && {_now - _stageStarted >= 0.20}) then {
+                if (_mode in ["junctional", "aajt", "torsoBandage"] && {!(_state param [16, false])} && {_current != toLower _main} && {_now - _stageStarted >= 0.20}) then {
                     [_medic, _main, 1] call ACME_fnc_doAnim;
                     _state set [4, _now];
                 };

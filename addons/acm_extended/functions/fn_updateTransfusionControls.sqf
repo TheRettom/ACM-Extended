@@ -641,29 +641,7 @@ if (!isNull _ctrlLeftList) then {
                     };
                     _ctrlLeftList lbSetColor [_r, [1, 0.85, 0.16, 1]];  // pillar amber.
                 };
-                // blood warmer. a warmed blood unit reads orange with a [warmed] tag, which wins over amber.
-                if ((_sType in ["Blood", "FreshBlood"]) && {_targetPatient getVariable ["ACME_warmedBlood", false]}) then {
-                    private _wtxt = _ctrlLeftList lbText _r;
-                    if ((_wtxt find " [Warmed]") < 0) then {
-                        _ctrlLeftList lbSetText [_r, _wtxt + " [Warmed]"];
-                    };
-                    _ctrlLeftList lbSetColor [_r, [1, 0.55, 0.13, 1]];  // warm orange.
-                };
-                // cooled blood. if the medic is carrying a blood cooler that still holds blood, the blood units read light blue
-                // with a [cooled] tag. it is a reminder that they are cold and will pull body temperature down during
-                // transfusion unless they run through the inline warmer. [warmed] takes precedence, because a unit on the
-                // warmer is no longer cold, so this only paints unwarmed blood.
-                if ((_sType in ["Blood", "FreshBlood"]) && {!(_targetPatient getVariable ["ACME_warmedBlood", false])}) then {
-                    private _coolStore = ACE_player getVariable ["ACME_coolerStore", createHashMap];
-                    private _heldClr = ((uniformItems ACE_player) + (vestItems ACE_player) + (backpackItems ACE_player)) select { (_x find "ACME_BloodCooler_") == 0 };
-                    if (((keys _coolStore) findIf {(_x in _heldClr) && {(count (_coolStore getOrDefault [_x, []])) > 0}}) >= 0) then {
-                        private _ctxt = _ctrlLeftList lbText _r;
-                        if ((_ctxt find " [Cooled]") < 0) then {
-                            _ctrlLeftList lbSetText [_r, _ctxt + " [Cooled]"];
-                        };
-                        _ctrlLeftList lbSetColor [_r, [0.45, 0.72, 1, 1]];  // light blue.
-                    };
-                };
+                // Blood temperature presentation is applied once below from patient thermal state.
                 // y line linkage. blood on a y-tubing'd line gets a [y] tag, so the unit and its paired saline read as one
                 // line.
                 if (_sType in ["Blood", "FreshBlood"]) then {
@@ -1111,27 +1089,21 @@ if (!isNull _ctrlActive) then {
                     _ctrlActive lbSetPicture [_r, "\z\ace\addons\medical_treatment\ui\salineIV_ca.paa"];
                 } else {
                     if (_bType in ["Blood", "FreshBlood"]) then {
-                        // the live remaining ml, like the saline row. it rewrites the "(<num>ml)" in ACM's label, because ACM shows the
-                        // static original volume on this list and never ticks it down.
-                        private _open = _cur find "(";
-                        private _mlAt = _cur find "ml)";
-                        if (_open >= 0 && {_mlAt > _open}) then {
-                            private _newLabel = (_cur select [0, _open + 1]) + (str (round _bVol)) + (_cur select [_mlAt]);
-                            if (_newLabel isNotEqualTo _cur) then { _ctrlActive lbSetText [_r, _newLabel]; _cur = _newLabel; };
-                        };
-                        if (_lineYd && {(_cur find "[Y]") < 0}) then {
-                            _ctrlActive lbSetText [_r, _cur + " [Y]"];
-                            _cur = _cur + " [Y]";
-                        };
-                        // warmed blood reads orange with a [warmed] tag, and normal, cold blood stays white. the row was reset to white
-                        // above, so the orange is re-asserted here every refresh. otherwise the reset strips the color the earlier
-                        // pass set and warmed units look identical to cold.
+                        // Native UpdateBagList now updates every fluid, not just blood. Repaint tags/color
+                        // from current thermal state, never the provider's unrelated cooler inventory.
+                        _cur = [_cur, " [Warmed]", ""] call CBA_fnc_replace;
+                        _cur = [_cur, " [Cooled]", ""] call CBA_fnc_replace;
+                        if (_lineYd && {(_cur find "[Y]") < 0}) then {_cur = _cur + " [Y]";};
                         if (_targetPatient getVariable ["ACME_warmedBlood", false]) then {
-                            if ((_cur find " [Warmed]") < 0) then {
-                                _ctrlActive lbSetText [_r, _cur + " [Warmed]"];
+                            _cur = _cur + " [Warmed]";
+                            _ctrlActive lbSetColor [_r, [1, 0.55, 0.13, 1]];
+                        } else {
+                            if (_targetPatient getVariable ["ACME_coldBlood", false]) then {
+                                _cur = _cur + " [Cooled]";
+                                _ctrlActive lbSetColor [_r, [0.45, 0.72, 1, 1]];
                             };
-                            _ctrlActive lbSetColor [_r, [1, 0.55, 0.13, 1]];  // warm orange.
                         };
+                        if (_cur != (_ctrlActive lbText _r)) then {_ctrlActive lbSetText [_r, _cur];};
                     };
                 };
                 };
@@ -1148,6 +1120,7 @@ if (!isNull _ctrlActive) then {
 // lbdata is ACM's own "class|fluidData" plus a trailing "|COOLER" marker. ACM's params read the first two fields
 // only, so addbag still works, and our code keys on the marker. fresh-blood units carry per-unit ids that ACM
 // lists dynamically and are not surfaced here, so those still need a manual unload.
+private _ownInventory = (missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_Inventory", 0]) == 0;
 private _coolerScanDue = diag_tickTime >= (_display getVariable ["ACME_txCoolerNextScan", 0]);
 if (!isNull _ctrlRightList
     && {_coolerScanDue}
@@ -1156,7 +1129,7 @@ if (!isNull _ctrlRightList
     // Carried/nearby cooler contents are not a frame-time signal. nearestObjects plus inventory scans were being
     // repeated by the UI refresher; cache that discovery cadence independently from button/list repaint cadence.
     _display setVariable ["ACME_txCoolerNextScan", diag_tickTime + 0.75];
-    private _store = ACE_player getVariable ["ACME_coolerStore", createHashMap];
+    private _store = if (_ownInventory) then {ACE_player getVariable ["ACME_coolerStore", createHashMap]} else {createHashMap};
     // only blood inside a cooler the medic is carrying is usable here. a cooler that has been dropped or handed off
     // keeps its blood in the store, preserved, and must not appear as spikeable until it is carried again.
     private _heldNow = ((uniformItems ACE_player) + (vestItems ACE_player) + (backpackItems ACE_player)) select { (_x find "ACME_BloodCooler_") == 0 };
@@ -1182,7 +1155,7 @@ if (!isNull _ctrlRightList
         {
             if ((_x find "ACM_BloodBag_") == 0) then { _want set [_x, (_want getOrDefault [_x, 0]) + 1]; };
         } forEach (itemCargo _bx);
-    } forEach (nearestObjects [ACE_player, ["ACME_BloodCoolerBox_CSWB1U", "ACME_BloodCoolerBox_CSWB2U", "ACME_BloodCoolerBox_CSWB4U"], 6]);
+    } forEach (if (_ownInventory) then {nearestObjects [ACE_player, ["ACME_BloodCoolerBox_CSWB1U", "ACME_BloodCoolerBox_CSWB2U", "ACME_BloodCoolerBox_CSWB4U"], 6]} else {[]});
 
     // a signature of class and count, so we rebuild on a cooler-content change. the row-count check catches an ACM
     // list rebuild that wiped our rows. fn_transfusionspikeoradd sets the sig to "__force__" after a pull to force
@@ -1223,7 +1196,7 @@ if (!isNull _ctrlRightList
 // it is signature-driven, so it rebuilds only when the used set changes, and the row-count check re-adds our
 // rows after an ACM list rebuild wipes them.
 if (!isNull _ctrlRightList) then {
-    private _usedBags = ACE_player getVariable ["ACME_usedBags", []];
+    private _usedBags = if (_ownInventory) then {ACE_player getVariable ["ACME_usedBags", []]} else {[]};
     private _usedSig = "";
     { _usedSig = _usedSig + format ["%1:%2;", (_x param [0, ""]), round (_x param [2, 0])]; } forEach _usedBags;
     private _ourUsedRows = [];
