@@ -18,6 +18,7 @@ def training_setup():
     out='''
         private _patientLocal=true;private _isPlayer=false;private _parent=objNull;private _attached=objNull;
         private _dragged=false;private _carried=false;private _clock=100;private _engineStance="STAND";
+        private _trainingAnimation="amovpercmstpsnonwnondnon";
         private _engineCalls=[];private _enabledFeatures=["MOVE","PATH","TARGET","AUTOTARGET","FSM"];
         private _engineUnitPos="AUTO";private _engineBehaviour="AWARE";private _engineCombat="YELLOW";
         ace_common_fnc_isPlayer={_isPlayer};ace_common_fnc_isBeingDragged={_dragged};ace_common_fnc_isBeingCarried={_carried};
@@ -29,6 +30,7 @@ def training_setup():
                         '_patient checkAIFeature _x':'(_x in _enabledFeatures)',
                         'unitPos _patient':'_engineUnitPos','behaviour _patient':'_engineBehaviour',
                         'unitCombatMode _patient':'_engineCombat','stance _patient':'_engineStance',
+                        'animationState _patient':'_trainingAnimation',
                         'objectParent _patient':'_parent','attachedTo _patient':'_attached',
                         'serverTime':'_clock','doStop _patient;':'_engineCalls pushBack ["doStop",true];'}.items():s=s.replace(old,new)
         s=commands(s,['disableAI','enableAI','setUnitPos','setBehaviourStrong','setUnitCombatMode','allowFleeing','forceSpeed','playMoveNow'])

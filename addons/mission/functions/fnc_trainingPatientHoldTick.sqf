@@ -19,6 +19,10 @@ if (!(_patient getVariable ["ACME_trainingCrouchOnly",false]) || {[_patient] cal
 _patient forceSpeed 0;
 if (_patient getVariable ["ACE_isUnconscious",false]
     || {_patient getVariable ["ace_medical_unconscious",false]}
+    // B225: the wake token owns only the clip, NOT the complete awake/down episode.
+    // Natural clip completion must never authorize this keeper to crouch the casualty.
+    || {_patient getVariable ["ACM_core_Lying_State",false]}
+    || {(toLowerANSI animationState _patient) == "acm_lyingstate"}
     || {!isNull objectParent _patient}
     || {!isNull attachedTo _patient}
     || {_patient call ace_common_fnc_isBeingDragged}

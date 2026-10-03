@@ -110,6 +110,7 @@ def wake_setup():
         private _duration=4;private _epoch=1;private _fallback=[];
         ACE_player=_patient;
         ACME_fnc_clinicalEpoch={_epoch};ACME_fnc_nativeAnimationTime={_duration};
+        ACM_core_fnc_setLyingState={params ["_p","_v"];_p setVariable ["ACM_core_Lying_State",_v];};
         _patient setVariable ["ACM_core_Lying_State",true];
         private _frame={private _r=_patient getVariable ["ACME_wakeVisual",[]];if (_r isEqualTo []) exitWith {};
             private _id=_r select 7;[[_patient,_r select 0],_id] call ACME_fnc_wakeAnimationTick;};
@@ -164,7 +165,7 @@ def test_old_wake_callback_cannot_cancel_or_change_new_episode():
 
 
 @pytest.mark.parametrize('block',['_duration=0;','_duration=50;','_vehicle=missionNamespace;',
-    '_patient setVariable ["ACME_roc_paralyzed",true];','_patient setVariable ["ACM_core_Lying_State",false];_stance="CROUCH";'])
+    '_patient setVariable ["ACME_roc_paralyzed",true];','_patient setVariable ["ACE_isUnconscious",true];'])
 def test_ineligible_wake_leaves_native_awake_path_alone(block):
     execute(wake_setup()+block+'''call _wake;[count _moves==0 && {count _handlers==0},"invalid clip seized patient"] call _check;''')
 
@@ -190,12 +191,13 @@ def test_entry_fallback_runs_once_and_only_from_unchanged_rest():
     ''')
 
 
-def test_nonlying_wake_keeps_native_prone_rest_and_clips_never_repeat():
+def test_nonlying_wake_keeps_medical_lying_rest_and_clips_never_repeat():
     execute(wake_setup()+'''
         _patient setVariable ["ACM_core_Lying_State",false];call _wake;call _observe;
         private _r=_patient getVariable "ACME_wakeVisual";
-        [(_r select 1) find "_Prone" > 0,"prone return graph missing"] call _check;
-        _animation="amovppnemstpsnonwnondnon";call _frame;
+        [(_r select 1) find "_Prone" < 0,"ordinary prone graph selected"] call _check;
+        [(_r select 2)=="ACM_LyingState","medical rest lost"] call _check;
+        _animation="acm_lyingstate";call _frame;
         [count _moves==1,"natural graph return replayed animation"] call _check;
     ''')
 
@@ -224,7 +226,7 @@ def test_native_hooks_include_early_get_up_and_no_speed_or_input_freeze():
             assert 'looped = 0;' in block and 'minPlayTime = 0;' in block
     getup=(ROOT/'addons/core/functions/fnc_getUp.sqf').read_text()
     assert getup.index('call ACME_fnc_wakeAnimationStop') < getup.index('setVariable ["ACM_core_Lying_State", false')
-    assert 'if (_wakeExit) then {\n    _patient playMoveNow _roll;' in getup
+    assert '_patient switchMove [_roll,0,0.25,false];' in getup
     assert 'call ACME_fnc_wakeAnimationEvent' in (ROOT/'addons/core/functions/fnc_onUnconscious.sqf').read_text()
     assert 'ACME_wakeVisualToken' in (ROOT/'addons/mission/functions/fnc_trainingPatientHoldTick.sqf').read_text()
     for n in ['wakeAnimationEvent','wakeAnimationTick','wakeAnimationStop']:

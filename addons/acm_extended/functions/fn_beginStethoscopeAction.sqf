@@ -15,6 +15,7 @@ if (isNull _medic || {isNull _patient} || {!local _medic} || {!alive _medic}
 // global Active flag, so an interrupted scope could survive long enough to see a later maneuver set Active=true and
 // then close/cancel that newer maneuver. Each scope now owns one immutable generation.
 private _epoch = (missionNamespace getVariable ["ACM_core_ContinuousAction_Epoch", 0]) + 1;
+private _providerTreatmentEpoch = _medic getVariable ["ACME_providerTreatmentEpoch", 0];
 [_medic, [["epoch", _epoch]], false] call ACM_core_fnc_setContinuousActionState;
 
 // Match the core continuous-action ownership contract. Provider reconciliation treats an active controller
@@ -48,7 +49,7 @@ private _dialogKeyEH = -1;
 private _keyID = -1;
 private _worker = {
     params ["_args", "_idPFH"];
-    _args params ["_medic", "_patient", "_bodyPart", "_extraArgs", "_notInVehicle", "_poseEpoch", "_perFrame", "_onCancel", "_dialogID", "_dialogKeyEH", "_scopeDisplay", "_keyID", "_isDialog", "_epoch", "_startupComplete"];
+    _args params ["_medic", "_patient", "_bodyPart", "_extraArgs", "_notInVehicle", "_poseEpoch", "_perFrame", "_onCancel", "_dialogID", "_dialogKeyEH", "_scopeDisplay", "_keyID", "_isDialog", "_epoch", "_startupComplete", ["_providerTreatmentEpoch", -1]];
 
     // A newer continuous action owns the globals now. Remove only this scope's PFH/input hook and its token-safe pose;
     // never execute the old cancellation/reopen path against the new owner.
@@ -108,6 +109,9 @@ private _worker = {
         if (_poseEpoch >= 0 && {isNull _scopeDisplay}) then {[_medic, "stethoscope", _poseEpoch, false] call ACME_fnc_treatmentPoseStop;};
         [_medic, _patient, _bodyPart, _extraArgs, _notInVehicle] call _onCancel;
 
+        // A carrier preflight paused DP under UseStethoscope, not the generic
+        // ACM_ContinuousAction name. Retire that pause even if no display survived.
+        [_medic, _patient, _epoch, _providerTreatmentEpoch] call ACME_fnc_stethoscopePressureRelease;
         ["ace_treatmentFailed", [_medic, _patient, _bodyPart, "ACM_ContinuousAction", "", "", false]] call CBA_fnc_localEvent;
 
         if (_returnToMenu && {(missionNamespace getVariable ["ACM_core_ContinuousAction_Epoch", -1]) == _epoch}
@@ -126,7 +130,7 @@ private _worker = {
     };
 
 };
-private _workerArgs = [_medic, _patient, _bodyPart, _extraArgs, _notInVehicle, _poseEpoch, _perFrame, _onCancel, _dialogID, _dialogKeyEH, _scopeDisplay, _keyID, _isDialog, _epoch, false];
+private _workerArgs = [_medic, _patient, _bodyPart, _extraArgs, _notInVehicle, _poseEpoch, _perFrame, _onCancel, _dialogID, _dialogKeyEH, _scopeDisplay, _keyID, _isDialog, _epoch, false, _providerTreatmentEpoch];
 private _pfh = [_worker, 0, _workerArgs] call CBA_fnc_addPerFrameHandler;
 [_medic, [["pfh", _pfh], ["controller", [_medic, _patient, _epoch, _worker, _workerArgs, _pfh]]], false] call ACM_core_fnc_setContinuousActionState;
 
@@ -154,6 +158,7 @@ if (_isDialog) then {
         _scopeDisplay setVariable ["ACME_continuousEpoch", _epoch];
         _scopeDisplay setVariable ["ACME_stethMedic", _medic];
         _scopeDisplay setVariable ["ACME_stethPoseEpoch", _poseEpoch];
+        _scopeDisplay setVariable ["ACME_stethProviderTreatmentEpoch", _providerTreatmentEpoch];
 
         _dialogKeyEH = _scopeDisplay displayAddEventHandler ["KeyDown", {
             params ["_display", "_key"];

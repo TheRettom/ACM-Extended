@@ -1,5 +1,5 @@
 /* Called on the patient owner after the actual ACE unconsciousness edge. This is visual only.
- * Duplicate wake notifications cannot replay a clip; clinical wake is never deferred for theatre. */
+ * Duplicate wake notifications cannot replay a clip; clinical wake is never deferred for presentation. */
 params [["_patient",objNull,[objNull]], ["_unconscious",true,[false]]];
 if (isNull _patient || {!local _patient}) exitWith {false};
 private _fractures = _patient getVariable ["ace_medical_fractures",[0,0,0,0,0,0]];
@@ -29,13 +29,13 @@ _patient setVariable ["ACME_wakeVisualArmed",false,true];
 if (!alive _patient || {_patient getVariable ["ACE_isUnconscious",false]}
     || {!isNull objectParent _patient} || {!isNull attachedTo _patient}
     || {_patient getVariable ["ACME_roc_paralyzed",false]}) exitWith {false};
-private _lying = _patient getVariable ["ACM_core_Lying_State",false];
-if (!_lying && {stance _patient != "PRONE"}) exitWith {false};
+// B225: actual waking (including spontaneous/Zeus wake) always keeps the medical
+// lying contract. This is not Get Up, even when a native wake path cleared its flag.
+[_patient, true, true] call ACM_core_fnc_setLyingState;
 private _serial = (_patient getVariable ["ACME_wakeVisualSerial",0]) + 1;
 _patient setVariable ["ACME_wakeVisualSerial",_serial,true];
 private _move = [_tbi,_arms,_torso] call ACME_fnc_wakeAnimationChoice;
 private _rest = "ACM_LyingState";
-if (!_lying) then {_move = _move + "_Prone"; _rest = "AmovPpneMstpSnonWnonDnon";};
 private _duration = [_move] call ACME_fnc_nativeAnimationTime;
 // Missing/disabled native animation is not a reason to immobilize a medically awake patient.
 if (_duration <= 0 || {_duration > 30}) exitWith {false};

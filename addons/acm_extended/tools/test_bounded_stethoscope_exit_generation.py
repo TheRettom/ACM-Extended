@@ -28,6 +28,7 @@ def setup():
         private _providerCancels = []; private _patientCancels = [];
         CBA_fnc_removePerFrameHandler = {_removed pushBack (_this select 0);};
         ACME_fnc_treatmentPoseStop = {_stops pushBack _this;};
+        ACME_fnc_stethoscopePressureRelease = {};
         ACME_fnc_headElevMedicSeq = {_lower pushBack _this;};
         ACME_fnc_chestAccessVestRestore = {_restore pushBack _this;};
         ACME_fnc_chestAccessVestEvent = {_vestEvents pushBack _this;};

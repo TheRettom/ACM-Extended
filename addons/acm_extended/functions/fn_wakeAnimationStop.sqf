@@ -15,11 +15,11 @@ if (_exit && {alive _patient} && {!(_patient getVariable ["ACE_isUnconscious",fa
     && {isNull objectParent _patient} && {isNull attachedTo _patient}
     && {(_record select 6) == ([_patient] call ACME_fnc_clinicalEpoch)}
     && {((_patient getVariable ["ACME_patientAnimLock",[]]) param [4,-1]) <= serverTime}
+    && {_patient getVariable ["ACM_core_Lying_State",false]}
     && {(toLowerANSI animationState _patient) == toLowerANSI (_record select 1)}) then {
-    private _rest = _record select 2;
-    if (_rest == "ACM_LyingState" && {!(_patient getVariable ["ACM_core_Lying_State",false])}) then {
-        _rest = "AmovPpneMstpSnonWnonDnon";
-    };
-    _patient playMoveNow _rest;
+    // Completion/input cancels only the one-shot, never the Get Up requirement.
+    // When that requirement was explicitly released, the Get Up transaction owns
+    // the exit; do not inject an ordinary-prone pose behind its back.
+    _patient playMoveNow "ACM_LyingState";
 };
 true

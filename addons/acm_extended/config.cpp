@@ -107,136 +107,148 @@ class CfgMovesMaleSdr: CfgMovesBasic {
             };
         };
 
-        // B224: one-shot wake RTMs. Native speed inherited; dedicated graphs cannot re-enter unconsciousness on completion.
+        // B225: one-shot wake RTMs inherit native speed, but have only a medical lying completion.
+        // No ordinary-prone/Get Up graph edge: autonomous AI must not select a locomotion exit.
+        // Real re-unconsciousness is still handled by the engine/native unconscious controller.
         class UnconsciousReviveDefault_A;
         class ACME_WakeDefaultA: UnconsciousReviveDefault_A {
             looped = 0;
             minPlayTime = 0;
             terminal = 0;
-            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
-            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            // Script-only entry: reverse links here would modify shared native graphs.
+            // The owner uses one partial-blend switchMove, never a locomotion path.
+            connectAs = "";
+            connectFrom[] = {};
+            interpolateFrom[] = {};
+            interpolateWith[] = {};
             connectTo[] = {"ACM_LyingState",0.2};
-            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
-        };
-        class ACME_WakeDefaultA_Prone: ACME_WakeDefaultA {
-            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2};
         };
         class UnconsciousReviveDefault_B;
         class ACME_WakeDefaultB: UnconsciousReviveDefault_B {
             looped = 0;
             minPlayTime = 0;
             terminal = 0;
-            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
-            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            // Script-only entry: reverse links here would modify shared native graphs.
+            // The owner uses one partial-blend switchMove, never a locomotion path.
+            connectAs = "";
+            connectFrom[] = {};
+            interpolateFrom[] = {};
+            interpolateWith[] = {};
             connectTo[] = {"ACM_LyingState",0.2};
-            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
-        };
-        class ACME_WakeDefaultB_Prone: ACME_WakeDefaultB {
-            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2};
         };
         class UnconsciousReviveBody_A;
         class ACME_WakeBodyA: UnconsciousReviveBody_A {
             looped = 0;
             minPlayTime = 0;
             terminal = 0;
-            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
-            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            // Script-only entry: reverse links here would modify shared native graphs.
+            // The owner uses one partial-blend switchMove, never a locomotion path.
+            connectAs = "";
+            connectFrom[] = {};
+            interpolateFrom[] = {};
+            interpolateWith[] = {};
             connectTo[] = {"ACM_LyingState",0.2};
-            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
-        };
-        class ACME_WakeBodyA_Prone: ACME_WakeBodyA {
-            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2};
         };
         class UnconsciousReviveBody_B;
         class ACME_WakeBodyB: UnconsciousReviveBody_B {
             looped = 0;
             minPlayTime = 0;
             terminal = 0;
-            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
-            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            // Script-only entry: reverse links here would modify shared native graphs.
+            // The owner uses one partial-blend switchMove, never a locomotion path.
+            connectAs = "";
+            connectFrom[] = {};
+            interpolateFrom[] = {};
+            interpolateWith[] = {};
             connectTo[] = {"ACM_LyingState",0.2};
-            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
-        };
-        class ACME_WakeBodyB_Prone: ACME_WakeBodyB {
-            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2};
         };
         class UnconsciousReviveArms_A;
         class ACME_WakeArmsA: UnconsciousReviveArms_A {
             looped = 0;
             minPlayTime = 0;
             terminal = 0;
-            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
-            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            // Script-only entry: reverse links here would modify shared native graphs.
+            // The owner uses one partial-blend switchMove, never a locomotion path.
+            connectAs = "";
+            connectFrom[] = {};
+            interpolateFrom[] = {};
+            interpolateWith[] = {};
             connectTo[] = {"ACM_LyingState",0.2};
-            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
-        };
-        class ACME_WakeArmsA_Prone: ACME_WakeArmsA {
-            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2};
         };
         class UnconsciousReviveArms_B;
         class ACME_WakeArmsB: UnconsciousReviveArms_B {
             looped = 0;
             minPlayTime = 0;
             terminal = 0;
-            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
-            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            // Script-only entry: reverse links here would modify shared native graphs.
+            // The owner uses one partial-blend switchMove, never a locomotion path.
+            connectAs = "";
+            connectFrom[] = {};
+            interpolateFrom[] = {};
+            interpolateWith[] = {};
             connectTo[] = {"ACM_LyingState",0.2};
-            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
-        };
-        class ACME_WakeArmsB_Prone: ACME_WakeArmsB {
-            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2};
         };
         class UnconsciousReviveArms_C;
         class ACME_WakeArmsC: UnconsciousReviveArms_C {
             looped = 0;
             minPlayTime = 0;
             terminal = 0;
-            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
-            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            // Script-only entry: reverse links here would modify shared native graphs.
+            // The owner uses one partial-blend switchMove, never a locomotion path.
+            connectAs = "";
+            connectFrom[] = {};
+            interpolateFrom[] = {};
+            interpolateWith[] = {};
             connectTo[] = {"ACM_LyingState",0.2};
-            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
-        };
-        class ACME_WakeArmsC_Prone: ACME_WakeArmsC {
-            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2};
         };
         class UnconsciousReviveHead_A;
         class ACME_WakeHeadA: UnconsciousReviveHead_A {
             looped = 0;
             minPlayTime = 0;
             terminal = 0;
-            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
-            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            // Script-only entry: reverse links here would modify shared native graphs.
+            // The owner uses one partial-blend switchMove, never a locomotion path.
+            connectAs = "";
+            connectFrom[] = {};
+            interpolateFrom[] = {};
+            interpolateWith[] = {};
             connectTo[] = {"ACM_LyingState",0.2};
-            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
-        };
-        class ACME_WakeHeadA_Prone: ACME_WakeHeadA {
-            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2};
         };
         class UnconsciousReviveHead_B;
         class ACME_WakeHeadB: UnconsciousReviveHead_B {
             looped = 0;
             minPlayTime = 0;
             terminal = 0;
-            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
-            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            // Script-only entry: reverse links here would modify shared native graphs.
+            // The owner uses one partial-blend switchMove, never a locomotion path.
+            connectAs = "";
+            connectFrom[] = {};
+            interpolateFrom[] = {};
+            interpolateWith[] = {};
             connectTo[] = {"ACM_LyingState",0.2};
-            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
-        };
-        class ACME_WakeHeadB_Prone: ACME_WakeHeadB {
-            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2};
         };
         class UnconsciousReviveHead_C;
         class ACME_WakeHeadC: UnconsciousReviveHead_C {
             looped = 0;
             minPlayTime = 0;
             terminal = 0;
-            connectFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
-            interpolateFrom[] = {"ACM_LyingState",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.2};
+            // Script-only entry: reverse links here would modify shared native graphs.
+            // The owner uses one partial-blend switchMove, never a locomotion path.
+            connectAs = "";
+            connectFrom[] = {};
+            interpolateFrom[] = {};
+            interpolateWith[] = {};
             connectTo[] = {"ACM_LyingState",0.2};
-            interpolateTo[] = {"ACM_LyingState",0.2,"UnconsciousOutProne",0.2,"AmovPpneMstpSnonWnonDnon",0.2,"Unconscious",0.02};
-        };
-        class ACME_WakeHeadC_Prone: ACME_WakeHeadC {
-            connectTo[] = {"AmovPpneMstpSnonWnonDnon",0.2};
+            interpolateTo[] = {"ACM_LyingState",0.2};
         };
 
         // Semi-Fowler states.
@@ -2873,6 +2885,7 @@ class CfgFunctions {
             class stethoscopeBreathGain {};
             class stethoscopeWeights {};
             class stethoscopeClose {};
+            class stethoscopePressureRelease {};
             class rollProviderCancel {};
             class patientRollCancel {};
             class ivLineCreate {};

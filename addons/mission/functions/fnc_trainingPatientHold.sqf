@@ -1,6 +1,6 @@
 #include "..\script_component.hpp"
 /* Only marked spawner patients. Behaviour is suppressed; ANIM and simulation remain available to medical care.
-   One local active list follows locality and resumes crouching only after awakening/transport/treatment. */
+   One local active list follows locality and resumes crouching only after explicit medical lying release/transport/treatment. */
 params ["_patient"];
 if (isNull _patient || {!local _patient} || {!alive _patient}
     || {!(_patient getVariable ["ACME_trainingCrouchOnly",false])}) exitWith {false};

@@ -138,14 +138,22 @@ if (_obtunded) then {
 // IMPORTANT: priority 2 is required here. ACM_LyingState has ConnectTo[] = {} and InterpolateTo[] = {}, so
 // priority-1 playMoveNow can never leave it. ACE priority 2 tries playMoveNow and then switchMove only if necessary.
 if (_wakeExit) then {
-    _patient playMoveNow _roll;
+    // Only an accepted Get Up may exit the wake graph toward locomotion. A partial
+    // blend preserves the early-interrupt transition without exposing an automatic
+    // prone/get-up edge to AI during ordinary clip completion.
+    _patient switchMove [_roll,0,0.25,false];
 } else {[_patient, _roll, 2] call ACME_fnc_doAnim;};
 
 // First repair backstop: if a different unconscious/dead-state controller won the same frame, clear the engine lock
 // and re-run the exact stock ACM release. This is intentionally short so the action never appears to vanish silently.
 [{
     params ["_p", "_roll"];
-    if (isNull _p || {!alive _p} || {!local _p} || {_p getVariable ["ACE_isUnconscious", false]}) exitWith {};
+    if (isNull _p || {!alive _p} || {!local _p} || {_p getVariable ["ACE_isUnconscious", false]}
+        || {_p getVariable ["ACM_core_Lying_State", false]}
+        || {!isNull objectParent _p} || {!isNull attachedTo _p}
+        || {((_p getVariable ["ACME_patientAnimLock",[]]) param [4,-1]) > serverTime}
+        || {_p getVariable ["ACME_headElevated",false]}
+        || {_p getVariable ["ACM_airway_RecoveryPosition_State",false]}) exitWith {};
     private _state = toLower animationState _p;
     private _stuck = _state in ["acm_lyingstate", "unconscious", "deadstate"]
         || {(_state find "ace_medical_engine_uncon_anim") >= 0};
@@ -160,7 +168,12 @@ if (_wakeExit) then {
 // locked and can move/get up normally even if the authored roll itself was rejected by a third-party animation mod.
 [{
     params ["_p"];
-    if (isNull _p || {!alive _p} || {!local _p} || {_p getVariable ["ACE_isUnconscious", false]}) exitWith {};
+    if (isNull _p || {!alive _p} || {!local _p} || {_p getVariable ["ACE_isUnconscious", false]}
+        || {_p getVariable ["ACM_core_Lying_State", false]}
+        || {!isNull objectParent _p} || {!isNull attachedTo _p}
+        || {((_p getVariable ["ACME_patientAnimLock",[]]) param [4,-1]) > serverTime}
+        || {_p getVariable ["ACME_headElevated",false]}
+        || {_p getVariable ["ACM_airway_RecoveryPosition_State",false]}) exitWith {};
     private _state = toLower animationState _p;
     private _stuck = _state in ["acm_lyingstate", "unconscious", "deadstate"]
         || {(_state find "ace_medical_engine_uncon_anim") >= 0} || {(_state find "acme_wake") == 0};

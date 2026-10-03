@@ -181,6 +181,8 @@ PREAMBLE += "\nACME_fnc_ventMaskSelected={" + adapt(read('ventMaskSelected')) + 
 PREAMBLE += "\nACME_fnc_ventSyncMask={" + adapt(read('ventSyncMask')) + "};"
 
 
+PREAMBLE += "\nACME_fnc_stethoscopePressureRelease={" + adapt(read("stethoscopePressureRelease")) + "};"
+
 def execute(code):
     vm = os.environ.get('SQFVM') or shutil.which('sqfvm')
     if not vm:

@@ -96,6 +96,11 @@ if (_continuousEpoch >= 0
     };
 };
 
+// B225: the modal lifetime, not the tiny launcher timer, releases its DP pause.
+// The same idempotent gate is used by the controller's missing-display fallback.
+[_medic, _patient, _continuousEpoch,
+    _display getVariable ["ACME_stethProviderTreatmentEpoch", -1]] call ACME_fnc_stethoscopePressureRelease;
+
 // Only a temporarily removed carrier warrants the reaching-out replacement theatre.
 // Bare chests and manually parked carriers use the normal scoped treatment exit.
 if (!isNull _medic && {_poseEpoch >= 0}
