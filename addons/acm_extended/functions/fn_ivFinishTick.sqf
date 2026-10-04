@@ -22,7 +22,19 @@ private _p=if (isNull _medic) then {[]} else {_medic getVariable ["ACME_IV_Finis
 if (count _active>=3 && {count _p>=9}) then {
     private _row=_active select 0;private _uid=_row param [14,""];
     private _i=_marks findIf {(_x param [14,""])==_uid && {(_x param [4,""])=="hub"}};
-    if (_i<0 || {!((_p select 7) call ACME_fnc_ivMinigameViewValid)}
+    // The accepted owner ACK can precede replication of its mark/job. Do not
+    // cancel the new insertion against an older empty snapshot. Once observed,
+    // loss/replacement of that job is authoritative; the request deadline still
+    // bounds a job which never becomes visible to this client.
+    private _fieldJobLost=false;
+    if ((_d getVariable ["ACME_IV_FieldInserting",false]) && {_i>=0} && {!(_active select 2)}) then {
+        private _token=((_marks select _i) param [16,[]]) param [0,""];
+        if (_token==(_p select 1)) then {
+            _d setVariable ["ACME_IV_FieldJobSeen",true];
+        } else {_fieldJobLost=_d getVariable ["ACME_IV_FieldJobSeen",false];};
+    };
+    if (_i<0 || {serverTime>(_p select 5)} || {_fieldJobLost}
+        || {!((_p select 7) call ACME_fnc_ivMinigameViewValid)}
         || {([_medic,_patient] call ACME_fnc_patientInteractionDistance)>3}
         || {!alive _medic} || {_medic getVariable ["ACE_isUnconscious",false]}
         || {(objectParent _medic) isNotEqualTo (objectParent _patient)}
@@ -30,14 +42,14 @@ if (count _active>=3 && {count _p>=9}) then {
         [] call ACME_fnc_ivFinishAbort;_active=[];
     } else {
         private _job=_row param [16,[]];
-        if (count _job>=7 && {!(_active select 2)} && {diag_tickTime-(_active select 1)>=(_job select 4)}) then {
+        if (count _job>=7 && {!((_job select 2) in ["field14","field16"])} && {!(_active select 2)} && {diag_tickTime-(_active select 1)>=(_job select 4)}) then {
             _active set [2,true];_d setVariable ["ACME_IV_FinishActive",_active];
             [_patient,"ivFinish",[_medic,"finish",_p select 2,_p select 3,_p select 1,_p select 4,_p select 5]] call ACME_fnc_ownerDispatch;
         };
     };
 };
 {
-    _x params ["_uid","_accessory","_dressing"];
+    _x params ["_uid","_accessory","_dressing",["_lock",controlNull],["_secondary",controlNull]];
     private _i=_marks findIf {(_x param [14,""])==_uid && {(_x param [4,""])=="hub"}};
     if (_i>=0) then {
         private _row=_marks select _i;
@@ -46,6 +58,10 @@ if (count _active>=3 && {count _p>=9}) then {
             _row=_active select 0;_job=_row param [16,[]];_elapsed=diag_tickTime-(_active select 1);
         };
         private _state=_row param [15,[false,false,false,false]];
+        if ((_state param [4,false]) || {(_job param [2,""])=="lock"}) then {
+            [_row,_job,_elapsed,[_accessory,_dressing,_lock,_secondary]] call ACME_fnc_ivFieldRender;
+        } else {
+        {_x ctrlShow false;} forEach [_lock,_secondary];
         private _tex=if (_state select 3) then {"\acm_extended\ui\iv\finish\line_ca.paa"} else {
             if (_state select 0) then {"\acm_extended\ui\iv\finish\extension_ca.paa"} else {""}
         };
@@ -65,5 +81,6 @@ if (count _active>=3 && {count _p>=9}) then {
                 _ctrl ctrlShow (_texture!="");
             };
         } forEach [[_accessory,_tex],[_dressing,_film]];
-    } else {_accessory ctrlShow false;_dressing ctrlShow false;};
+        };
+    } else {{_x ctrlShow false;} forEach [_accessory,_dressing,_lock,_secondary];};
 } forEach (_d getVariable ["ACME_IV_FinishCtrls",[]]);

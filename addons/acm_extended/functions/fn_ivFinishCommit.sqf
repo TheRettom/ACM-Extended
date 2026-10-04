@@ -3,7 +3,7 @@
    every job. There is no whole-array write supplied by a client. */
 params ["_patient","_medic","_phase","_uid","_action","_token","_epoch","_deadline",["_receipt",[]]];
 if (isNull _patient || {!local _patient} || {isNull _medic}) exitWith {};
-if !(_phase in ["begin","finish","cancel"] && {_action in ["extension","flush","dressing","line","removeExtension","removeDressing","removeLine"]}
+if !(_phase in ["begin","finish","cancel","advance","thread","retract"] && {_action in ["extension","flush","dressing","line","lock","field14","field16","removeLock","removeSecondary","removeExtension","removeDressing","removeLine"]}
     && {_uid isEqualType ""} && {_uid != ""} && {_token isEqualType ""} && {_token != ""}
     && {count _token <= 120} && {_deadline isEqualType 0} && {finite _deadline}
     && {_epoch isEqualType 0}) exitWith {};
@@ -11,6 +11,7 @@ private _reply = {
     params ["_status","_accepted",["_message",""],["_row",[]]];
     [_medic,"ivFinishReply",[_medic,_patient,_token,_status,_accepted,_message,_row]] call ACME_fnc_ownerDispatch;
 };
+private _field=_action in ["field14","field16"];
 private _now=serverTime;
 private _history=+(_patient getVariable ["ACME_IV_FinishReceipts",[]]);
 _history=_history select {(_x param [5,0]) + 30 >= _now};
@@ -37,7 +38,7 @@ private _bp=toLower (_row param [0,""]);
 if (_bp=="ej") then {_bp="head";};
 private _site=[_row param [10,""]] call ACME_fnc_ivSiteIndex;
 private _valid=_epoch==([_patient] call ACME_fnc_clinicalEpoch) && {_mi>=0}
-    && {_deadline>=_now} && {_deadline<=_now+40} && {alive _medic}
+    && {_deadline>=_now} && {_deadline<=_now+(if (_field) then {100} else {40})} && {alive _medic}
     && {!(_medic getVariable ["ACE_isUnconscious",false])}
     && {([_medic,_patient] call ACME_fnc_patientInteractionDistance)<=3}
     && {(objectParent _medic) isEqualTo (objectParent _patient)}
@@ -62,10 +63,17 @@ if (_phase=="begin") exitWith {
     private _reason="The IV is no longer available.";
     private _plan=[false,_reason,"",0];
     if (_valid) then {
-        _plan=[_state,_action,[_patient,_row] call ACME_fnc_ivFinishPatency] call ACME_fnc_ivFinishPlan;
+        _plan=[_state,_action,[_patient,_row] call ACME_fnc_ivFinishPatency,_row param [7,0]] call ACME_fnc_ivFinishPlan;
         if (count _job>0 && {(_job param [6,0])>=_now}) then {_plan=[false,"This IV is already being worked on.","",0];};
         if (_action=="flush" && {count _receipt!=4 || {(_receipt param [1,""])!="ACM_SalineFlush_10"}}) then {
             _plan=[false,"A 10 mL saline flush is required.","",0];
+        };
+        if (_field) then {
+            private _item=if (_action=="field14") then {"ACM_IV_14g"} else {"ACM_IV_16g"};
+            if (count _receipt!=4 || {(_receipt param [1,""])!=_item} || {(_receipt param [3,""])==""}
+                || {(_history findIf {(_x param [9,""])==(_receipt param [3,""]) && {_x param [6,false]}})>=0}) then {
+                _plan=[false,"The selected catheter is not available.","",0];
+            };
         };
         if (count _history>=64) then {_plan=[false,"Please wait for the previous IV request.","",0];};
     };
@@ -79,17 +87,37 @@ if (_phase=="begin") exitWith {
     [_record select 8,_ok,_message,_row] call _reply;
 };
 if (!_same || {count _job<7} || {(_job select 0)!=_token}) exitWith {["rejected",false,"The IV procedure has expired."] call _reply;};
+// B234 manual stages must arrive in order. These messages never mutate venous state.
+if (_phase in ["advance","thread","retract"]) exitWith {
+    if (_field && {_valid}) then {
+        private _old=_job param [7,1];
+        private _want=switch (_phase) do {case "advance":{6};case "thread":{11};default{13};};
+        private _required=switch (_phase) do {case "advance":{1};case "thread":{6};default{11};};
+        if (_old==_required && {_now>=(_job select 3)+0.1}) then {
+            _job set [7,_want];_row set [16,_job];call _publish;
+        };
+    };
+};
+if (_field && {_valid} && {(_job param [7,1])!=13}) exitWith {};
 if (_valid && {_now<(_job select 3)+(_job select 4)}) exitWith {}; // cannot accelerate clinical completion.
 private _message="";
 if (_action in ["dressing","line"] && {!([_patient,_row] call ACME_fnc_ivFinishPatency)}) then {_valid=false;};
 if (_valid) then {
     switch (_action) do {
-        case "removeExtension": {_state=[false,false,false,false];[_patient,_bp,_site] call ACME_fnc_ivAccessoryUnplug;};
-        case "removeDressing": {_state set [2,false];};
-        case "removeLine": {_state set [3,false];[_patient,_bp,_site] call ACME_fnc_ivAccessoryUnplug;};
-        case "extension": {_state set [0,true];};
-        case "dressing": {_state set [2,true];};
-        case "line": {_state set [3,true];};
+        case "removeLock";
+        case "removeSecondary";
+        case "removeExtension";
+        case "removeLine": {
+            _state=[_state,_action] call ACME_fnc_ivFieldTransition;
+            [_patient,_bp,_site] call ACME_fnc_ivAccessoryUnplug;
+        };
+        case "lock";
+        case "field14";
+        case "field16";
+        case "removeDressing";
+        case "extension";
+        case "dressing";
+        case "line": {_state=[_state,_action] call ACME_fnc_ivFieldTransition;};
         case "flush": {
             private _success=(_job select 5)=="blood_return_flush" && {[_patient,_row] call ACME_fnc_ivFinishPatency};
             _state set [1,_success];

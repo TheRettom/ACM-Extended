@@ -11,7 +11,7 @@ from test_menu_death_lifecycle import ROOT, read, adapt, execute
 from test_historical_vial_execution import map_defaults
 
 ASSETS = ROOT / 'addons/acm_extended/ui/iv/finish'
-FUNCTIONS = ['ivFinishPlan','ivFinishFrame','ivFinishPatency','ivFinishCommit',
+FUNCTIONS = ['ivFieldTransition','ivFieldClear','ivFieldAccessoryRow','ivFinishPlan','ivFinishFrame','ivFinishPatency','ivFinishCommit',
              'ivMarkCommit','ivFinishReply','ivFinishAbort','ivFinishRetry']
 
 def source(name):
@@ -288,7 +288,7 @@ uiNamespace setVariable ["ACME_IV_Session",[_patient,7,5]];
 _d setVariable ["ACME_IV_ViewGeneration",2];
 uiNamespace setVariable ["ACME_IV_Held","flush"];
 _row set [15,[true,false,false,false]];_patient setVariable ["ACME_IV_Marks",[_row]];
-'''+''.join('ACME_fnc_'+n+'={'+geometry_source(n)+'};' for n in ['ivFinishGeometry','ivFinishPoint','ivFinishTarget'])
+'''+''.join('ACME_fnc_'+n+'={'+geometry_source(n)+'};' for n in ['ivFinishGeometry','ivFinishPoint','ivFieldPoint','ivFieldPort','ivFieldSecondaryRow','ivFieldAccessoryRow','ivFinishTarget'])
 
 @pytest.mark.parametrize('scenario',['normal','repeat_click','other_view','no_stock','no_hub','needs_extension','missed_site'])
 def test_real_click_launch_and_exact_supply_reservation(scenario):
@@ -430,7 +430,7 @@ private _marks=_patient getVariable ["ACME_IV_Marks",[]];
 def test_tool_button_click_is_not_swallowed_by_body_router():
     text=read('ivMinigameClick')
     assert 'if (_onFinishTray) exitWith {false};' in text
-    assert text.index('if (_onFinishTray)') < text.index('if (_held in ["extension","flush","dressing","line"])')
+    assert text.index('if (_onFinishTray)') < text.index('if (_held in ["extension","flush","dressing","line","lock"])')
     assert 'ctrlAddEventHandler ["ButtonClick"' in read('ivFinishTray')
 
 

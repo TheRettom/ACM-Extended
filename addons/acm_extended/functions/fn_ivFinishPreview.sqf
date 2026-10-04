@@ -12,18 +12,29 @@ private _overTray=(_buttons findIf {
 })>=0;
 if (_overTray) exitWith {_ctrl ctrlShow false;};
 private _target=[_cursor select 0,_cursor select 1,_tool] call ACME_fnc_ivFinishTarget;
-private _texture=format ["\acm_extended\ui\iv\finish\cursor_%1_ca.paa",_tool];
+private _texture=if (_tool=="lock") then {"\acm_extended\ui\iv\field\lock_ca.paa"} else {format ["\acm_extended\ui\iv\finish\cursor_%1_ca.paa",_tool]};
 if ((ctrlText _ctrl)!=_texture) then {_ctrl ctrlSetText _texture;};
 if (_target isNotEqualTo []) then {
-    [_ctrl,_target select 0] call ACME_fnc_ivFinishPose;
+    private _row=_target select 0;private _state=_row param [15,[]];
+    if (_tool=="lock" || {_tool=="dressing" && {_state param [4,false]}}) then {
+        if (_tool=="dressing") then {
+            _ctrl ctrlSetText format ["\acm_extended\ui\iv\field\dressing_%1_ca.paa",["lock","field"] select ((_state param [5,0])>0)];
+        };
+        [_ctrl,_row] call ACME_fnc_ivFieldPose;
+    } else {
+        private _direct=(_state param [4,false]) && {!(_state param [0,false])} && {_tool in ["line","flush"]};
+        if (_direct && {_tool=="flush"}) then {_ctrl ctrlSetText "\acm_extended\ui\iv\field\cursor_flush_ca.paa";};
+        [_ctrl,[_row,_direct] call ACME_fnc_ivFieldAccessoryRow] call ACME_fnc_ivFinishPose;
+    };
 } else {
     // Free tool keeps the catheter-scale canvas and its logical contact point.
     private _r=uiNamespace getVariable ["ACME_IV_BodyRect",[0,0,1,1]];
     private _h=(_r select 3)*(uiNamespace getVariable ["ACME_IV_CathScale",0.62]);
     private _w=_h*(pixelW/(pixelH max 1e-9));
-    private _uv=if (_tool in ["flush","line"]) then {[1033.02/2048,1386.52/2048]} else {[1006.5/2048,1032/2048]};
+    if (_tool=="lock") then {_w=_w*2;_h=_h*2;};
+    private _uv=if (_tool=="lock") then {[0.5,0.5]} else {if (_tool in ["flush","line"]) then {[1033.02/2048,1386.52/2048]} else {[1006.5/2048,1032/2048]}};
     _ctrl ctrlSetAngle [0,_uv select 0,_uv select 1,false];
     _ctrl ctrlSetPosition [(_cursor select 0)-_w*(_uv select 0),(_cursor select 1)-_h*(_uv select 1),_w,_h];
-    _ctrl ctrlCommit 0;_ctrl setVariable ["ACME_IV_FinishPose",[]];
+    _ctrl ctrlCommit 0;_ctrl setVariable ["ACME_IV_FinishPose",[]];_ctrl setVariable ["ACME_IV_FieldPose",[]];
 };
 _ctrl ctrlShow true;

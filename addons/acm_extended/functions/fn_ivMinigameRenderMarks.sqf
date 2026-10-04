@@ -175,10 +175,14 @@ if (!isNull _patient && {_bp in ["leftarm", "rightarm", "leftleg", "rightleg"]})
             private _uid=_x param [14,""];
             if (_uid!="") then {
                 private _accessory=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
+                private _secondary=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
+                private _lock=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
                 private _film=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
+                {_x ctrlEnable false;_x ctrlShow false;} forEach [_secondary,_lock];
+                _ctrls append [_secondary,_lock];
                 {_x ctrlShow false;_x ctrlEnable false;} forEach [_accessory,_film];
                 _ctrls append [_accessory,_film];
-                _finishCtrls pushBack [_uid,_accessory,_film];
+                _finishCtrls pushBack [_uid,_accessory,_film,_lock,_secondary];
             };
         } else {
             // the miss-site bruise first, under the hole, gauge-correlated, scaled to fit and faded in.

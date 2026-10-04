@@ -12,6 +12,11 @@ if !([] call ACME_fnc_ivUiValid) exitWith {false};
 if (isNull _display || {_display != (uiNamespace getVariable ["ACME_IV_DLG", displayNull])}) exitWith {false};
 
 if (_display getVariable ["ACME_IV_FinishBusy",false]) exitWith {
+    if (_display getVariable ["ACME_IV_FieldInserting",false]) exitWith {
+        if (_button==0) then {uiNamespace setVariable ["ACME_IV_Dragging",true];};
+        if (_button in [1,2]) then {[] call ACME_fnc_ivMinigameRetract;};
+        true
+    };
     if (_button in [1,2]) then {[] call ACME_fnc_ivFinishAbort;};
     if (_button==0) then {
         private _a=_display getVariable ["ACME_IV_FinishActive",[]];
@@ -76,6 +81,14 @@ _ui params ["_ux", "_uy"];
 if !(([_ux] call _finite) && {[_uy] call _finite}) exitWith { false };
 
 private _held = uiNamespace getVariable ["ACME_IV_Held", "none"];
+private _fieldTarget=if (_held=="needle") then {[_ux,_uy,"field"] call ACME_fnc_ivFinishTarget} else {[]};
+if (_fieldTarget isNotEqualTo []) exitWith {
+    private _g=uiNamespace getVariable ["ACME_IV_Gauge",16];
+    if (_g in [14,16]) then {
+        [0,0,format ["field%1",_g],(_fieldTarget select 0) param [14,""]] call ACME_fnc_ivFinishStart;
+    } else {["Use a 14g or 16g catheter for the saline lock.",2,uiNamespace getVariable ["ACME_IV_Medic",objNull]] call ace_common_fnc_displayTextStructured;};
+    true
+};
 
 // for a held needle, trust the last rendered hover position, because that is what the player is actually seeing.
 // the MouseButtonDown coords and getMousePosition can disagree by a frame or a control space, which caused the
@@ -102,7 +115,7 @@ private _onFinishTray=false;
 } forEach (_display getVariable ["ACME_IV_FinishTray",[]]);
 // Let the native button receive its click; do not also treat its coordinates as a hub.
 if (_onFinishTray) exitWith {false};
-if (_held in ["extension","flush","dressing","line"]) exitWith {
+if (_held in ["extension","flush","dressing","line","lock"]) exitWith {
     uiNamespace setVariable ["ACME_IV_Dragging",false];
     [_fx,_fy] call ACME_fnc_ivFinishStart;
     true
@@ -160,6 +173,10 @@ if (!(uiNamespace getVariable ["ACME_IV_EJMode", false]) || {true}) then {
                     };
                 };
             } forEach (_display getVariable ["ACME_IV_FinishCtrls",[]]);
+            if ((_row param [15,[]]) param [4,false]) then {
+                private _fieldPull=[_display,_row,_kind,_mc] call ACME_fnc_ivFieldPullLayers;
+                _layers=_fieldPull select 0;_mc=_fieldPull select 1;
+            };
             {_bases pushBack (ctrlPosition _x);} forEach _layers;
             uiNamespace setVariable ["ACME_IV_PullLayers",_layers];
             uiNamespace setVariable ["ACME_IV_PullLayerBases",_bases];

@@ -14,6 +14,26 @@ private _best=[];private _distance=_radius;
     if ((_row param [4,""])=="hub" && {(_row select 0)==_bp} && {(_row select 1)==_view}) then {
         private _state=_row param [15,[false,false,false,false]];
         private _points=[];
+        if (_state param [4,false]) then {
+            if (_pull) then {
+                _points pushBack ["catheter",[(_rect select 0)+(_rect select 2)*(_row select 2),(_rect select 1)+(_rect select 3)*(_row select 3)]];
+                _points pushBack ["removeLock",[_row,[1006.5,1060]] call ACME_fnc_ivFieldPoint];
+                if ((_state param [5,0])>0) then {_points pushBack ["removeSecondary",[_row,[1006.5,1140]] call ACME_fnc_ivFieldPoint];};
+                private _y=if ((_state param [5,0])>0) then {1189} else {1088};
+                if (_state select 0) then {_points pushBack ["removeExtension",[_row,[1007,_y+190]] call ACME_fnc_ivFieldPoint];};
+                if (_state select 2) then {_points pushBack ["removeDressing",[_row,[1120,970]] call ACME_fnc_ivFieldPoint];};
+                if (_state select 3) then {_points pushBack ["removeLine",[_row,[1100,_y+(if (_state select 0) then {650} else {310})]] call ACME_fnc_ivFieldPoint];};
+            } else {
+                private _point=switch (_tool) do {
+                    case "field";case "field14";case "field16": {[1006.5,1088]};
+                    case "extension": {[1006.5,if ((_state param [5,0])>0) then {1189} else {1088}]};
+                    case "dressing";case "lock": {[1006.5,1037]};
+                    default {[_row] call ACME_fnc_ivFieldPort};
+                };
+                _points pushBack [_tool,[_row,_point] call ACME_fnc_ivFieldPoint];
+            };
+        } else {
+        if (_tool in ["field","field14","field16"]) then {} else {
         if (_pull) then {
             _points pushBack ["catheter",[(_rect select 0)+(_rect select 2)*(_row select 2),(_rect select 1)+(_rect select 3)*(_row select 3)]];
             if (_state select 0) then {_points pushBack ["removeExtension",[_row,[1007/2048,1230/2048]] call ACME_fnc_ivFinishPoint];};
@@ -22,6 +42,8 @@ private _best=[];private _distance=_radius;
         } else {
             private _uv=if (_tool in ["flush","line"]) then {[1033.02/2048,1386.52/2048]} else {[1006.5/2048,1032/2048]};
             _points pushBack [_tool,[_row,_uv] call ACME_fnc_ivFinishPoint];
+        };
+        };
         };
         {
             _x params ["_kind","_point"];

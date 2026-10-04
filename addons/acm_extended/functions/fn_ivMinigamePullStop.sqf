@@ -35,7 +35,7 @@ if (isNull _patient) exitWith { call _clear; };
 private _marks = _patient getVariable ["ACME_IV_Marks", []];
 if (_uid!="") then {_idx=_marks findIf {(_x param [14,""])==_uid && {(_x param [4,""])=="hub"}};};
 if (_idx<0 || {_idx >= count _marks}) exitWith { call _clear;[] call ACME_fnc_ivMinigameRenderMarks; };
-if (_kind in ["removeExtension","removeDressing","removeLine"]) exitWith {
+if (_kind in ["removeLock","removeSecondary","removeExtension","removeDressing","removeLine"]) exitWith {
     call _clear;
     [0,0,_kind,_uid] call ACME_fnc_ivFinishStart;
     [] call ACME_fnc_ivMinigameRenderMarks;

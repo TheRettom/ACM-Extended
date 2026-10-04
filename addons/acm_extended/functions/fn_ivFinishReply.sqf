@@ -17,11 +17,13 @@ if (_status=="begin" && {_accepted} && {_valid}) exitWith {
         _d setVariable ["ACME_IV_FinishActive",[_row,diag_tickTime,false]];
         [] call ACME_fnc_ivMinigameRenderMarks;
         [] call ACME_fnc_ivMinigameRefreshBandSlot;
+        if ((_pending select 3) in ["field14","field16"]) then {[_row] call ACME_fnc_ivFieldInsertStart;};
     };
 };
 if (_status=="begin" && {_accepted}) exitWith {
     [_patient,"ivFinish",[_medic,"cancel",_pending select 2,_pending select 3,_token,_pending select 4,_pending select 5]] call ACME_fnc_ownerDispatch;
 };
+if (_valid && {(_pending select 3) in ["field14","field16"]}) then {[] call ACME_fnc_ivFieldClear;};
 _medic setVariable ["ACME_IV_FinishPending",[]];
 if (!isNull _d) then {_d setVariable ["ACME_IV_FinishActive",[]];_d setVariable ["ACME_IV_FinishBusy",false];};
 if (_valid) then {

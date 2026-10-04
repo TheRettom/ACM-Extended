@@ -3,6 +3,7 @@
 params ["_ctrl","_row"];
 private _g=[_row] call ACME_fnc_ivFinishGeometry;
 if (isNull _ctrl || {_g isEqualTo []}) exitWith {};
+_ctrl setVariable ["ACME_IV_FieldPose",[]];
 _g params ["_x","_y","_w","_h","_angle"];
 private _u=1006.5/2048;private _v=1032/2048;
 private _pose=[_x-_w*_u,_y-_h*_v,_w,_h,_angle];

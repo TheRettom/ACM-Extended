@@ -3,6 +3,9 @@
 // are no clicks and no prompts. the band stays on so another iv can be placed, above the used and removed sites.
 // call it as [_stickU, _stickV] call ACME_fnc_ivMinigameStickSuccess.
 params ["_su", "_sv"];
+if ((uiNamespace getVariable ["ACME_IV_DLG",displayNull]) getVariable ["ACME_IV_FieldInserting",false]) exitWith {
+    [] call ACME_fnc_ivFieldInsertEnd;
+};
 if !([] call ACME_fnc_ivUiValid) exitWith {};
 private _dlg = uiNamespace getVariable ["ACME_IV_DLG", displayNull];
 if (isNull _dlg) exitWith {};

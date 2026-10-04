@@ -2342,6 +2342,20 @@ class CfgFunctions {
             class ivMinigameAddMark {};
             class ivMarkCommit {};
             class ivFinishPlan {};
+            class ivFieldTransition {};
+            class ivFieldPoint {};
+            class ivFieldSecondaryRow {};
+            class ivFieldPort {};
+            class ivFieldAccessoryRow {};
+            class ivFieldPose {};
+            class ivFieldPreview {};
+            class ivFieldInsertStart {};
+            class ivFieldInsertEnd {};
+            class ivFieldClear {};
+            class ivFieldProgress {};
+            class ivFieldRender {};
+            class ivFieldPullLayers {};
+
             class ivFinishFrame {};
             class ivFinishPatency {};
             class ivFinishPose {};

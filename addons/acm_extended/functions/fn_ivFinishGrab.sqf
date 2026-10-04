@@ -3,7 +3,7 @@ private _d=uiNamespace getVariable ["ACME_IV_DLG",displayNull];
 if (isNull _d || {!([] call ACME_fnc_ivUiValid)}) exitWith {};
 if (_d getVariable ["ACME_IV_FinishBusy",false]) exitWith {};
 if ((uiNamespace getVariable ["ACME_IV_InsStage",""])!="") exitWith {};
-if !(_tool in ["extension","flush","dressing","line"]) exitWith {};
+if !(_tool in ["extension","flush","dressing","line","lock"]) exitWith {};
 private _press=[diag_frameNo,_tool];
 if ((_d getVariable ["ACME_IV_FinishGrabPress",[]]) isEqualTo _press) exitWith {};
 _d setVariable ["ACME_IV_FinishGrabPress",_press];

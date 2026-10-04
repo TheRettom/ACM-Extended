@@ -68,6 +68,7 @@ if (count _ivBase >= 4) then {
 };
 
 [] call ACME_fnc_ivFinishTick;
+[] call ACME_fnc_ivFieldProgress;
 
 // the darkness is drawn first, before any branch can bail out.
 // this used to be the last line of this function, below thirteen exitwith branches for the held item, dragging,
@@ -322,7 +323,7 @@ if (_display getVariable ["ACME_IV_FinishBusy",false]) exitWith {
     if (!isNull _heldC) then {_heldC ctrlShow false;};
     if (!isNull _dot) then {_dot ctrlShow false;};
 };
-if (_held in ["extension","flush","dressing","line"]) exitWith {
+if (_held in ["extension","flush","dressing","line","lock"]) exitWith {
     [_heldC,_held,[] call ACME_fnc_ivMinigameCursor] call ACME_fnc_ivFinishPreview;
     if (!isNull _dot) then {_dot ctrlShow false;};
 };
@@ -472,6 +473,7 @@ if (_held == "pad") exitWith {
 // needle held: the full-size catheter on the cursor, tip at the cursor, with no feel dot, so it is a blind
 // stick.
 if (_held == "needle") exitWith {
+    if ([_heldC,[] call ACME_fnc_ivMinigameCursor] call ACME_fnc_ivFieldPreview) exitWith {};
     if (!isNull _dot) then { _dot ctrlShow false; };
     if (isNull _heldC) exitWith {};
     // Anatomical side selects one authored 15-degree family for the entire approach.
