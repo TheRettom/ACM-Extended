@@ -15,9 +15,11 @@ uiNamespace setVariable ["ACME_IV_Gauge",_gauge];
 uiNamespace setVariable ["ACME_IV_NeedleFrame",_row param [6,""]];
 uiNamespace setVariable ["ACME_IV_NeedleAngle",_row param [13,0]];
 uiNamespace setVariable ["ACME_IV_StickAcc",0];
+// Recreate the inactive native catheter control once so the held introducer is above the base film.
+// The existing mark renderer owns the lock; never duplicate it above the primary hub.
+private _old=uiNamespace getVariable ["ACME_IV_CathCtrl",controlNull];
+if (!isNull _old) then {ctrlDelete _old;};
+uiNamespace setVariable ["ACME_IV_CathCtrl",controlNull];
 [_child select 2,_child select 3,false,_row param [10,""]] call ACME_fnc_ivMinigameInsertStart;
-private _shell=_d ctrlCreate ["ACME_IV_HubMark",-1];
-_shell ctrlEnable false;_shell ctrlSetText "\acm_extended\ui\iv\field\lock_ca.paa";
-[_shell,_row] call ACME_fnc_ivFieldPose;_shell ctrlShow true;
-_d setVariable ["ACME_IV_FieldShell",_shell];
+_d setVariable ["ACME_IV_FieldShell",controlNull];
 (_d displayCtrl 86503) ctrlSetText "Push into the saline-lock port, then scroll to thread the catheter.";

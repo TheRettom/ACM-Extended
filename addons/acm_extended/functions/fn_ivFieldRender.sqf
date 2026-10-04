@@ -1,7 +1,7 @@
 /* Render this assembly in independent layers: original native hub is unchanged.
    An active needle uses the existing Catheter control; remote viewers see ordered milestones. */
 params ["_row","_job","_elapsed","_ctrls"];
-_ctrls params ["_accessory","_film","_lockCtrl","_secondaryCtrl"];
+_ctrls params ["_accessory","_film","_lockCtrl","_secondaryCtrl",["_baseFilm",controlNull]];
 private _state=_row param [15,[]];
 private _extension=_state param [0,false];
 private _dressed=_state param [2,false];
@@ -53,7 +53,14 @@ if ([_secondaryCtrl,_secondaryTex] call _paint && {_secondaryTex!=""}) then {
     private _r=uiNamespace getVariable ["ACME_IV_BodyRect",[]];
     [_secondaryCtrl,(_r select 0)+(_r select 2)*(_child select 2),(_r select 1)+(_r select 3)*(_child select 3),_row param [6,""],_row param [13,0]] call ACME_fnc_ivCathPose;
 };
-private _filmTex=if (_dressed || {_action=="dressing"}) then {
+// The short primary film remains under the second catheter, including while advancing it.
+private _fieldJob=_action in ["field14","field16"];
+private _separateBase=!isNull _baseFilm;
+private _baseCovered=(_state param [6,false]) || {_fieldJob && {_dressed}};
+if ([_baseFilm,if (_baseCovered) then {"\acm_extended\ui\iv\field\dressing_lock_ca.paa"} else {""}] call _paint) then {
+    [_baseFilm,_row] call ACME_fnc_ivFieldPose;_baseFilm ctrlSetFade 0;_baseFilm ctrlCommit 0;
+};
+private _filmTex=if ((_dressed && {!(_fieldJob && {_separateBase})}) || {_action=="dressing"}) then {
     format ["\acm_extended\ui\iv\field\dressing_%1_ca.paa",["lock","field"] select ((_state param [5,0])>0)]
 } else {""};
 if ([_film,_filmTex] call _paint) then {

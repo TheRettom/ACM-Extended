@@ -2360,6 +2360,7 @@ class CfgFunctions {
             class ivFinishPatency {};
             class ivFinishPose {};
             class ivFinishGeometry {};
+            class ivMagnetGeometry {};
             class ivFinishSyringeHit {};
             class ivCatheterPull {};
             class transfusionUiSet {};

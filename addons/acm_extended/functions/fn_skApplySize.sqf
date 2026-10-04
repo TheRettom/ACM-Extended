@@ -67,7 +67,12 @@ if (!isNull _vis) then {
 
 // Update the geometry cache used by the Body Map carousel without recreating the dialog.
 private _barrel = _d displayCtrl (_base+2);
-if (!isNull _barrel) then {_d setVariable ["ACME_SK_CarouselNativeRect",ctrlPosition _barrel];};
+if (!isNull _barrel) then {
+    _barrel ctrlSetText (if (_size==10 && {_flushClass!=""}) then {
+        "\acm_extended\ui\syringe\syringe_flush_10_barrel_ca.paa"
+    } else {format ["\x\ACM\addons\circulation\ui\syringe\syringe_%1_barrel_ca.paa",_size]});
+    _d setVariable ["ACME_SK_CarouselNativeRect",ctrlPosition _barrel];
+};
 private _travelNow = _bottom - _top;
 private _ratio = switch (_size) do {case 1:{10.2/10.5};case 3:{9.83/10.5};case 5:{10.3/10.5};default{1};};
 if (_travelNow > 0) then {_d setVariable ["ACME_SK_CarouselTravel10",_travelNow / (_ratio max 0.01)];};

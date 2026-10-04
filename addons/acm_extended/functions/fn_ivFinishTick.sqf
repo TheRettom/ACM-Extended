@@ -49,7 +49,7 @@ if (count _active>=3 && {count _p>=9}) then {
     };
 };
 {
-    _x params ["_uid","_accessory","_dressing",["_lock",controlNull],["_secondary",controlNull]];
+    _x params ["_uid","_accessory","_dressing",["_lock",controlNull],["_secondary",controlNull],["_baseFilm",controlNull]];
     private _i=_marks findIf {(_x param [14,""])==_uid && {(_x param [4,""])=="hub"}};
     if (_i>=0) then {
         private _row=_marks select _i;
@@ -59,9 +59,9 @@ if (count _active>=3 && {count _p>=9}) then {
         };
         private _state=_row param [15,[false,false,false,false]];
         if ((_state param [4,false]) || {(_job param [2,""])=="lock"}) then {
-            [_row,_job,_elapsed,[_accessory,_dressing,_lock,_secondary]] call ACME_fnc_ivFieldRender;
+            [_row,_job,_elapsed,[_accessory,_dressing,_lock,_secondary,_baseFilm]] call ACME_fnc_ivFieldRender;
         } else {
-        {_x ctrlShow false;} forEach [_lock,_secondary];
+        {_x ctrlShow false;} forEach [_lock,_secondary,_baseFilm];
         private _tex=if (_state select 3) then {"\acm_extended\ui\iv\finish\line_ca.paa"} else {
             if (_state select 0) then {"\acm_extended\ui\iv\finish\extension_ca.paa"} else {""}
         };
@@ -82,5 +82,5 @@ if (count _active>=3 && {count _p>=9}) then {
             };
         } forEach [[_accessory,_tex],[_dressing,_film]];
         };
-    } else {{_x ctrlShow false;} forEach [_accessory,_dressing,_lock,_secondary];};
+    } else {{_x ctrlShow false;} forEach [_accessory,_dressing,_lock,_secondary,_baseFilm];};
 } forEach (_d getVariable ["ACME_IV_FinishCtrls",[]]);

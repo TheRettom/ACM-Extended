@@ -146,6 +146,14 @@ if (!isNull _patient && {_bp in ["leftarm", "rightarm", "leftleg", "rightleg"]})
             };
         };
         if (_mkind == "hub") then {
+            private _uid=_x param [14,""];
+            private _lock=controlNull;private _accessory=controlNull;
+            if (_uid!="") then {
+                _lock=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
+                _accessory=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
+                {_x ctrlEnable false;_x ctrlShow false;} forEach [_lock,_accessory];
+                _ctrls append [_lock,_accessory];
+            };
             private _c = _dlg ctrlCreate ["ACME_IV_HubMark", -1];
             // every iv, the ej included, builds its hub path from the frame now. the _mtex branch only fires for any legacy
             // iv_ej marker still stored on a patient from an older build, whose anchor sits higher.
@@ -172,17 +180,13 @@ if (!isNull _patient && {_bp in ["leftarm", "rightarm", "leftleg", "rightleg"]})
             // view, so indexing it by mark number gives the wrong control. the pull needs the exact sprite for the
             // hub it took hold of, which is what this pairing provides.
             _hubCtrls pushBack [_forEachIndex, _c];
-            private _uid=_x param [14,""];
             if (_uid!="") then {
-                private _accessory=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
+                private _baseFilm=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
                 private _secondary=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
-                private _lock=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
                 private _film=_dlg ctrlCreate ["ACME_IV_HubMark",-1];
-                {_x ctrlEnable false;_x ctrlShow false;} forEach [_secondary,_lock];
-                _ctrls append [_secondary,_lock];
-                {_x ctrlShow false;_x ctrlEnable false;} forEach [_accessory,_film];
-                _ctrls append [_accessory,_film];
-                _finishCtrls pushBack [_uid,_accessory,_film,_lock,_secondary];
+                {_x ctrlEnable false;_x ctrlShow false;} forEach [_baseFilm,_secondary,_film];
+                _ctrls append [_baseFilm,_secondary,_film];
+                _finishCtrls pushBack [_uid,_accessory,_film,_lock,_secondary,_baseFilm];
             };
         } else {
             // the miss-site bruise first, under the hole, gauge-correlated, scaled to fit and faded in.

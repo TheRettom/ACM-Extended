@@ -2,13 +2,13 @@
 params ["_d","_row","_kind","_native"];
 private _result=[[_native],_native];
 {
-    _x params ["_uid","_acc","_film","_lock","_secondary"];
+    _x params ["_uid","_acc","_film","_lock","_secondary",["_baseFilm",controlNull]];
     if (_uid==(_row param [14,""])) exitWith {
         private _layers=switch (_kind) do {
-            case "catheter": {[_native,_acc,_film,_lock,_secondary]};
-            case "removeLock": {[_lock,_secondary,_acc,_film]};
+            case "catheter": {[_native,_acc,_film,_lock,_secondary]+([[],[_baseFilm]] select (!isNull _baseFilm))};
+            case "removeLock": {[_lock,_secondary,_acc,_film]+([[],[_baseFilm]] select (!isNull _baseFilm))};
             case "removeSecondary": {[_secondary,_acc,_film]};
-            case "removeDressing": {[_film]};
+            case "removeDressing": {[if ((_row param [15,[]]) param [2,false]) then {_film} else {_baseFilm}]};
             default {[_acc]};
         };
         if (_kind=="removeLine") then {

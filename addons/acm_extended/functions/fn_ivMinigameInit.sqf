@@ -517,6 +517,21 @@ uiNamespace setVariable ["ACME_IV_FrameAxis", createHashMapFromArray [
 ]];
 // where the floating line meets the hub, as a canvas fraction. it is the connector end of the tubing, so it is
 // the point that must sit under the cursor while the medic carries it to the hub.
+// B235: measured seated-hub sockets/axes; not the old floating-line artwork endpoints.
+uiNamespace setVariable ["ACME_IV_HubSockets", createHashMapFromArray [
+    ["", [0.49083587, 0.50485242]],
+    ["_15_left", [0.49385948, 0.50441832]],
+    ["_15_right", [0.4884779, 0.50312679]],
+    ["_ej_15_left", [0.4841672, 0.49265216]],
+    ["_ej_15_right", [0.49008342, 0.49051349]]
+]];
+uiNamespace setVariable ["ACME_IV_HubAxes", createHashMapFromArray [
+    ["", [0.01109028, -0.9999385]],
+    ["_15_left", [-0.24950163, -0.96837438]],
+    ["_15_right", [0.26734963, -0.96359959]],
+    ["_ej_15_left", [0.24916114, 0.96846204]],
+    ["_ej_15_right", [-0.26750392, 0.96355677]]
+]];
 uiNamespace setVariable ["ACME_IV_LineAnchors", createHashMapFromArray [
     ["",              [0.49246, 0.50391]],
     ["_15_left",      [0.49867, 0.50244]],

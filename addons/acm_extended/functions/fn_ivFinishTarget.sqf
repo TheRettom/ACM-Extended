@@ -1,13 +1,13 @@
 /* Nearest current-view component, in physical pixel units. Used for both
    magnetic previews and click acceptance; never target a last-used catheter. */
-params ["_ux","_uy","_tool",["_pull",false]];
+params ["_ux","_uy","_tool",["_pull",false],["_close",false]];
 private _p=uiNamespace getVariable ["ACME_IV_Patient",objNull];
 private _bp=uiNamespace getVariable ["ACME_IV_BodyPart",""];
 private _view=uiNamespace getVariable ["ACME_IV_View",""];
 private _rect=uiNamespace getVariable ["ACME_IV_BodyRect",[]];
 if (isNull _p || {count _rect!=4}) exitWith {[]};
 private _aspect=pixelW/(pixelH max 1e-9);
-private _radius=(_rect select 3)*(if (_pull) then {0.025} else {0.052});
+private _radius=(_rect select 3)*(if (_pull) then {0.025} else {if (_close) then {0.004} else {0.052}});
 private _best=[];private _distance=_radius;
 {
     private _row=_x;
@@ -21,7 +21,7 @@ private _best=[];private _distance=_radius;
                 if ((_state param [5,0])>0) then {_points pushBack ["removeSecondary",[_row,[1006.5,1140]] call ACME_fnc_ivFieldPoint];};
                 private _y=if ((_state param [5,0])>0) then {1189} else {1088};
                 if (_state select 0) then {_points pushBack ["removeExtension",[_row,[1007,_y+190]] call ACME_fnc_ivFieldPoint];};
-                if (_state select 2) then {_points pushBack ["removeDressing",[_row,[1120,970]] call ACME_fnc_ivFieldPoint];};
+                if ((_state select 2) || {_state param [6,false]}) then {_points pushBack ["removeDressing",[_row,[1120,970]] call ACME_fnc_ivFieldPoint];};
                 if (_state select 3) then {_points pushBack ["removeLine",[_row,[1100,_y+(if (_state select 0) then {650} else {310})]] call ACME_fnc_ivFieldPoint];};
             } else {
                 private _point=switch (_tool) do {

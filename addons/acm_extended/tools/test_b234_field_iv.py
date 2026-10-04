@@ -23,15 +23,17 @@ def field_state(sec=0, ext=False, tested=False, dressed=False, line=False):
 @pytest.mark.parametrize('base',[14,16,18,20])
 @pytest.mark.parametrize('second',[14,16])
 def test_field_gauges_and_base_access(base,second):
-    run(f'''private _p=[{field_state()},"field{second}",false,{base}] call ACME_fnc_ivFinishPlan;
+    run(f'''private _p=[{field_state(dressed=True)},"field{second}",false,{base}] call ACME_fnc_ivFinishPlan;
     [(_p select 0)=={str(base in [14,16]).lower()},"large bore rule"] call _check;''')
 
 
 @pytest.mark.parametrize('state',[
     [False]*4,[False,False,False,False,True,14],
-    [True,False,False,False,True,0],[False,False,True,False,True,0],
+    [True,False,True,False,True,0],[False,False,False,False,True,0],
     [False,False,False,True,True,0]])
 def test_field_requires_exposed_empty_lock(state):
+    # B235: exposed port now means a covered primary lock without downstream hardware.
+    # Keep this case identity while rejecting an UNDRESSED primary, not the required film.
     run(f'[!(([{json.dumps(state).lower()},"field16",true,16] call ACME_fnc_ivFinishPlan) select 0),"exposed port"] call _check;')
 
 
@@ -61,7 +63,7 @@ def test_component_removal_cascade_never_removes_primary(action,wanted,disconnec
 @pytest.mark.parametrize('missed',[False,True])
 def test_real_owner_field_insertion_has_one_access_and_inherits_patency(second,missed):
     run(f'''
-    _row set [15,{field_state()}];_patient setVariable ["ACME_IV_Marks",[_row]];
+    _row set [15,{field_state(dressed=True)}];_patient setVariable ["ACME_IV_Marks",[_row]];
     _patient setVariable ["ACME_ivCompromised_leftarm_1",{str(missed).lower()}];
     private _needle=[_medic,"ACM_IV_{second}g",objNull,"needle1"];
     ["begin","field{second}","f",_needle,"ivhub:7:1",7,190] call _invoke;
@@ -84,7 +86,7 @@ def test_real_owner_field_insertion_has_one_access_and_inherits_patency(second,m
 def test_insertion_protocol_boundaries(mode):
     begin='["begin","field16","f",_needle,"ivhub:7:1",7,190] call _invoke;'
     body=f'''
-    _row set [15,{field_state()}];_patient setVariable ["ACME_IV_Marks",[_row]];
+    _row set [15,{field_state(dressed=True)}];_patient setVariable ["ACME_IV_Marks",[_row]];
     private _needle=[_medic,"ACM_IV_16g",objNull,"needle1"];
     '''
     if mode=='no_needle':body+='_needle=[];'
@@ -158,7 +160,7 @@ def test_active_port_and_direct_flush_transform(second,ext):
 
 def test_local_click_reserves_second_catheter_once():
     run(START_SETUP+'ACME_fnc_ivFinishStart={'+start_source()+r'''};
-    _row set [15,[false,false,false,false,true,0]];_patient setVariable ["ACME_IV_Marks",[_row]];
+    _row set [15,[false,false,true,false,true,0]];_patient setVariable ["ACME_IV_Marks",[_row]];
     _testSupplyReceipt=[_medic,"ACM_IV_14g",objNull,"second"];
     [0,0,"field14","ivhub:7:1"] call ACME_fnc_ivFinishStart;
     [0,0,"field14","ivhub:7:1"] call ACME_fnc_ivFinishStart;
@@ -247,7 +249,7 @@ def test_real_manual_push_thread_retract_commits_only_hardware(abort_at):
     };
     uiNamespace setVariable ["ACME_IV_CathCtrl",_d];
     _d setVariable ["ACME_IV_FinishCtrls",[]];
-    _row set [15,[false,false,false,false,true,0]];_patient setVariable ["ACME_IV_Marks",[_row]];
+    _row set [15,[false,false,true,false,true,0]];_patient setVariable ["ACME_IV_Marks",[_row]];
     _testSupplyReceipt=[_medic,"ACM_IV_16g",objNull,"needle1"];
     [0,0,"field16","ivhub:7:1"] call ACME_fnc_ivFinishStart;
     [(uiNamespace getVariable ["ACME_IV_InsStage",""])=="advance","native advance started after owner ACK"] call _check;

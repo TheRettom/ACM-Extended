@@ -83,6 +83,12 @@ if !(([_ux] call _finite) && {[_uy] call _finite}) exitWith { false };
 private _held = uiNamespace getVariable ["ACME_IV_Held", "none"];
 private _fieldTarget=if (_held=="needle") then {[_ux,_uy,"field"] call ACME_fnc_ivFinishTarget} else {[]};
 if (_fieldTarget isNotEqualTo []) exitWith {
+    private _close=[_ux,_uy,"field",false,true] call ACME_fnc_ivFinishTarget;
+    if (_close isEqualTo []) exitWith {
+        ["Move the needle closer to the saline-lock port.",2,uiNamespace getVariable ["ACME_IV_Medic",objNull]] call ace_common_fnc_displayTextStructured;
+        true
+    };
+    _fieldTarget=_close;
     private _g=uiNamespace getVariable ["ACME_IV_Gauge",16];
     if (_g in [14,16]) then {
         [0,0,format ["field%1",_g],(_fieldTarget select 0) param [14,""]] call ACME_fnc_ivFinishStart;
