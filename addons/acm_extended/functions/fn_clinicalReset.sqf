@@ -136,6 +136,7 @@ _patient forceWalk _preservedLegXStat;
 _patient setVariable ["ACME_yFlushJobs", createHashMap, true];
 _patient setVariable ["ACME_bagMoves", createHashMap, true];
 [_patient, []] call ACME_fnc_detachedBagsCommit;
+[_patient,"ACME_IV_DisconnectedBagUIDs",[]] call ACME_fnc_setVarNet;
 [_patient, []] call ACME_fnc_infusionMedicationStateCommit;
 [_patient, createHashMap] call ACME_fnc_circStateCommit;
 [_patient, createHashMap] call ACME_fnc_tbiStateCommit;

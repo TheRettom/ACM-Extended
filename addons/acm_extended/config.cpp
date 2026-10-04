@@ -2345,6 +2345,18 @@ class CfgFunctions {
             class ivFinishFrame {};
             class ivFinishPatency {};
             class ivFinishPose {};
+            class ivFinishGeometry {};
+            class ivFinishSyringeHit {};
+            class ivCatheterPull {};
+            class transfusionUiSet {};
+            class ivAccessoryUnplug {};
+            class fbtkHang {};
+            class fbtkHangCommit {};
+            class fbtkHangReply {};
+            class fbtkHangRetry {};
+            class ivFinishPoint {};
+            class ivFinishTarget {};
+            class ivFinishPreview {};
             class ivFinishCommit {};
             class ivFinishStart {};
             class ivFinishReply {};
@@ -4013,6 +4025,13 @@ class ACME_Thoracostomy_Dialog {
 // mouse-catching surface that reports the cursor in true ui coords and is ultrawide-safe, and a feel dot that
 // tracks the fingertip. fn_ivminigameinit positions all the controls at runtime, and the limb and band
 // textures swap per selected site.
+class ACME_IV_ToolLabel: RscText {style=2; font="RobotoCondensed"; colorText[]={0.90,0.95,1,1}; colorBackground[]={0,0,0,0};};
+class ACME_IV_ToolButton: RscButton {
+    colorText[] = {0,0,0,0}; colorBackground[] = {0,0,0,0};
+    colorBackgroundActive[] = {0.3,0.5,0.7,0.30}; colorFocused[] = {0,0,0,0};
+    colorBackgroundDisabled[] = {0,0,0,0}; colorShadow[] = {0,0,0,0}; borderSize=0;
+    offsetX=0; offsetY=0; offsetPressedX=0; offsetPressedY=0;
+};
 class ACME_IVMinigame_Dialog {
     idd = 86500;
     movingEnable = 0;
@@ -7807,6 +7826,8 @@ class ACM_MedicalMenu_ActionButton_ACM_IV_14G {
     textureNoShortcut = "\acm_extended\ui\items\iv_14g_ca.paa";
 };
 
+class ACM_MedicalMenu_ActionButton_ACE_salineIV_500;
+
 #define ACME_LBTN(name) \
     class ACM_MedicalMenu_ActionButton_L_##name: ACM_MedicalMenu_ActionButton_##name { \
         style = 0; \
@@ -7819,6 +7840,7 @@ class ACM_MedicalMenu_ActionButton_ACM_IV_14G {
         }; \
     }
 ACME_LBTN(None);
+ACME_LBTN(ACE_salineIV_500);
 ACME_LBTN(ACE_tourniquet);
 ACME_LBTN(ACE_surgicalKit);
 ACME_LBTN(ACE_personalAidKit);
@@ -7886,7 +7908,7 @@ ACME_LBTN(ACME_Ventilator);
 
 class ace_medical_treatment_actions {
     class OpenTransfusionMenu {
-        icon = "\z\ace\addons\medical_treatment\data\IVBag_saline_500ml_ca.paa";
+        icon = "\z\ace\addons\medical_treatment\ui\salineIV_ca.paa";
         ACM_menuIcon = "ACE_salineIV_500";
     };
 

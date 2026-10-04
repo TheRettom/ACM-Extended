@@ -13,6 +13,15 @@ if (isNull _display || {_display != (uiNamespace getVariable ["ACME_IV_DLG", dis
 
 if (_display getVariable ["ACME_IV_FinishBusy",false]) exitWith {
     if (_button in [1,2]) then {[] call ACME_fnc_ivFinishAbort;};
+    if (_button==0) then {
+        private _a=_display getVariable ["ACME_IV_FinishActive",[]];
+        private _cursor=[] call ACME_fnc_ivMinigameCursor;
+        if (count _a>=3 && {(((_a select 0) param [16,[]]) param [2,""])=="flush"}
+            && {[_a select 0,_cursor] call ACME_fnc_ivFinishSyringeHit}) then {
+            uiNamespace setVariable ["ACME_IV_Dragging",true];
+            _display setVariable ["ACME_IV_FlushPullPin",_cursor];
+        };
+    };
     true
 };
 if (_button in [1, 2]) exitWith {
@@ -114,20 +123,15 @@ if (!(uiNamespace getVariable ["ACME_IV_EJMode", false]) || {true}) then {
     private _held0 = uiNamespace getVariable ["ACME_IV_Held", "none"];
     if (!isNull _patient && {_held0 == "none"} && {(uiNamespace getVariable ["ACME_IV_InsStage", ""]) == ""}) then {
         private _marks = _patient getVariable ["ACME_IV_Marks", []];
-        private _bestI = -1;
-        private _bestD = 1e9;
-        {
-            _x params ["_mbp", "_mview", "_mu", "_mv", "_mkind"];
-            if (_mbp == _bp && {_mview == _view} && {_mkind == "hub"}) then {
-                private _du = _fx - _mu;
-                private _dv = (_fy - _mv) * (1 / _af);
-                private _d = sqrt ((_du * _du) + (_dv * _dv));
-                if (_d < _bestD) then { _bestD = _d; _bestI = _forEachIndex; };
-            };
-        } forEach _marks;
+        private _hit=[_ux,_uy,"",true] call ACME_fnc_ivFinishTarget;
+        private _bestI=if (_hit isEqualTo []) then {-1} else {_marks findIf {(_x param [14,""])==((_hit select 0) param [14,""]) && {(_x param [4,""])=="hub"}}};
+        private _bestD=if (_bestI<0) then {1e9} else {0};
         if (_bestI >= 0 && {_bestD <= (missionNamespace getVariable ["ACME_iv_pullGrabRadius", 0.05])}) exitWith {
             (_marks select _bestI) params ["", "", "", "", "", "", ["_pframe", ""]];
             uiNamespace setVariable ["ACME_IV_PullIdx", _bestI];
+            private _row=_marks select _bestI;
+            uiNamespace setVariable ["ACME_IV_PullUID",_row param [14,""]];
+            uiNamespace setVariable ["ACME_IV_PullKind",_hit select 1];
             uiNamespace setVariable ["ACME_IV_PullSuffix", _pframe];
             uiNamespace setVariable ["ACME_IV_PullAngle", (_marks select _bestI) param [13,0]];
             uiNamespace setVariable ["ACME_IV_PullProg", 0];
@@ -138,6 +142,27 @@ if (!(uiNamespace getVariable ["ACME_IV_EJMode", false]) || {true}) then {
             {
                 if ((_x select 0) == _bestI) exitWith { _mc = _x select 1; };
             } forEach (uiNamespace getVariable ["ACME_IV_HubCtrls", []]);
+            private _layers=[];private _bases=[];
+            private _kind=_hit select 1;private _uid=_row param [14,""];
+            {
+                if ((_x select 0)==_uid) exitWith {
+                    if (_kind=="removeDressing") then {_mc=_x select 2;_layers=[_mc];} else {
+                        if (_kind in ["removeExtension","removeLine"]) then {_mc=_x select 1;};
+                        _layers=if (_kind=="catheter") then {[_mc,_x select 1,_x select 2]} else {if (_kind=="removeExtension") then {[_x select 1,_x select 2]} else {[_mc]}};
+                        // A line pull moves only its downstream tubing, not the extension baked into line_ca.
+                        if (_kind=="removeLine") then {
+                            (_x select 1) ctrlSetText "\acm_extended\ui\iv\finish\cursor_line_ca.paa";
+                            private _base=_display ctrlCreate ["ACME_IV_HubMark",-1];
+                            _base ctrlSetText "\acm_extended\ui\iv\finish\extension_ca.paa";
+                            [_base,_row] call ACME_fnc_ivFinishPose;_base ctrlShow true;
+                            uiNamespace setVariable ["ACME_IV_PullExtra",_base];
+                        };
+                    };
+                };
+            } forEach (_display getVariable ["ACME_IV_FinishCtrls",[]]);
+            {_bases pushBack (ctrlPosition _x);} forEach _layers;
+            uiNamespace setVariable ["ACME_IV_PullLayers",_layers];
+            uiNamespace setVariable ["ACME_IV_PullLayerBases",_bases];
             uiNamespace setVariable ["ACME_IV_PullCtrl", _mc];
             if (!isNull _mc) then {
                 (ctrlPosition _mc) params ["_p0x", "_p0y"];

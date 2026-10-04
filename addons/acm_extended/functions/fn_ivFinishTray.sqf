@@ -11,9 +11,9 @@ private _ctrls=[];
     private _pic=_d ctrlCreate ["RscPictureKeepAspect",-1];
     _pic ctrlSetText format ["\acm_extended\ui\iv\finish\icon_%1_ca.paa",_tool];
     _pic ctrlSetPosition [(_left)+_w*0.08,_top+_h*0.08,_w*0.84,_h*0.84];_pic ctrlCommit 0;_pic ctrlEnable false;
-    private _text=_d ctrlCreate ["RscText",-1];_text ctrlSetText _label;
+    private _text=_d ctrlCreate ["ACME_IV_ToolLabel",-1];_text ctrlSetText _label;
     _text ctrlSetPosition [_left,_top+_h,_w,_labelH];_text ctrlSetFontHeight (_labelH*0.75);_text ctrlCommit 0;_text ctrlEnable false;
-    private _click=_d ctrlCreate ["RscButton",-1];_click ctrlSetText "";
+    private _click=_d ctrlCreate ["ACME_IV_ToolButton",-1];_click ctrlSetText "";
     _click ctrlSetPosition [_left,_top,_w,_h];_click ctrlSetBackgroundColor [0,0,0,0];_click ctrlCommit 0;
     _click ctrlSetTooltip (switch (_tool) do {
         case "extension": {"Connect the extension to a seated catheter hub."};

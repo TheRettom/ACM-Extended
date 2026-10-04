@@ -7,7 +7,7 @@ switch (_action) do {
     case "flush": {
         if (!_extension) exitWith {[false,"Connect the extension first.","",0]};
         if (_line) exitWith {[false,"Tubing is already connected to this port.","",0]};
-        [true,"",["resisted_no_return","blood_return_flush"] select _patent,[5.6,7.4] select _patent]
+        [true,"",["resisted_no_return","blood_return_flush"] select _patent,[4.48,5.92] select _patent]
     };
     case "dressing": {
         if (!_extension || {!_tested}) exitWith {[false,"Check the line with the saline flush first.","",0]};
@@ -21,5 +21,8 @@ switch (_action) do {
         if (_line) exitWith {[false,"The tubing is already connected.","",0]};
         [true,"","iv_line_attach",1]
     };
+    case "removeExtension": {[ _extension,if (_extension) then {""} else {"No extension is attached."},"",0.05]};
+    case "removeDressing": {[ _dressed,if (_dressed) then {""} else {"No dressing is attached."},"",0.05]};
+    case "removeLine": {[ _line,if (_line) then {""} else {"No tubing is attached."},"",0.05]};
     default {[false,"Select an IV tool.","",0]};
 }

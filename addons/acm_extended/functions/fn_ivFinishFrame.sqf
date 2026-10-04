@@ -1,7 +1,8 @@
 /* Original assets run at 30 fps, without looping. The no-return branch reverses
    its FULL syringe connection frames to unlock and remove it without injection. */
 params ["_sequence", "_elapsed"];
-private _frame = floor ((_elapsed max 0) * 30);
+private _rate = if (_sequence in ["blood_return_flush","resisted_no_return"]) then {1.25} else {1};
+private _frame = floor ((_elapsed max 0) * 30 * _rate);
 switch (_sequence) do {
     case "blood_return_flush": {
         if (_frame >= 180) then {_sequence = "post_flush_secure"; _frame = (_frame - 180) min 41;};

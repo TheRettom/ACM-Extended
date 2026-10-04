@@ -217,7 +217,7 @@
     "extension_ca.paa": "e168291435d5686ffd8cd3cc5bbbbe8878f4e41d4e87fc4bfd23e73183376d9a",
     "icon_dressing_ca.paa": "b19e1d8f6c5a14206c92fc4b2dd3aa021084288092ee3689eeedccf9438cb6ca",
     "icon_extension_ca.paa": "cd94af8eccfc63001d11a616beffb16954ae136679a2360a1ce86f15c1e834ad",
-    "icon_flush_ca.paa": "61df25b00709a0e8e9c808020e3559ef671a4cbfd445cd9ffdd9835c4b34dcb3",
+    "icon_flush_ca.paa": "50f02b11f13dc6419f79945605e73e0eadd861d668490873065de2f293136864",
     "icon_line_ca.paa": "3de6f884ea01248f05292dabe8461fd96e588432509486581220bb10aff9e39e",
     "iv_line_attach_0000_ca.paa": "b335fbd99e625d8f8157aeb106687621e43b09819d0b78a28054c4ab035db23d",
     "iv_line_attach_0001_ca.paa": "eefbe46002c1ffd32d9636ab1e08f9fc9de866ec3430f1fd06fd8c665740950e",
@@ -447,8 +447,17 @@
     "tegaderm_apply_0032_ca.paa": "16f8d3d09c110d52436e427c3465e9da2cb585cbc36e45de397507dbd9c20c0a",
     "tegaderm_apply_0033_ca.paa": "c5079657435fbafd9b26e524c952f9602c9bba78193a3461f7176d846c86d595",
     "tegaderm_apply_0034_ca.paa": "c5079657435fbafd9b26e524c952f9602c9bba78193a3461f7176d846c86d595",
-    "tegaderm_apply_0035_ca.paa": "c5079657435fbafd9b26e524c952f9602c9bba78193a3461f7176d846c86d595"
+    "tegaderm_apply_0035_ca.paa": "c5079657435fbafd9b26e524c952f9602c9bba78193a3461f7176d846c86d595",
+    "cursor_extension_ca.paa": "d1995de37f5acc903f17800da6bcef721d0d082e9a37a85ada22a03b538fb2a7",
+    "cursor_flush_ca.paa": "0d408dc0516f9093f7e771631214c77609e0c2333875e3af3ab87b75c0d1e881",
+    "cursor_dressing_ca.paa": "70e5b74e0c66996f871c16d159b1c8815f9c95381cefe89ec5b5b609de42b4b2",
+    "cursor_line_ca.paa": "6787cd138115cd0cb5de369bbc17705c2009140b8ed1fb7a1f4afe25682e78ca"
   },
   "note": "Accessory-only layers preserve the existing gauge-specific native hub. Dressing applied separately after flush syringe withdrawal. No new artwork generated.",
-  "withdrawal_correction": "Final six successful-withdrawal frames use multiplicative alpha on the syringe to remove an opaque floating piston in the input export."
+  "withdrawal_correction": "Final six successful-withdrawal frames use multiplicative alpha on the syringe to remove an opaque floating piston in the input export.",
+  "socket_anchor": [
+    0.491455078125,
+    0.50390625
+  ],
+  "b233_changes": "Complete authored syringe icon; tool-only preview layers share the hub socket and square canvas."
 }

@@ -23,6 +23,6 @@ def test_single_debug_renderer_uses_cfgpatches_version():
 
 def test_stable_1241_debug_identity_has_no_rc_suffix():
     startup = read("functions/fn_initForkStartupRuntime.sqf")
-    assert 'ACME_buildBatch = "B232";' in startup
+    assert 'ACME_buildBatch = "B233";' in startup
     assert 'ACME_debugRevision = "";' in startup
-    assert 'ACME_networkAuditRevision = "NA8-B232-1.2.4.1-candidate";' in startup
+    assert 'ACME_networkAuditRevision = "NA8-B233-1.2.4.1-candidate";' in startup

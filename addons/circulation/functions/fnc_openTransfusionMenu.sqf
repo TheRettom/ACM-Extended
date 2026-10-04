@@ -368,29 +368,8 @@ private _pfh = [{
         _xMiddle ctrlShow (_IVMiddle > 0);
         _xLower ctrlShow (_IVLower > 0);
 
-        if (GVAR(TransfusionMenu_SelectIV) && (_forEachIndex + 2) == _partIndex) then {
-            switch (GVAR(TransfusionMenu_Selected_AccessSite)) do {
-                case 0: {
-                    _xUpper ctrlSetTextColor [0.20,0.65,0.20,1];
-                    _xMiddle ctrlSetTextColor [0.20,0.65,0.20,0.42];
-                    _xLower ctrlSetTextColor [0.20,0.65,0.20,0.42];
-                };
-                case 1: {
-                    _xUpper ctrlSetTextColor [0.20,0.65,0.20,0.42];
-                    _xMiddle ctrlSetTextColor [0.20,0.65,0.20,1];
-                    _xLower ctrlSetTextColor [0.20,0.65,0.20,0.42];
-                };
-                case 2: {
-                    _xUpper ctrlSetTextColor [0.20,0.65,0.20,0.42];
-                    _xMiddle ctrlSetTextColor [0.20,0.65,0.20,0.42];
-                    _xLower ctrlSetTextColor [0.20,0.65,0.20,1];
-                };
-            };
-        } else {
-            _xUpper ctrlSetTextColor [0.20,0.65,0.20,0.42];
-            _xMiddle ctrlSetTextColor [0.20,0.65,0.20,0.42];
-            _xLower ctrlSetTextColor [0.20,0.65,0.20,0.42];
-        };
+        // The shared access-hotspot painter owns hover/selected color. A second
+        // native painter must not dim a hovered access again on every tick.
     } forEach _IVCtrlArray;
 
     private _ctrlIOLeftArm = _display displayCtrl IDC_TRANSFUSIONMENU_BG_IO_LEFTARM;
@@ -410,11 +389,7 @@ private _pfh = [{
         if !(_value isEqualType 0 && {finite _value}) then {_value = 0;};
         _x ctrlShow (_value > 0);
 
-        if (!(GVAR(TransfusionMenu_SelectIV)) && (_forEachIndex + 1) == _partIndex) then {
-            _x ctrlSetTextColor [0.20,0.65,0.20,1];
-        } else {
-            _x ctrlSetTextColor [0.20,0.65,0.20,0.42];
-        };
+        // Color is owned by the same IV/IO hotspot renderer.
     } forEach _IOCtrlArray;
 
     private _ctrlStopTransfusionButton = _display displayCtrl IDC_TRANSFUSIONMENU_BUTTON_STOPIV;

@@ -362,7 +362,7 @@ private _actionIndex = 0;
         // flag. Direct Pressure Apply/Stop are immediate in-place state toggles, so they never touch pendingReopen.
         _ctrl ctrlAddEventHandler ['ButtonClick', _statement];
         if (_groupKey isEqualTo '' && {!(_actionClass in [
-            'acme_directpressure', 'acme_stopdirectpressure',
+            'acme_directpressure', 'acme_stopdirectpressure', 'opentransfusionmenu',
             'acme_performthoracostomy', 'acme_adjustthoracostomy', 'acme_insertchesttube'
         ])}) then {
             _ctrl ctrlAddEventHandler ['ButtonClick', {

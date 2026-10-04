@@ -138,8 +138,8 @@ class IVRotationRegression(unittest.TestCase):
         # B232 selects a finishing tool without capturing an arbitrary last hub.
         # The clicked hub's live angle is applied by the shared accessory pose.
         self.assertIn('ACME_fnc_ivFinishGrab', source('ivMinigameGrabLine'))
-        self.assertIn('_row param [13,0]', source('ivFinishPose'))
-        self.assertIn('call ACME_fnc_ivCathPose', source('ivFinishPose'))
+        self.assertIn('_row param [13,0]', source('ivFinishGeometry'))
+        self.assertIn('call ACME_fnc_ivFinishGeometry', source('ivFinishPose'))
         self.assertIn('ACME_IV_InsAngle', source('ivMinigameAddMark'))
         add_mark = source('ivMinigameAddMark')
         self.assertIn('[_patient, "ivMarks", ["add"', add_mark)

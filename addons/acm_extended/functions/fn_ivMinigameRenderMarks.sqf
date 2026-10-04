@@ -3,6 +3,14 @@
 // on init and on flip, so the sites stay put when you re-open or flip the limb.
 private _dlg = uiNamespace getVariable ["ACME_IV_DLG", displayNull];
 if (isNull _dlg) exitWith {};
+if ((uiNamespace getVariable ["ACME_IV_PullIdx",-1])>=0) then {
+    uiNamespace setVariable ["ACME_IV_PullIdx",-1];
+    uiNamespace setVariable ["ACME_IV_PullLayers",[]];
+    uiNamespace setVariable ["ACME_IV_PullLayerBases",[]];
+    private _extra=uiNamespace getVariable ["ACME_IV_PullExtra",controlNull];
+    if (!isNull _extra) then {ctrlDelete _extra;};
+    uiNamespace setVariable ["ACME_IV_PullExtra",controlNull];
+};
 private _rect = uiNamespace getVariable ["ACME_IV_BodyRect", []];
 if (_rect isEqualTo []) exitWith {};
 _rect params ["_bx", "_by", "_bw", "_bh"];

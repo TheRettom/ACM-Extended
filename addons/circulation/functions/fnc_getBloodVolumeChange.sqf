@@ -261,8 +261,9 @@ if (_hasFluidBags) then {
             // function rather than this element alone.
             private _isYSaline = _type in ["ACME_SalineY"] || {_onYLine && {_type == "Saline"}};
             private _detached = _unit getVariable ["ACME_detachedBags", []];
-            private _heldDetached = _bagUid in _detached;
-            if (_heldDetached && {([_unit, _partIndex, _iv, _accessSite, -1] call ACM_circulation_fnc_getIVFlowRate) > 0}) then {
+            private _physicallyUnplugged=_bagUid in (_unit getVariable ["ACME_IV_DisconnectedBagUIDs",[]]);
+            private _heldDetached = _bagUid in _detached || {_physicallyUnplugged};
+            if (_heldDetached && {!_physicallyUnplugged} && {([_unit, _partIndex, _iv, _accessSite, -1] call ACM_circulation_fnc_getIVFlowRate) > 0}) then {
                 _heldDetached = false;
                 [_unit, "ACME_detachedBags", _detached - [_bagUid]] call ACME_fnc_setVarNet;
             };

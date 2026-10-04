@@ -266,14 +266,8 @@ private _needleRects = [];
 
     private _iconX = _colX + (_slotW / 2) - (_iconW / 2);
 
-    // Keep the existing height preference, bounded by the actual fan footprint. This also safely brings old
-    // saved 0.34 defaults down from the top without overwriting the player's stored preference.
-    private _iconBias = missionNamespace getVariable ["ACME_iv_trayIconBias", 0.66];
-    if (!(_iconBias isEqualType 0) || {!finite _iconBias}) then {_iconBias = 0.66;};
-    private _minBias = 0.12 + (0.27 * _iconH / _slotH);
-    private _maxBias = 0.90 - (0.065 * _iconH / _slotH);
-    _iconBias = (_iconBias max _minBias) min _maxBias;
-    private _iconY = _ry + (_slotH * _iconBias) - (_iconH / 2);
+    // B233: the ready needle artwork is centered in its tile, never biased for a fan.
+    private _iconY = _ry + (_slotH / 2) - (_iconH / 2);
     (_display displayCtrl _bgIdc) ctrlSetPosition [_colX, _ry, _slotW, _slotH]; (_display displayCtrl _bgIdc) ctrlCommit 0;
     private _logo = _display displayCtrl _logoIdc;
     _logo ctrlSetText format ["\acm_extended\ui\iv\tray\iv_tray_%1g_0_ca.paa", _g];

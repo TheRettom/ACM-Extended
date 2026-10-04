@@ -3,7 +3,7 @@
    every job. There is no whole-array write supplied by a client. */
 params ["_patient","_medic","_phase","_uid","_action","_token","_epoch","_deadline",["_receipt",[]]];
 if (isNull _patient || {!local _patient} || {isNull _medic}) exitWith {};
-if !(_phase in ["begin","finish","cancel"] && {_action in ["extension","flush","dressing","line"]}
+if !(_phase in ["begin","finish","cancel"] && {_action in ["extension","flush","dressing","line","removeExtension","removeDressing","removeLine"]}
     && {_uid isEqualType ""} && {_uid != ""} && {_token isEqualType ""} && {_token != ""}
     && {count _token <= 120} && {_deadline isEqualType 0} && {finite _deadline}
     && {_epoch isEqualType 0}) exitWith {};
@@ -84,6 +84,9 @@ private _message="";
 if (_action in ["dressing","line"] && {!([_patient,_row] call ACME_fnc_ivFinishPatency)}) then {_valid=false;};
 if (_valid) then {
     switch (_action) do {
+        case "removeExtension": {_state=[false,false,false,false];[_patient,_bp,_site] call ACME_fnc_ivAccessoryUnplug;};
+        case "removeDressing": {_state set [2,false];};
+        case "removeLine": {_state set [3,false];[_patient,_bp,_site] call ACME_fnc_ivAccessoryUnplug;};
         case "extension": {_state set [0,true];};
         case "dressing": {_state set [2,true];};
         case "line": {_state set [3,true];};

@@ -6,6 +6,18 @@ private _patient=uiNamespace getVariable ["ACME_IV_Patient",objNull];
 private _medic=uiNamespace getVariable ["ACME_IV_Medic",objNull];
 private _active=+(_d getVariable ["ACME_IV_FinishActive",[]]);
 private _marks=_patient getVariable ["ACME_IV_Marks",[]];
+private _pin=_d getVariable ["ACME_IV_FlushPullPin",[]];
+if (count _pin==2) then {
+    if !(uiNamespace getVariable ["ACME_IV_Dragging",false]) then {_d setVariable ["ACME_IV_FlushPullPin",[]];} else {
+        private _cursor=[] call ACME_fnc_ivMinigameCursor;
+        if (count _cursor==2) then {
+            private _dx=((_cursor select 0)-(_pin select 0))/(pixelW/(pixelH max 1e-9));
+            private _dy=(_cursor select 1)-(_pin select 1);
+            private _h=(uiNamespace getVariable ["ACME_IV_BodyRect",[0,0,1,1]]) select 3;
+            if (sqrt (_dx*_dx+_dy*_dy)>0.035*_h) then {[] call ACME_fnc_ivFinishAbort;_active=[];};
+        };
+    };
+};
 private _p=if (isNull _medic) then {[]} else {_medic getVariable ["ACME_IV_FinishPending",[]]};
 if (count _active>=3 && {count _p>=9}) then {
     private _row=_active select 0;private _uid=_row param [14,""];
@@ -38,13 +50,14 @@ if (count _active>=3 && {count _p>=9}) then {
             if (_state select 0) then {"\acm_extended\ui\iv\finish\extension_ca.paa"} else {""}
         };
         private _film=if (_state select 2) then {"\acm_extended\ui\iv\finish\dressing_ca.paa"} else {""};
-        if (count _job>=7 && {serverTime<=(_job select 6)}) then {
+        if (count _job>=7 && {serverTime<=(_job select 6)} && {(_job select 5)!=""}) then {
             private _frame=[_job select 5,_elapsed] call ACME_fnc_ivFinishFrame;
             if ((_job select 2)=="dressing") then {_film=_frame;} else {_tex=_frame;};
         };
         {
             _x params ["_ctrl","_texture"];
-            if (!isNull _ctrl) then {
+            private _pulling=_ctrl in (uiNamespace getVariable ["ACME_IV_PullLayers",[]]);
+            if (!isNull _ctrl && {!_pulling}) then {
                 if ((_ctrl getVariable ["ACME_IV_FinishTexture","-"])!=_texture) then {
                     _ctrl ctrlSetText _texture;_ctrl setVariable ["ACME_IV_FinishTexture",_texture];
                 };

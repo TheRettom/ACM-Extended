@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 import pytest
 from test_menu_death_lifecycle import ROOT, read, adapt, execute
+from test_historical_vial_execution import map_defaults
 
 ASSETS = ROOT / 'addons/acm_extended/ui/iv/finish'
 FUNCTIONS = ['ivFinishPlan','ivFinishFrame','ivFinishPatency','ivFinishCommit',
@@ -94,7 +95,7 @@ def test_procedure_rules(action,state,patent,allowed,sequence):
  ('resisted_no_return',100,'resisted_no_return_0000'),('blood_return_flush',-10,'blood_return_flush_0000'),
 ])
 def test_frames_are_bounded_and_failed_syringe_never_uses_empty_branch(seq,time,expected):
-    run(f'private _f=["{seq}",{time}] call ACME_fnc_ivFinishFrame;'
+    run(f'private _f=["{seq}",{time/1.25 if seq in ["blood_return_flush","resisted_no_return"] else time}] call ACME_fnc_ivFinishFrame;'
         f'[(_f find "{expected}_ca.paa")>=0,"frame"] call _check;')
 
 @pytest.mark.parametrize('bp,site,key', [('leftarm','upper','leftarm_0'),('rightarm','middle','rightarm_1'),
@@ -243,7 +244,7 @@ def test_registration(name):
 def test_all_shipped_asset_hashes_and_count():
     data=json.loads((ASSETS/'manifest.json').read_text())
     paths=list(ASSETS.glob('*.paa'))
-    assert len(paths)==439
+    assert len(paths)==443
     # Digest validation reads the actual converted game files, not the preview sources.
     digests=data['files']
     for p in paths:
@@ -265,7 +266,14 @@ def start_source():
     s=s.replace('playSound "ACE_Sound_Click";','_clicks=_clicks+1;')
     return s
 
+def geometry_source(name):
+    s=source(name).replace('pixelW','_testPixelW').replace('pixelH','_testPixelH')
+    if name=='ivFinishGeometry':
+        s=re.sub(r'private _axis=.+?;', 'private _axis=_testAxis;',s)
+    return map_defaults(s)
+
 START_SETUP=r'''
+private _mapDefault={params ["_map","_args"];_args params ["_key","_default"];if (_key in _map) then {_map get _key} else {_default}};
 private _testAxis=[0,-1];private _testPixelW=1/1920;private _testPixelH=1/1080;
 private _clicks=0;private _cursorHidden=false;private _takes=0;private _stock=true;private _testSupplyReceipt=+_receipt;
 ACME_fnc_ivUiValid={true};
@@ -280,7 +288,7 @@ uiNamespace setVariable ["ACME_IV_Session",[_patient,7,5]];
 _d setVariable ["ACME_IV_ViewGeneration",2];
 uiNamespace setVariable ["ACME_IV_Held","flush"];
 _row set [15,[true,false,false,false]];_patient setVariable ["ACME_IV_Marks",[_row]];
-'''
+'''+''.join('ACME_fnc_'+n+'={'+geometry_source(n)+'};' for n in ['ivFinishGeometry','ivFinishPoint','ivFinishTarget'])
 
 @pytest.mark.parametrize('scenario',['normal','repeat_click','other_view','no_stock','no_hub','needs_extension','missed_site'])
 def test_real_click_launch_and_exact_supply_reservation(scenario):
@@ -290,8 +298,8 @@ def test_real_click_launch_and_exact_supply_reservation(scenario):
     if scenario=='no_hub':body+='_patient setVariable ["ACME_IV_Marks",[]];'
     if scenario=='needs_extension':body+='_row set [15,[false,false,false,false]];_patient setVariable ["ACME_IV_Marks",[_row]];'
     if scenario=='missed_site':body+='_patient setVariable ["ACME_ivCompromised_leftarm_1",true];'
-    body+='[0.5,0.5] call ACME_fnc_ivFinishStart;'
-    if scenario=='repeat_click':body+='[0.5,0.5] call ACME_fnc_ivFinishStart;'
+    body+='([_row,[1033.02/2048,1386.52/2048]] call ACME_fnc_ivFinishPoint) call ACME_fnc_ivFinishStart;'
+    if scenario=='repeat_click':body+='([_row,[1033.02/2048,1386.52/2048]] call ACME_fnc_ivFinishPoint) call ACME_fnc_ivFinishStart;'
     allowed=scenario in ['normal','repeat_click','missed_site']
     body+=f'[count _events=={1 if allowed else 0},"one request or local rejection"] call _check;'
     body+=f'[_takes=={1 if allowed or scenario=="no_stock" else 0},"supply reservation count"] call _check;'
@@ -305,10 +313,11 @@ def test_distal_port_target_matches_square_pixel_asset_transform(angle):
     # The port uses the same physical square canvas, including non-square body panel.
     import math
     t=math.radians(angle)
-    dx=(1033.02-1006.5)/2048*.62;dy=(1386.52-910)/2048*.62
+    dx=(1033.02-1006.5)/2048*.62;dy=(1386.52-1032)/2048*.62
     ratio=(1/1920)/(1/1080)
-    u=.5+(dx*math.cos(t)-dy*math.sin(t))*ratio
-    v=.5+dx*math.sin(t)+dy*math.cos(t)
+    hu=(.49246-.49166)*.62;hv=(.50391-.44434)*.62
+    u=.5+((hu+dx)*math.cos(t)-(hv+dy)*math.sin(t))*ratio
+    v=.5+(hu+dx)*math.sin(t)+(hv+dy)*math.cos(t)
     run(START_SETUP+f'_row set [13,{angle}];_patient setVariable ["ACME_IV_Marks",[_row]];'+
         'ACME_fnc_ivFinishStart={'+start_source()+'};'+
         f'[{u},{v}] call ACME_fnc_ivFinishStart;'+
@@ -438,7 +447,7 @@ ACME_fnc_ownerDispatch={
  };
 };
 _d setVariable ["ACME_IV_FinishCtrls",[]];
-[0.5,0.5] call ACME_fnc_ivFinishStart;
+([_row,[1033.02/2048,1386.52/2048]] call ACME_fnc_ivFinishPoint) call ACME_fnc_ivFinishStart;
 [(_d getVariable ["ACME_IV_FinishBusy",false]),"awaiting sequence"] call _check;
 [count (_d getVariable ["ACME_IV_FinishActive",[]])==3,"ACK enabled animation"] call _check;
 [count _refunds==1 && {!((_refunds select 0) select 1)},"ACK commits one syringe"] call _check;

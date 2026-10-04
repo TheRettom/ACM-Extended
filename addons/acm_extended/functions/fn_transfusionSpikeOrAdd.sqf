@@ -32,7 +32,7 @@ if (_class isEqualTo "") exitWith {};
 // handed straight to ACM's native add bag, which hangs it to fill, and the removal is likewise handed to native
 // in fn_transfusionpullbag, so it returns the filled blood. native addbag reads the same right-list selection
 // this function does, so the pick carries over.
-if ((_class find "FieldBloodTransfusionKit") >= 0) exitWith { call ACM_circulation_fnc_TransfusionMenu_AddBag; };
+if ((_class find "FieldBloodTransfusionKit") >= 0) exitWith { call ACME_fnc_fbtkHang; };
 
 private _action = ((_right lbData _idx) splitString "|") param [1, ""];
 // is it a cooler-sourced row? the available-list rows we add for cooler blood carry a trailing |COOLER

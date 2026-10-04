@@ -99,7 +99,7 @@ switch (toLower _op) do {
         private _i = _marks findIf {[_x, _sig] call _matchesSignature && {toLower (_x param [4, ""]) == "hub"}};
         if (_i >= 0) then {
             private _row = +(_marks select _i);
-            _row set [4, "removed"];
+            _row set [15,[false,false,false,false]]; _row set [16,[]]; _row set [4, "removed"];
             _row set [5, _hole];
             _marks set [_i, _row];
             _changed = true;
@@ -118,7 +118,7 @@ switch (toLower _op) do {
         };
         if (_i >= 0) then {
             private _row = +(_marks select _i);
-            _row set [4, "removed"]; _row set [5, _hole]; _marks set [_i, _row]; _changed = true;
+            _row set [15,[false,false,false,false]]; _row set [16,[]]; _row set [4, "removed"]; _row set [5, _hole]; _marks set [_i, _row]; _changed = true;
         };
         // Defensive cleanup of legacy stale hubs only when the native circulation state confirms the whole part is empty.
         private _stillHas = false;
@@ -129,7 +129,7 @@ switch (toLower _op) do {
             for "_j" from 0 to ((count _marks) - 1) do {
                 private _row = +(_marks select _j);
                 if (toLower (_row param [0, ""]) == toLower _bp && {toLower (_row param [4, ""]) == "hub"}) then {
-                    _row set [4, "removed"]; _row set [5, _hole]; _marks set [_j, _row]; _changed = true;
+                    _row set [15,[false,false,false,false]]; _row set [16,[]]; _row set [4, "removed"]; _row set [5, _hole]; _marks set [_j, _row]; _changed = true;
                 };
             };
         };

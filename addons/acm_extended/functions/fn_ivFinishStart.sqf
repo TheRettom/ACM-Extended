@@ -1,37 +1,23 @@
 /* Select a real seated hub, never a global 'last puncture' outcome. */
-params ["_fx","_fy"];
+params ["_fx","_fy",["_override",""],["_exactUID",""]];
 private _d=uiNamespace getVariable ["ACME_IV_DLG",displayNull];
 private _medic=uiNamespace getVariable ["ACME_IV_Medic",objNull];
 private _patient=uiNamespace getVariable ["ACME_IV_Patient",objNull];
 if (isNull _d || {isNull _medic} || {!local _medic} || {!([] call ACME_fnc_ivUiValid)}) exitWith {false};
 if ((_medic getVariable ["ACME_IV_FinishPending",[]]) isNotEqualTo []) exitWith {true};
-private _action=uiNamespace getVariable ["ACME_IV_Held","none"];
-if !(_action in ["extension","flush","dressing","line"]) exitWith {false};
+private _action=if (_override!="") then {_override} else {uiNamespace getVariable ["ACME_IV_Held","none"]};
+if !(_action in ["extension","flush","dressing","line","removeExtension","removeDressing","removeLine"]) exitWith {false};
 private _bp=uiNamespace getVariable ["ACME_IV_BodyPart",""];
 private _view=uiNamespace getVariable ["ACME_IV_View",""];
-private _aspect=uiNamespace getVariable ["ACME_IV_AspectFix",0.5625];
-private _best=[];private _distance=0.07;
-{
-    if ((_x param [4,""])=="hub" && {(_x select 0)==_bp} && {(_x select 1)==_view}) then {
-        // The same hub hit area remains selectable while the extension's distal port
-        // can also be clicked; use the rendered accessory transform for that point.
-        private _points=[[_x select 2,_x select 3]];
-        private _axis=(uiNamespace getVariable ["ACME_IV_FrameAxis",createHashMap]) getOrDefault [_x param [6,""],[0,-1]];
-        private _a=((_axis select 0) atan2 (-(_axis select 1)))+(_x param [13,0]);
-        private _scale=uiNamespace getVariable ["ACME_IV_CathScale",0.62];
-        private _dx=(1033.02-1006.5)/2048*_scale;
-        private _dy=(1386.52-910)/2048*_scale;
-        private _rect=uiNamespace getVariable ["ACME_IV_BodyRect",[0,0,1,1]];
-        private _xRatio=(_rect select 3)*(pixelW/(pixelH max 1e-9))/((_rect select 2) max 1e-9);
-        _points pushBack [(_x select 2)+(_dx*cos _a-_dy*sin _a)*_xRatio,(_x select 3)+_dx*sin _a+_dy*cos _a];
-        private _row=+_x;
-        {
-            private _du=_fx-(_x select 0);private _dv=(_fy-(_x select 1))/_aspect;
-            private _dist=sqrt (_du*_du+_dv*_dv);
-            if (_dist<_distance) then {_distance=_dist;_best=_row;};
-        } forEach _points;
-    };
-} forEach (_patient getVariable ["ACME_IV_Marks",[]]);
+private _r=uiNamespace getVariable ["ACME_IV_BodyRect",[]];
+if (count _r!=4) exitWith {false};
+private _target=[(_r select 0)+(_r select 2)*_fx,(_r select 1)+(_r select 3)*_fy,_action] call ACME_fnc_ivFinishTarget;
+private _best=if (_target isEqualTo []) then {[]} else {_target select 0};
+if (_exactUID!="" && {_action in ["removeExtension","removeDressing","removeLine"]}) then {
+    private _marks=_patient getVariable ["ACME_IV_Marks",[]];
+    private _i=_marks findIf {(_x param [14,""])==_exactUID && {(_x param [4,""])=="hub"} && {(_x select 0)==_bp} && {(_x select 1)==_view}};
+    _best=if (_i<0) then {[]} else {+(_marks select _i)};
+};
 if (_best isEqualTo []) exitWith {false};
 private _uid=_best param [14,""];
 if (_uid=="") exitWith {["Reopen the IV view to load this catheter.",2,_medic] call ace_common_fnc_displayTextStructured;true};

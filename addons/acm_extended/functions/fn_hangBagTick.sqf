@@ -84,6 +84,7 @@ if (_hPart != "") then {
     { if (toLower _x == _hPart) then { _hbags = _y; }; } forEach (_patient getVariable ["ACM_circulation_IV_Bags", createHashMap]);
     private _flowing = (_hbags findIf {
         !((_x param [0, ""]) in ["ACME_Empty", "ACME_EmptySaline", "ACME_SalineY"]) && {(_x param [1, 0]) > 0.5}
+            && {!((_x param [8, ""]) in (_patient getVariable ["ACME_IV_DisconnectedBagUIDs", []]))}
     }) >= 0;
     if (_flowing) then {
         _medic setVariable ["ACME_hang_sawFlow", true];

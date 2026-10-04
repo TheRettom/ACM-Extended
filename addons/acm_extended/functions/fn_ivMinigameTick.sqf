@@ -323,14 +323,7 @@ if (_display getVariable ["ACME_IV_FinishBusy",false]) exitWith {
     if (!isNull _dot) then {_dot ctrlShow false;};
 };
 if (_held in ["extension","flush","dressing","line"]) exitWith {
-    private _cursor=[] call ACME_fnc_ivMinigameCursor;
-    if (count _cursor==2 && {!isNull _heldC}) then {
-        private _h=safeZoneH*0.10;private _w=_h*_af;
-        _heldC ctrlSetAngle [0,0.5,0.5,false];
-        _heldC ctrlSetText format ["\acm_extended\ui\iv\finish\icon_%1_ca.paa",_held];
-        _heldC ctrlSetPosition [(_cursor select 0)-_w/2,(_cursor select 1)-_h/2,_w,_h];
-        _heldC ctrlCommit 0;_heldC ctrlShow true;
-    };
+    [_heldC,_held,[] call ACME_fnc_ivMinigameCursor] call ACME_fnc_ivFinishPreview;
     if (!isNull _dot) then {_dot ctrlShow false;};
 };
 if (_held == "line") exitWith {

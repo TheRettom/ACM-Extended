@@ -128,13 +128,13 @@ if ((uiNamespace getVariable ["ACME_infusion_LayoutDisplay", displayNull]) != _d
         // baseremovepos, and the layout anchors off that captured value, so hiding the live control here is safe.
         if (!isNull _ctrlRemove) then {
             private _rp = ctrlPosition _ctrlRemove;
-            _ctrlRemove ctrlShow false;
-            _ctrlRemove ctrlEnable false;
+            [_ctrlRemove,"show",false] call ACME_fnc_transfusionUiSet;
+            [_ctrlRemove,"enable",false] call ACME_fnc_transfusionUiSet;
             if (!isNull _ctrlPullBag) then {
-                _ctrlPullBag ctrlSetPosition _rp;
-                _ctrlPullBag ctrlCommit 0;
-                _ctrlPullBag ctrlShow true;
-                _ctrlPullBag ctrlEnable true;
+                [_ctrlPullBag,"position",_rp] call ACME_fnc_transfusionUiSet;
+
+                [_ctrlPullBag,"show",true] call ACME_fnc_transfusionUiSet;
+                [_ctrlPullBag,"enable",true] call ACME_fnc_transfusionUiSet;
             };
         };
 
@@ -201,15 +201,12 @@ if !(_display getVariable ["ACME_txPaneHooks", false]) then {
 // is exactly what scrambled the menu. retry next tick, once ACM has finished building the reopened dialog.
 if ((uiNamespace getVariable ["ACME_infusion_LayoutDisplay", displayNull]) != _display) exitWith {};
 
-// a defensive pre-hide of the volatile adjust infusion controls: the drop set, the rate, the adjust button, the
-// infusions sub-list and its move and remove. the active-infusion block below re-shows and repositions
-// whichever apply in the same frame, so there is no flicker in the normal case. but if that block ever aborts
-// on a bad or edge-case bag entry, these would otherwise be left visible at their raw config positions, which
-// is the report that the menu scrambles after give infusion, titrate and done. pre-hiding degrades the worst
-// case to a missing infusion sub-list, which a reopen still recovers, instead of a scrambled, unusable menu.
+// B233: obsolete rate widgets stay hidden, but active buttons are not hidden and
+// re-shown every tick. Their owning sections below decide visibility.
+
 {
-    if (!isNull _x) then { _x ctrlShow false; };
-} forEach [_ctrlDrop, _ctrlRateDown, _ctrlRateUp, _ctrlRateText, _ctrlActiveInfTitle, _ctrlAdjust];
+    if (!isNull _x) then { [_x,"show",false] call ACME_fnc_transfusionUiSet; };
+} forEach [_ctrlDrop, _ctrlRateDown, _ctrlRateUp];
 
 private _leftBase = +(uiNamespace getVariable ["ACME_infusion_BaseLeftListPos", []]);
 private _rightBase = +(uiNamespace getVariable ["ACME_infusion_BaseRightListPos", []]);
@@ -223,8 +220,8 @@ private _stopNudge = safeZoneH * 0.008;
 if (_stopBase isNotEqualTo []) then {
     _stopBase set [1, (_stopBase select 1) + _stopNudge];
     if (!isNull _ctrlNativeStop) then {
-        _ctrlNativeStop ctrlSetPosition _stopBase;
-        _ctrlNativeStop ctrlCommit 0;
+        [_ctrlNativeStop,"position",_stopBase] call ACME_fnc_transfusionUiSet;
+
     };
 };
 if (_leftBase isNotEqualTo []) then {
@@ -297,8 +294,8 @@ private _preparedTitleY = _giveY + _buttonH + _btnGap;
 private _preparedY = _preparedTitleY + _preparedTitleH;
 
 if (!isNull _ctrlRightList) then {
-    _ctrlRightList ctrlSetPosition [_rightX, _nativeListY, _rightW, _nativeListH max _rowStep];
-    _ctrlRightList ctrlCommit 0;
+    [_ctrlRightList,"position",[_rightX, _nativeListY, _rightW, _nativeListH max _rowStep]] call ACME_fnc_transfusionUiSet;
+
 };
 
 // the "Prepared IV sets" toggle button, 86144, in its own row at the top of the column, and the prepared-sets
@@ -310,7 +307,7 @@ private _preparedMode = uiNamespace getVariable ["ACME_preparedListMode", false]
 private _preparedSetCountB50 = count (ACE_player getVariable ["ACME_preparedIVSets", []]);
 private _ctrlSetsBtn = _display displayCtrl 86144;
 if (!isNull _ctrlSetsBtn) then {
-    _ctrlSetsBtn ctrlSetPosition [_rightX, _setsBtnY, _rightW, _setsBtnH];
+    [_ctrlSetsBtn,"position",[_rightX, _setsBtnY, _rightW, _setsBtnH]] call ACME_fnc_transfusionUiSet;
     _ctrlSetsBtn ctrlSetFontHeight _fontH;
     // B50: the toggle advertises exactly how many complete IV sets the medic is carrying.  If any exist, pulse
     // the button with the same circulation green family used elsewhere in the medical body map.
@@ -327,16 +324,16 @@ if (!isNull _ctrlSetsBtn) then {
         _ctrlSetsBtn ctrlSetBackgroundColor [0, 0, 0, 0.55];
         _ctrlSetsBtn ctrlSetTextColor [1, 1, 1, 1];
     };
-    _ctrlSetsBtn ctrlCommit 0;
-    _ctrlSetsBtn ctrlShow true;
+
+    [_ctrlSetsBtn,"show",true] call ACME_fnc_transfusionUiSet;
 };
 private _ctrlSetsList = _display displayCtrl 86145;
 if (!isNull _ctrlSetsList) then {
-    _ctrlSetsList ctrlSetPosition [_rightX, _nativeListY, _rightW, _nativeListH max _rowStep];
-    _ctrlSetsList ctrlCommit 0;
-    _ctrlSetsList ctrlShow _preparedMode;
+    [_ctrlSetsList,"position",[_rightX, _nativeListY, _rightW, _nativeListH max _rowStep]] call ACME_fnc_transfusionUiSet;
+
+    [_ctrlSetsList,"show",_preparedMode] call ACME_fnc_transfusionUiSet;
 };
-if (!isNull _ctrlRightList) then { _ctrlRightList ctrlShow (!_preparedMode); };
+if (!isNull _ctrlRightList) then { [_ctrlRightList,"show",(!_preparedMode)] call ACME_fnc_transfusionUiSet; };
 
 // the spike and add button, 86141, and y tubing, 86142. for a blood bag, or while a y pairing is pending, the
 // two share the row as spike and y tubing. otherwise spike takes the full width and y tubing is hidden. in
@@ -355,19 +352,19 @@ private _ctrlYBtn = _display displayCtrl 86142;
 if (!isNull _ctrlSpikeBtn) then {
     if (_showY0 && {!isNull _ctrlYBtn}) then {
         private _halfW = (_rightW - _gap) / 2;
-        _ctrlSpikeBtn ctrlSetPosition [_rightX, _spikeY, _halfW, _spikeRowH];
-        _ctrlYBtn ctrlSetPosition [_rightX + _halfW + _gap, _spikeY, _halfW, _spikeRowH];
-        _ctrlYBtn ctrlSetFontHeight _fontH; _ctrlYBtn ctrlCommit 0; _ctrlYBtn ctrlShow true;
+        [_ctrlSpikeBtn,"position",[_rightX, _spikeY, _halfW, _spikeRowH]] call ACME_fnc_transfusionUiSet;
+        [_ctrlYBtn,"position",[_rightX + _halfW + _gap, _spikeY, _halfW, _spikeRowH]] call ACME_fnc_transfusionUiSet;
+        _ctrlYBtn ctrlSetFontHeight _fontH;  [_ctrlYBtn,"show",true] call ACME_fnc_transfusionUiSet;
     } else {
-        _ctrlSpikeBtn ctrlSetPosition [_rightX, _spikeY, _rightW, _spikeRowH];
-        if (!isNull _ctrlYBtn) then { _ctrlYBtn ctrlShow false; };
+        [_ctrlSpikeBtn,"position",[_rightX, _spikeY, _rightW, _spikeRowH]] call ACME_fnc_transfusionUiSet;
+        if (!isNull _ctrlYBtn) then { [_ctrlYBtn,"show",false] call ACME_fnc_transfusionUiSet; };
     };
     _ctrlSpikeBtn ctrlSetFontHeight _fontH;
-    _ctrlSpikeBtn ctrlCommit 0;
-    _ctrlSpikeBtn ctrlShow true;
+
+    [_ctrlSpikeBtn,"show",true] call ACME_fnc_transfusionUiSet;
 };
 private _ctrlSpikeNative = _display displayCtrl 86140;
-if (!isNull _ctrlSpikeNative) then { _ctrlSpikeNative ctrlShow false; };
+if (!isNull _ctrlSpikeNative) then { [_ctrlSpikeNative,"show",false] call ACME_fnc_transfusionUiSet; };
 
 {
     if (!isNull _x) then {_x ctrlSetFontHeight _fontH;};
@@ -382,25 +379,25 @@ if (!isNull _ctrlSpikeNative) then { _ctrlSpikeNative ctrlShow false; };
 } forEach [86134, 86148];
 
 if (!isNull _ctrlPrep) then {
-    _ctrlPrep ctrlSetPosition [_rightX, _prepY, _rightW, _buttonH];
-    _ctrlPrep ctrlCommit 0;
+    [_ctrlPrep,"position",[_rightX, _prepY, _rightW, _buttonH]] call ACME_fnc_transfusionUiSet;
+
 };
 
 if (!isNull _ctrlGivePrep) then {
-    _ctrlGivePrep ctrlSetPosition [_rightX, _giveY, _rightW, _buttonH];
-    _ctrlGivePrep ctrlCommit 0;
+    [_ctrlGivePrep,"position",[_rightX, _giveY, _rightW, _buttonH]] call ACME_fnc_transfusionUiSet;
+
 };
 
 if (!isNull _ctrlPreparedTitle) then {
-    _ctrlPreparedTitle ctrlSetPosition [_rightX, _preparedTitleY, _rightW, _preparedTitleH];
+    [_ctrlPreparedTitle,"position",[_rightX, _preparedTitleY, _rightW, _preparedTitleH]] call ACME_fnc_transfusionUiSet;
     _ctrlPreparedTitle ctrlSetFontHeight (_preparedTitleH * 0.62);
-    _ctrlPreparedTitle ctrlCommit 0;
-    _ctrlPreparedTitle ctrlShow true;
+
+    [_ctrlPreparedTitle,"show",true] call ACME_fnc_transfusionUiSet;
 };
 
 if (!isNull _ctrlPreparedList) then {
-    _ctrlPreparedList ctrlSetPosition [_rightX, _preparedY, _rightW, _preparedH];
-    _ctrlPreparedList ctrlCommit 0;
+    [_ctrlPreparedList,"position",[_rightX, _preparedY, _rightW, _preparedH]] call ACME_fnc_transfusionUiSet;
+
 };
 
 // B227: line service first, then bag movement/removal. Original anchor geometry is immutable.
@@ -420,8 +417,8 @@ if (_moveBase isNotEqualTo [] && {_removeBase isNotEqualTo []}) then {
     _stack append [_ctrlMove,_ctrlPullBag,_ctrlInject,_ctrlInfuse,_ctrlHang,(_display displayCtrl 86148)];
     {
         if (!isNull _x) then {
-            _x ctrlSetPosition [_mx,_my + _forEachIndex * _pitch,_mw,_mh];
-            _x ctrlSetFontHeight _fontH; _x ctrlCommit 0;
+            [_x,"position",[_mx,_my + _forEachIndex * _pitch,_mw,_mh]] call ACME_fnc_transfusionUiSet;
+            _x ctrlSetFontHeight _fontH;
         };
     } forEach _stack;
 };
@@ -527,24 +524,24 @@ if (!isNull _ctrlLeftList) then {
             private _infTitleY = _ly + _normalH + _gap;
             private _infListY = _infTitleY + _titleH;
             private _infListH = (_ly + _lh) - _infListY;
-            _ctrlLeftList ctrlSetPosition [_lx, _ly, _lw, _normalH];
-            _ctrlLeftList ctrlCommit 0;
+            [_ctrlLeftList,"position",[_lx, _ly, _lw, _normalH]] call ACME_fnc_transfusionUiSet;
+
             if (!isNull _ctrlActiveInfTitle) then {
-                _ctrlActiveInfTitle ctrlSetPosition [_lx, _infTitleY, _lw, _titleH];
+                [_ctrlActiveInfTitle,"position",[_lx, _infTitleY, _lw, _titleH]] call ACME_fnc_transfusionUiSet;
                 _ctrlActiveInfTitle ctrlSetFontHeight (_titleH * 0.62);
-                _ctrlActiveInfTitle ctrlCommit 0;
-                _ctrlActiveInfTitle ctrlShow true;
+
+                [_ctrlActiveInfTitle,"show",true] call ACME_fnc_transfusionUiSet;
             };
             if (!isNull _ctrlActiveInfList) then {
-                _ctrlActiveInfList ctrlSetPosition [_lx, _infListY, _lw, _infListH max _rowStep];
-                _ctrlActiveInfList ctrlCommit 0;
-                _ctrlActiveInfList ctrlShow true;
+                [_ctrlActiveInfList,"position",[_lx, _infListY, _lw, _infListH max _rowStep]] call ACME_fnc_transfusionUiSet;
+
+                [_ctrlActiveInfList,"show",true] call ACME_fnc_transfusionUiSet;
             };
         } else {
-            _ctrlLeftList ctrlSetPosition _leftBase;
-            _ctrlLeftList ctrlCommit 0;
-            if (!isNull _ctrlActiveInfTitle) then {_ctrlActiveInfTitle ctrlShow false;};
-            if (!isNull _ctrlActiveInfList) then {_ctrlActiveInfList ctrlShow false; _display setVariable ["ACME_txRebuilding", true];
+            [_ctrlLeftList,"position",_leftBase] call ACME_fnc_transfusionUiSet;
+
+            if (!isNull _ctrlActiveInfTitle) then {[_ctrlActiveInfTitle,"show",false] call ACME_fnc_transfusionUiSet;};
+            if (!isNull _ctrlActiveInfList) then {[_ctrlActiveInfList,"show",false] call ACME_fnc_transfusionUiSet; _display setVariable ["ACME_txRebuilding", true];
             lbClear _ctrlActiveInfList;};
         };
     };
@@ -719,13 +716,13 @@ if (!isNull _ctrlPreparedList) then {
         _selectedPrepared = _ctrlPreparedList lbValue _row;
         if (_selectedPrepared >= 0) then {missionNamespace setVariable ["ACME_infusion_SelectedPreparedIndex", _selectedPrepared];};
     };
-    _ctrlPreparedList ctrlShow true;
+    [_ctrlPreparedList,"show",true] call ACME_fnc_transfusionUiSet;
 };
 
-if (!isNull _ctrlPrep) then {_ctrlPrep ctrlEnable _canPrep;};
+if (!isNull _ctrlPrep) then {[_ctrlPrep,"enable",_canPrep] call ACME_fnc_transfusionUiSet;};
 // pull bag operates on the selected hung bag. it must never resolve to an infusion, and it must gray out
 // entirely when no bag row is selected in the transfusion list.
-if (!isNull _ctrlPullBag) then {_ctrlPullBag ctrlEnable (_selectedAccessValid && {_bagRowSelected});};
+if (!isNull _ctrlPullBag) then {[_ctrlPullBag,"enable",(_selectedAccessValid && {_bagRowSelected})] call ACME_fnc_transfusionUiSet;};
 private _preparedLineIsY = [
     missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Target", objNull],
     missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Selected_BodyPart", ""],
@@ -734,31 +731,31 @@ private _preparedLineIsY = [
 ] call ACME_fnc_isYLineAccess;
 // 86120 is the repurposed "Discard Y Tubing" button. it is live only when the selected access actually carries
 // a y and a bag row is selected in the transfusion list.
-if (!isNull _ctrlInject) then {_ctrlInject ctrlEnable (_bagRowSelected && {_preparedLineIsY});};
+if (!isNull _ctrlInject) then {[_ctrlInject,"enable",(_bagRowSelected && {_preparedLineIsY})] call ACME_fnc_transfusionUiSet;};
 // 86147 is the restored infuse. it is live only when the selected hung bag can carry a medication, which the
 // central gate, canMedicateBagContext, now restricts to a plain normal saline bag with fluid left at any
 // volume, and only when a bag row is actually selected in the transfusion list.
-if (!isNull _ctrlInfuse) then {_ctrlInfuse ctrlEnable (_bagRowSelected && {_canActive});};
+if (!isNull _ctrlInfuse) then {[_ctrlInfuse,"enable",(_bagRowSelected && {_canActive})] call ACME_fnc_transfusionUiSet;};
 if (!isNull _ctrlGivePrep) then {
     private _canGive = _selectedAccessValid && {(_selectedPrepared >= 0 && {_selectedPrepared < _preparedCount})} && {!_preparedLineIsY};
-    _ctrlGivePrep ctrlEnable _canGive;
+    [_ctrlGivePrep,"enable",_canGive] call ACME_fnc_transfusionUiSet;
     _ctrlGivePrep ctrlSetText "Give Infusion";
     // yellow when an infusion is selected, because this action is transfusion-bound.
     _ctrlGivePrep ctrlSetTextColor ([[1, 1, 1, 1], (["warning", 1] call ACME_fnc_a11yColor)] select _canGive);
 };
 
-if (!isNull _ctrlDrop) then {_ctrlDrop ctrlShow false;};
-if (!isNull _ctrlRateDown) then {_ctrlRateDown ctrlShow false;};
-if (!isNull _ctrlRateUp) then {_ctrlRateUp ctrlShow false;};
+if (!isNull _ctrlDrop) then {[_ctrlDrop,"show",false] call ACME_fnc_transfusionUiSet;};
+if (!isNull _ctrlRateDown) then {[_ctrlRateDown,"show",false] call ACME_fnc_transfusionUiSet;};
+if (!isNull _ctrlRateUp) then {[_ctrlRateUp,"show",false] call ACME_fnc_transfusionUiSet;};
 if (!isNull _ctrlRateText) then {
     // attached flush to the bottom edge of ACM's transfusion window. on menubackground, x is szx plus szw/4, w is
     // szw/2, and the bottom is szy plus 0.75 times szh.
     private _winX = _uiX + (_uiW / 2) - (_uiW * 0.35);
     private _winW = _uiW * 0.70;
     private _winBottom = safeZoneY + (safeZoneH * 0.865);
-    _ctrlRateText ctrlSetPosition [_winX, _winBottom, _winW, _buttonH * 1.25];
-    _ctrlRateText ctrlCommit 0;
-    _ctrlRateText ctrlShow _hasInfusion;
+    [_ctrlRateText,"position",[_winX, _winBottom, _winW, _buttonH * 1.25]] call ACME_fnc_transfusionUiSet;
+
+    [_ctrlRateText,"show",_hasInfusion] call ACME_fnc_transfusionUiSet;
     _ctrlRateText ctrlSetText _rateText;
 };
 
@@ -769,7 +766,7 @@ if (!isNull _ctrlRateText) then {
 if (!isNull _ctrlMove) then {
     private _nativeSelMedicated = _hasInfusion && {!isNull _ctrlLeftList} && {(lbCurSel _ctrlLeftList) >= 0};
     private _acmMoveBusy = (missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Move_Active", false]) || {missionNamespace getVariable ["ACM_circulation_TransfusionMenu_Move_Active_Moving", false]};
-    _ctrlMove ctrlEnable (_acmMoveBusy || {_selectedAccessValid && {_bagRowSelected} && {!_nativeSelMedicated}});
+    [_ctrlMove,"enable",(_acmMoveBusy || {_selectedAccessValid && {_bagRowSelected} && {!_nativeSelMedicated}})] call ACME_fnc_transfusionUiSet;
 };
 
 // infusions-specific move and remove. it is a vertical stack to the right of the infusions list, mirroring ACM's
@@ -789,14 +786,14 @@ if (_moveBase isNotEqualTo [] && {_leftBase isNotEqualTo []}) then {
     if (!isNull _ctrl) then {
         if (!isNull _ctrlActiveInfList) then {
             (ctrlPosition _ctrlActiveInfList) params ["_listX", "_listY", "_listW", "_listH"];
-            _ctrl ctrlSetPosition [_listX + _listW + _sideGap, _listY + (_slot * (_buttonH + _btnGap)), _buttonW, _buttonH];
+            [_ctrl,"position",[_listX + _listW + _sideGap, _listY + (_slot * (_buttonH + _btnGap)), _buttonW, _buttonH]] call ACME_fnc_transfusionUiSet;
             _ctrl ctrlSetFontHeight _fontH;
-            _ctrl ctrlCommit 0;
-            _ctrl ctrlShow (ctrlShown _ctrlActiveInfList);
+
+            [_ctrl,"show",(ctrlShown _ctrlActiveInfList)] call ACME_fnc_transfusionUiSet;
         } else {
-            _ctrl ctrlShow false;
+            [_ctrl,"show",false] call ACME_fnc_transfusionUiSet;
         };
-        _ctrl ctrlEnable _infSelected;
+        [_ctrl,"enable",_infSelected] call ACME_fnc_transfusionUiSet;
     };
 } forEach [[_ctrlInfMove, 0], [_ctrlInfRemove, 1], [_ctrlInfPressure, 2]];
 private _pane = _display getVariable ["ACME_txActivePane", "transfusion"];
@@ -809,11 +806,11 @@ if (_txSelected) then {
     if (_id != "" && {((_targetPatient getVariable ["ACME_infusion_BagMedications", []]) findIf {(_x param [23, ""]) == _id}) >= 0}) then {_txSelected = false;};
 };
 if (!isNull _ctrlHang) then {
-    _ctrlHang ctrlEnable (_selectedAccessValid && {_txSelected} && {(_txCtx param [10, 0]) > 0.5} && {(_txCtx param [3, ""]) in ["Blood","FreshBlood","Saline","Plasma","PlasmaLyte"]} && {!(ACE_player getVariable ["ACME_hang_Active", false])} && {isNull objectParent ACE_player});
+    [_ctrlHang,"enable",(_selectedAccessValid && {_txSelected} && {(_txCtx param [10, 0]) > 0.5} && {(_txCtx param [3, ""]) in ["Blood","FreshBlood","Saline","Plasma","PlasmaLyte"]} && {!(ACE_player getVariable ["ACME_hang_Active", false])} && {isNull objectParent ACE_player})] call ACME_fnc_transfusionUiSet;
 };
-(_display displayCtrl 86148) ctrlEnable (_txSelected && {[_txCtx, false] call ACME_fnc_pressureInfuserCan});
+[(_display displayCtrl 86148),"enable",(_txSelected && {[_txCtx, false] call ACME_fnc_pressureInfuserCan})] call ACME_fnc_transfusionUiSet;
 if (!isNull _ctrlInfPressure) then {
-    _ctrlInfPressure ctrlEnable (_pane == "infusion" && {[_inCtx, true] call ACME_fnc_pressureInfuserCan});
+    [_ctrlInfPressure,"enable",(_pane == "infusion" && {[_inCtx, true] call ACME_fnc_pressureInfuserCan})] call ACME_fnc_transfusionUiSet;
 };
 
 // a dedicated entry point. "Adjust Infusion" sits directly above the infusions section, anchored to the live
@@ -822,13 +819,13 @@ if (!isNull _ctrlInfPressure) then {
 if (!isNull _ctrlAdjust) then {
     if (!isNull _ctrlActiveInfTitle) then {
         (ctrlPosition _ctrlActiveInfTitle) params ["_titleX", "_titleY", "_titleW", "_titleH"];
-        _ctrlAdjust ctrlSetPosition [_titleX, _titleY - _buttonH - (safeZoneH * 0.003), _titleW, _buttonH];
-        _ctrlAdjust ctrlCommit 0;
-        _ctrlAdjust ctrlShow (ctrlShown _ctrlActiveInfTitle);
+        [_ctrlAdjust,"position",[_titleX, _titleY - _buttonH - (safeZoneH * 0.003), _titleW, _buttonH]] call ACME_fnc_transfusionUiSet;
+
+        [_ctrlAdjust,"show",(ctrlShown _ctrlActiveInfTitle)] call ACME_fnc_transfusionUiSet;
     } else {
-        _ctrlAdjust ctrlShow false;
+        [_ctrlAdjust,"show",false] call ACME_fnc_transfusionUiSet;
     };
-    _ctrlAdjust ctrlEnable _hasInfusion;
+    [_ctrlAdjust,"enable",_hasInfusion] call ACME_fnc_transfusionUiSet;
 };
 // do not add a "ButtonClick" event handler to the native stop control, 86006. it already carries ACM's config
 // action, call func(transfusionmenu_toggleivflow), and that function is a pure toggle: a flow above 0 goes to
@@ -914,7 +911,7 @@ if (!isNull _ctrlSpike) then {
         private _setSel = if (!isNull _ctrlSetsList) then { lbCurSel _ctrlSetsList } else { -1 };
         private _setOk = _selectedAccessValid && {(_setSel >= 0)} && {!isNull _ctrlSetsList} && {(_ctrlSetsList lbData _setSel) != ""};
         _ctrlSpike ctrlSetText "Hang Set";
-        _ctrlSpike ctrlEnable _setOk;
+        [_ctrlSpike,"enable",_setOk] call ACME_fnc_transfusionUiSet;
     } else {
         // loose-bag mode. by default the spike button spikes the selected bag and stages it into the prepared iv sets.
         // there are exceptions. a blood unit selected while this access site already carries a y line reads "Add to Y
@@ -952,12 +949,17 @@ if (!isNull _ctrlSpike) then {
                 };
             };
         };
+        if (_selIsFBTK) then {
+            _txt="Hang Bag";
+            _en=_selectedAccessValid && {_ivSel} && {([_flTarget,_bpSel,true,_siteSel] call ACME_fnc_preparedAttachBlockReason)==""}
+                && {(ACE_player getVariable ["ACME_fbtkPending",[]]) isEqualTo []};
+        };
         if (_selIsFBTK && {!_ivSel}) then {
             _txt = "IV required";
             _en = false;
         };
         _ctrlSpike ctrlSetText _txt;
-        _ctrlSpike ctrlEnable _en;
+        [_ctrlSpike,"enable",_en] call ACME_fnc_transfusionUiSet;
     };
 };
 
@@ -970,18 +972,18 @@ private _yPendingSaline = missionNamespace getVariable ["ACME_yPendingSaline", "
 if (!isNull _ctrlY) then {
     if (diag_tickTime < (missionNamespace getVariable ["ACME_yBuildingActive", -1])) then {
         _ctrlY ctrlSetText "Building...";
-        _ctrlY ctrlEnable false;
+        [_ctrlY,"enable",false] call ACME_fnc_transfusionUiSet;
     } else {
     if (_yPending != "" && {_yPendingSaline != ""}) then {
         _ctrlY ctrlSetText "Build Y Tubing";
-        _ctrlY ctrlEnable true;
+        [_ctrlY,"enable",true] call ACME_fnc_transfusionUiSet;
     } else {
         if (_yPending != "") then {
             _ctrlY ctrlSetText "Select Flush Saline";
-            _ctrlY ctrlEnable _selValidSaline;
+            [_ctrlY,"enable",_selValidSaline] call ACME_fnc_transfusionUiSet;
         } else {
             _ctrlY ctrlSetText "Spike Y tubing";
-            _ctrlY ctrlEnable (_selIsBlood && {!_normalSpiked} && {!_yPrepped});
+            [_ctrlY,"enable",(_selIsBlood && {!_normalSpiked} && {!_yPrepped})] call ACME_fnc_transfusionUiSet;
         };
     };
     };

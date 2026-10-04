@@ -100,6 +100,17 @@ if (_classname == "ACME_StopDirectPressure") exitWith {
     true
 };
 
+// B233: opening an inventory workspace is not a clinical assessment. Never inherit
+// CheckPulse's progress/weapon preflight, and do not wait for a free DP animation.
+if (_classname == "OpenTransfusionMenu") exitWith {
+    if (isNull _medic || {isNull _patient} || {!local _medic} || {!_rangeOkay}) exitWith {false};
+    if !(_this call ace_medical_treatment_fnc_canTreatCached) exitWith {false};
+    if !([_medic, _patient, _interactionChecks] call ace_common_fnc_canInteractWith) exitWith {false};
+    ace_medical_gui_pendingReopen = false;
+    [_medic, _patient, _bodyPart] call ACM_circulation_fnc_openTransfusionMenu;
+    true
+};
+
 if !([_medic, _classname] call ACME_fnc_procedureActionAllowed) exitWith {false};
 
 if (_classname == "ACME_FeelSkin") exitWith {_this call ACME_fnc_feelSkinStart;};

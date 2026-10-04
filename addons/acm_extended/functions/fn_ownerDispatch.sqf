@@ -236,6 +236,9 @@ switch (_operation) do {
             else {_patient setVariable [_key, true, true];};
         };
     };
+    case "fbtkHang": {([_patient]+_args) call ACME_fnc_fbtkHangCommit;};
+    case "fbtkHangReply": {_args call ACME_fnc_fbtkHangReply;};
+    case "ivCatheterPull": {([_patient]+_args) call ACME_fnc_ivCatheterPull;};
     case "ivFinish": {([_patient]+_args) call ACME_fnc_ivFinishCommit;};
     case "ivFinishReply": {_args call ACME_fnc_ivFinishReply;};
     case "ivSite": {_args call ACME_fnc_ivPlacementLocal;};

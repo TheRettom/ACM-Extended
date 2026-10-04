@@ -103,7 +103,10 @@ def test_iv_marks_and_compromise_are_owner_serialized():
     finish = src('functions/fn_ivFinishCommit.sqf')
     assert '"ivFinish"' in start and '_patient setVariable ["ACME_IV_Marks"' not in start
     assert '!local _patient' in finish and 'ACME_IV_MarkVer' in finish
-    assert '"remove"' in pull and '_patient setVariable ["ACME_IV_Marks"' not in pull
+    assert '"ivCatheterPull"' in pull and '_patient setVariable ["ACME_IV_Marks"' not in pull
+    owner_pull = src("functions/fn_ivCatheterPull.sqf")
+    assert "!local _patient" in owner_pull and '"remove"' in owner_pull
+    assert "_uid" in owner_pull and "ACME_fnc_ivAccessoryUnplug" in owner_pull
     assert 'serverTime' in infiltrated and 'CBA_missionTime' not in infiltrated.split('ivMinigameAddMark', 1)[0].splitlines()[-1]
     assert 'private _e = serverTime - _mmiss;' in render
     assert '!local _patient' in commit and 'ACME_IV_MarkVer' in commit
