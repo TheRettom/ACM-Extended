@@ -322,7 +322,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         release = repo / '.hemttout/release'
         manifest = verify_release(release, a.hemtt, commit)
         result = deploy(release, targets, root, a.server_keys, expected_manifest=manifest)
-        print(f'B236 artifact deployment VERIFIED: {len(result["entries"])} files; journal {root / "last-success.json"}')
+        print(f'ACME artifact deployment VERIFIED: {len(result["entries"])} files; journal {root / "last-success.json"}')
         print('Native Arma/dedicated-server acceptance has NOT been performed by this tool.')
         return 0
     except (DeployError, OSError, subprocess.SubprocessError, ValueError) as exc:

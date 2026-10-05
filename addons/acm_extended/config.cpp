@@ -3081,6 +3081,7 @@ class CfgFunctions {
             class debugForceShake {};
             class initVisualEffectsConfig {};
             class visualFxTick {};
+            class registerVisualEffectsRuntime {};
             class visualFxDebugCycle {};
             class visualFxDebugClear {};
             class compatCheck {};

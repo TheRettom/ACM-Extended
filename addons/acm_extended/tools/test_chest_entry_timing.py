@@ -11,6 +11,8 @@ from test_menu_death_lifecycle import adapt, execute
 
 
 def engine(text):
+    if 'private _distance = _medic distance _patient;' in text:
+        text = text.replace('private _distance', 'private _worldDistance').replace('{_distance}', '{_worldDistance}').replace('_distance min', '_worldDistance min')
     for var in ('_medic', '_m', '_flipMedic'):
         for old, new in [('local '+var, '_isLocal'), ('alive '+var, '_alive'),
                          ('objectParent '+var, '_parent'), ('animationState '+var, '_animation'),
@@ -48,7 +50,7 @@ def setup():
             _patient setVariable ["ACME_CS_ProcedureReadyAt",_serverTime];
         };
     '''
-    for name in ('chestAccessVestProvider','chestSealProviderHoldStart','chestSealClose','chestSealOpen'):
+    for name in ('patientInteractionDistance','chestAccessVestProvider','chestSealProviderHoldStart','chestSealClose','chestSealOpen'):
         code+='ACME_fnc_'+name+'={'+engine(pose.source(name))+'};\n'
     return code
 

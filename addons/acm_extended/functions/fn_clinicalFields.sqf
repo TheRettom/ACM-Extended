@@ -39,6 +39,14 @@
   ["ACME_sedation_hrAdjust", "", true, true],
   ["ACME_sedation_resistAdjust", "", true, true],
   ["ACME_medicationLineGenerations", "", true, true],
+  // B237: eligibility/consumption belongs to the physical IO line, not to a machine-local timer.
+  // Save it with that line and clear it on full heal before line-generation numbers are reused.
+  ["ACME_ioFluidSyncopeEpisode_body", "", true, true],
+  ["ACME_ioFluidSyncopeEpisode_leftarm", "", true, true],
+  ["ACME_ioFluidSyncopeEpisode_rightarm", "", true, true],
+  ["ACME_ioFluidSyncopeEpisode_leftleg", "", true, true],
+  ["ACME_ioFluidSyncopeEpisode_rightleg", "", true, true],
+  ["ACME_ioFluidSyncopeEpisode_head", "", true, true],
   ["ACME_pendingFlush", "", true, true],
   ["ACME_adenosineEpisodes", "", true, true],
   ["ACME_medicationReceiptsB14", "", false, false],
@@ -1549,10 +1557,10 @@
   ],
   [
     "ACME_detachedBags",
-    "ACME_IV_DisconnectedBagUIDs",
     "",
     true
   ],
+  ["ACME_IV_DisconnectedBagUIDs", "", true],
   [
     "ACME_edema_crackles",
     "",

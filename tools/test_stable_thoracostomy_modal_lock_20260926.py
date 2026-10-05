@@ -79,7 +79,7 @@ def test_abort_and_close_restore_free_provider_input_state_without_normal_provid
 def test_stable_debug_identity_is_b183_without_hotfix_suffix():
     startup = read("addons/acm_extended/functions/fn_initForkStartupRuntime.sqf")
     cfg = read("addons/acm_extended/config.cpp")
-    assert 'ACME_buildBatch = "B236";' in startup
+    assert 'ACME_buildBatch = "B237";' in startup
     assert 'ACME_debugRevision = "";' in startup
     assert 'version = "1.2.4";' in cfg
 
