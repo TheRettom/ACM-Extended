@@ -193,7 +193,10 @@ def test_ui_only_high_frequency_runtimes_never_register_on_dedicated_server():
     assert "if (hasInterface) then" in emma
     assert "if (hasInterface) then" in bvm
     assert 'if (!hasInterface && {!local _medic}) exitWith {};' in pose
-    assert "if (hasInterface) then {" in post and "ACME_fnc_visualFxTick" in post
+    visual = function("registerVisualEffectsRuntime")
+    assert "call ACME_fnc_registerVisualEffectsRuntime;" in post
+    assert "class registerVisualEffectsRuntime {};" in read("addons/acm_extended/config.cpp")
+    assert "if (hasInterface) then {" in visual and "ACME_fnc_visualFxTick" in visual
 
 
 def test_every_frame_cheyne_stokes_server_worker_was_bounded():
