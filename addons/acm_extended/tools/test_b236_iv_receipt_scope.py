@@ -144,3 +144,27 @@ private _returns=0;ace_common_fnc_addToInventory={_returns=_returns+1;};
 [_returns=={0 if accepted else 1},"single settlement"] call _check;
 [!(call _bind),"settled receipt rebound"] call _check;
 ''')
+
+
+@pytest.mark.parametrize('bindings',['4','"invalid"','[1]','[[1,2,3,4,5,6,7,8]]','[[[],2,3,4,5,6,7,8]]','[[[],2,3,4,5,6,"wrong deadline",8]]'])
+def test_malformed_replicated_binding_rows_do_not_raise_or_admit(bindings):
+    run(PREP+f'_medic setVariable ["ACME_IV_SupplyBindings",{bindings}];'+r'''
+[([_medic,_patient,"ivhub:7:1","flush","first",7,130,_receipt] call ACME_fnc_ivSupplyScopeCheck)!=1,"malformed binding admitted"] call _check;
+''')
+
+
+def test_oversized_binding_table_is_rejected():
+    run(PREP+r'''
+[call _bind,"bind"] call _check;
+private _rows=_medic getVariable "ACME_IV_SupplyBindings";
+private _many=[];for "_i" from 0 to 64 do {_many pushBack (_rows select 0);};
+_medic setVariable ["ACME_IV_SupplyBindings",_many];
+[([_medic,_patient,"ivhub:7:1","flush","first",7,130,_receipt] call ACME_fnc_ivSupplyScopeCheck)==0,"unbounded binding table admitted"] call _check;
+[!(call _bind),"publisher must fail closed on oversized public state"] call _check;
+''')
+
+@pytest.mark.parametrize('name',['ACME_supplyReceipts','ACME_IV_SupplyScopes'])
+def test_origin_rejects_malformed_local_receipt_maps(name):
+    run(PREP+f'missionNamespace setVariable ["{name}",[]];'+r'''
+[!(call _bind),"invalid local map must not create a scope"] call _check;
+''')

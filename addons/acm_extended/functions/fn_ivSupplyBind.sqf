@@ -11,11 +11,12 @@ if !(_receipt isEqualType [] && {count _receipt==4}
     && {_deadline<=serverTime+100}) exitWith {false};
 private _stock=missionNamespace getVariable ["ACME_supplyReceipts",createHashMap];
 private _scopes=missionNamespace getVariable ["ACME_IV_SupplyScopes",createHashMap];
+if !(_stock isEqualType createHashMap && {_scopes isEqualType createHashMap}) exitWith {false};
 // Expired unknown outcomes are committed, never refunded or rebound. Cleanup
 // is demand-driven and only touches reservations owned by this IV subsystem.
 {
     private _old=_scopes get _x;
-    if ((_old select 6)+30<serverTime) then {
+    if (_old isEqualType [] && {count _old==8} && {(_old select 6) isEqualType 0} && {(_old select 6)+30<serverTime}) then {
         if ((_stock getOrDefault [_x,[]]) isEqualTo (_old select 0)) then {_stock deleteAt _x;};
         _scopes deleteAt _x;
     };
@@ -25,8 +26,9 @@ if !((_stock getOrDefault [_id,[]]) isEqualTo _receipt) exitWith {false};
 private _scope=[+_receipt,_patient,_uid,_action,_token,_epoch,_deadline,_medic];
 private _existing=_scopes getOrDefault [_id,[]];
 if (_existing isNotEqualTo [] && {!(_existing isEqualTo _scope)}) exitWith {false};
-private _bindings=+(_medic getVariable ["ACME_IV_SupplyBindings",[]]);
-_bindings=_bindings select {(_x param [6,0])+30>=serverTime};
+private _bindings=_medic getVariable ["ACME_IV_SupplyBindings",[]];
+if !(_bindings isEqualType [] && {count _bindings<=64}) exitWith {false};
+_bindings=_bindings select {_x isEqualType [] && {count _x==8} && {(_x select 6) isEqualType 0} && {(_x select 6)+30>=serverTime}};
 if (count _bindings>=64 && {(_bindings findIf {_x isEqualTo _scope})<0}) exitWith {false};
 _bindings pushBackUnique _scope;
 _scopes set [_id,_scope];
