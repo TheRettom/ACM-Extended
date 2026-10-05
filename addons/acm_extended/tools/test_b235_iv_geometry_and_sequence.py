@@ -28,12 +28,24 @@ def js(value):
 @pytest.mark.parametrize('second',[14,16])
 @pytest.mark.parametrize('patent',[False,True])
 def test_full_cover_then_insert_workflow_retains_primary_film_without_fluid_credit(second,patent):
-    run(f'''
+    # Execute provider settlement as well as the owner transaction: a rejected
+    # reservation is refunded, and the next Take issues a NEW receipt ID.
+    refund=source('treatmentSupplyRefund').replace('_vehicle addItemCargoGlobal [_item, 1];','_returns=_returns+1;')
+    run('ACME_fnc_treatmentSupplyRefund={'+refund+'};'+f'''
+    private _returns=0;ace_common_fnc_addToInventory={{_returns=_returns+1;}};
     _patient setVariable ["ACME_ivCompromised_leftarm_1",{js(not patent)}];
     ["begin","lock","lock"] call _invoke;_serverTime=101;["finish","lock","lock"] call _invoke;
     private _needle=[_medic,"ACM_IV_{second}g",objNull,"needle1"];
+    _medic setVariable ["ACME_IV_FinishPending",[_patient,"early","ivhub:7:1","field{second}",7,190,_needle,[_d,[],0,"leftarm","front"],false]];
     ["begin","field{second}","early",_needle,"ivhub:7:1",7,190] call _invoke;
     [((call _getRow) select 16) isEqualTo [],"uncovered lock rejected before insertion"] call _check;
+    [!((call _lastReply) select 4),"explicit negative acknowledgement"] call _check;
+    _viewValid=false;(call _lastReply) call ACME_fnc_ivFinishReply;_viewValid=true;
+    [_returns==1 && {{!("needle1" in (missionNamespace getVariable "ACME_supplyReceipts"))}},"rejected needle returned exactly once"] call _check;
+    [(_medic getVariable "ACME_IV_SupplyBindings") isEqualTo [],"rejected scope retired"] call _check;
+    // Inventory itself is a fixture boundary, as in _invoke. Model a new Take,
+    // never transfer the rejected receipt to a different operation token.
+    _needle=[_medic,"ACM_IV_{second}g",objNull,"needle2"];
     ["begin","dressing","base"] call _invoke;_serverTime=103;["finish","dressing","base"] call _invoke;
     [((call _getState) select 2) && {{!((call _getState) select 1)}},"primary film does not require or fabricate aspiration"] call _check;
     ["begin","field{second}","field",_needle,"ivhub:7:1",7,190] call _invoke;

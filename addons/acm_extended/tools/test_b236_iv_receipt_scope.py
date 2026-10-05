@@ -168,3 +168,27 @@ def test_origin_rejects_malformed_local_receipt_maps(name):
     run(PREP+f'missionNamespace setVariable ["{name}",[]];'+r'''
 [!(call _bind),"invalid local map must not create a scope"] call _check;
 ''')
+
+
+def test_rejected_attempt_refunds_then_new_reservation_completes_without_reusing_old_receipt():
+    code=source('treatmentSupplyRefund').replace('_vehicle addItemCargoGlobal [_item, 1];','_returns=_returns+1;')
+    run(PREP+'ACME_fnc_treatmentSupplyRefund={'+code+r'''};
+private _returns=0;ace_common_fnc_addToInventory={_returns=_returns+1;};
+_row set [15,[false,false,false,false]];_patient setVariable ["ACME_IV_Marks",[_row]];
+_medic setVariable ["ACME_IV_FinishPending",[_patient,"first","ivhub:7:1","flush",7,130,_receipt,[_d,[],0,"leftarm","front"],false]];
+[call _bind,"bind rejected attempt"] call _check;call _begin;
+[!((call _lastReply) select 4),"flush without extension rejected"] call _check;
+private _ack=call _lastReply;
+_ack call ACME_fnc_ivFinishReply;_ack call ACME_fnc_ivFinishReply;
+[_returns==1 && {!("stock1" in (missionNamespace getVariable "ACME_supplyReceipts"))},"one refund after duplicate acknowledgement"] call _check;
+[(_medic getVariable "ACME_IV_SupplyBindings") isEqualTo [],"negative reply releases scope"] call _check;
+[!(call _bind),"refunded old receipt cannot be rebound"] call _check;
+_row set [15,[true,false,false,false]];_patient setVariable ["ACME_IV_Marks",[_row]];
+private _next=[_medic,"ACM_SalineFlush_10",objNull,"stock2"];
+// Engine inventory boundary: a fresh Take issues a distinct canonical ID.
+(missionNamespace getVariable "ACME_supplyReceipts") set ["stock2",+_next];
+[[_medic,_patient,"ivhub:7:1","flush","retry",7,130,_next] call ACME_fnc_ivSupplyBind,"fresh reservation admitted"] call _check;
+[_patient,_medic,"begin","ivhub:7:1","flush","retry",7,130,_next] call ACME_fnc_ivFinishCommit;
+_serverTime=108;[_patient,_medic,"finish","ivhub:7:1","flush","retry",7,130,[]] call ACME_fnc_ivFinishCommit;
+[count (call _credits)==1 && {(call _getState) select 1},"new request completes once"] call _check;
+''')

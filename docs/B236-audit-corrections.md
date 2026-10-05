@@ -80,6 +80,9 @@ SQF-VM map-default adapter for IO lifecycle tests. Selected stale tests of carri
 restoration, pinned menu ordering, build identity and thoracostomy dispatch now
 check current behavior rather than retired source layout. Remaining historical
 failures must be individually dispositioned; none are globally xfailed/deleted.
+The full field-IV workflow fixture now executes the negative provider ACK and
+actual single-use refund before modelling a fresh inventory reservation; it no
+longer reuses the rejected receipt ID. Original dressing/patency assertions remain.
 
 ## Required native acceptance — not executed by Linux tests
 
