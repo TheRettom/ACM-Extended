@@ -146,3 +146,17 @@ def test_release_change_after_validation_rejected_before_replacement(setup):
     with pytest.raises(m.DeployError,match='changed after'):m.deploy(release,targets,root,expected_manifest=manifest)
     assert snapshot(targets)==before
     assert not (root/'active.json').exists()
+
+
+def test_copy_flushes_a_write_capable_handle_for_windows(tmp_path,monkeypatch):
+    source=tmp_path/'source';target=tmp_path/'target';source.write_bytes(b'contents')
+    modes={};original_open=Path.open;original_sync=m.os.fsync
+    def opened(path,mode='r',*args,**kwargs):
+        f=original_open(path,mode,*args,**kwargs);modes[f.fileno()]=mode;return f
+    def synced(fd):
+        mode=modes.get(fd,'')
+        assert '+' in mode or 'w' in mode or 'a' in mode,'Windows requires GENERIC_WRITE for FlushFileBuffers'
+        original_sync(fd)
+    monkeypatch.setattr(Path,'open',opened);monkeypatch.setattr(m.os,'fsync',synced)
+    m._copy_verified(source,target,m.digest(source))
+    assert target.read_bytes()==source.read_bytes()

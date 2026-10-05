@@ -125,7 +125,9 @@ def _copy_verified(source: Path, target: Path, expected: str) -> None:
     safe_path(target)
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, target)
-    with target.open('rb') as f:
+    # Windows FlushFileBuffers requires a write-capable handle. Do not fsync
+    # a read-only reopened descriptor even though that happens to work on Linux.
+    with target.open('r+b') as f:
         os.fsync(f.fileno())
     if digest(target) != expected:
         raise DeployError(f'Copy verification failed: {target}')
