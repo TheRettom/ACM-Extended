@@ -53,6 +53,7 @@ def test_removal_order_is_lift_remove_park_release():
     lower_stage = begin.index("// Start the lower interval from the callback that actually removes the")
     commit = begin.index("private _removed = [_p,_ctx,_savedVar,_propVar,_pfhVar] call _commit;", lower_stage)
     release = begin.index('"ACME_HeadElevPatientRelease"', commit)
+    # B218 delegates exact carrier/cargo custody; do not restore the unsafe whole loadout.
     assert grab < lower_stage < commit < release
     commit_fn = s.split("private _commitRemoval = {", 1)[1].split("// Animation is allowed", 1)[0]
     assert commit_fn.index("removeVest _p") < commit_fn.index("ACME_fnc_chestAccessVestPark")
@@ -61,7 +62,7 @@ def test_restoration_is_patient_lift_revest_release_without_extra_provider_medic
     s = read("addons/acm_extended/functions/fn_chestAccessVestRestore.sqf")
     begin = s.split("private _beginRestore = {", 1)[1]
     grab = begin.index('"ACME_HeadElevPatientGrab"')
-    revest = begin.index("_loadout set [4,+_saved]")
+    revest = begin.index("call ACME_fnc_carrierInventoryRestore")
     release = begin.index('"ACME_HeadElevPatientRelease"')
     assert grab < revest < release
     assert '"chestAccessVestProvider", [_medic, _patient, "start"' not in s

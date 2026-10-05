@@ -61,4 +61,6 @@ def test_ci_invokes_strict_mode_and_runs_positive_control_tests():
     workflow = Path(__file__).resolve().parents[1] / ".github/workflows/b204-network-audit.yml"
     source = workflow.read_text()
     assert "python tools/audit_acme_native_owner_writes.py --strict" in source
-    assert "tools/test_b207_native_owner_audit_gate.py" in source
+    from run_sharded_regressions import current_selection
+    assert "tools/test_b207_native_owner_audit_gate.py" in current_selection(workflow.parents[2])
+    assert "run_sharded_regressions.py aggregate" in source

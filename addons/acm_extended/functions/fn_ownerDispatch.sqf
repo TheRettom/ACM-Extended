@@ -57,7 +57,9 @@ switch (_operation) do {
     // the casualty owner so it cannot race the native circulation integrator on another machine.
     case "crystalloidCredit": {
         _args params [["_liters", 0, [0]]];
-        if (finite _liters && {_liters > 0}) then {
+        // B236: only shipped small boluses (10/30/250 mL) use this
+        // trusted internal endpoint. This cap is not sender authentication.
+        if (count _args==1 && {finite _liters} && {_liters > 0} && {_liters <= 0.250}) then {
             [_patient, [["salineVolume", (_patient getVariable ["ACM_circulation_Saline_Volume", 0]) + _liters]], true] call ACM_circulation_fnc_setRuntimeState;
         };
     };

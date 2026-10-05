@@ -1,4 +1,4 @@
-/* B232. Owner-only extension/aspiration/dressing transaction.
+/* B236. Owner-only extension/aspiration/dressing transaction.
    A live catheter UID, clinical epoch, provider, token and bounded deadline own
    every job. There is no whole-array write supplied by a client. */
 params ["_patient","_medic","_phase","_uid","_action","_token","_epoch","_deadline",["_receipt",[]]];
@@ -6,7 +6,7 @@ if (isNull _patient || {!local _patient} || {isNull _medic}) exitWith {};
 if !(_phase in ["begin","finish","cancel","advance","thread","retract"] && {_action in ["extension","flush","dressing","line","lock","field14","field16","removeLock","removeSecondary","removeExtension","removeDressing","removeLine"]}
     && {_uid isEqualType ""} && {_uid != ""} && {_token isEqualType ""} && {_token != ""}
     && {count _token <= 120} && {_deadline isEqualType 0} && {finite _deadline}
-    && {_epoch isEqualType 0}) exitWith {};
+    && {_epoch isEqualType 0} && {finite _epoch} && {_receipt isEqualType []}) exitWith {};
 private _reply = {
     params ["_status","_accepted",["_message",""],["_row",[]]];
     [_medic,"ivFinishReply",[_medic,_patient,_token,_status,_accepted,_message,_row]] call ACME_fnc_ownerDispatch;
@@ -59,18 +59,27 @@ if (_same && {(_record select 8)!="begin" || {_phase=="begin"}}) exitWith {
     // Repeated begin or completed finish: return the receipt, never consume or credit twice.
     [_record select 8,_record select 6,"",_row] call _reply;
 };
+// Every consumable requires an exact provider-issued scope, including patient,
+// catheter UID, action, epoch and deadline. A missing replicated binding is not
+// a negative acknowledgement: leave stock reserved and let the retry deliver it.
+private _supplyState=1;
+if (_phase=="begin" && {_action=="flush" || {_field}}) then {
+    _supplyState=[_medic,_patient,_uid,_action,_token,_epoch,_deadline,_receipt] call ACME_fnc_ivSupplyScopeCheck;
+};
+if (_phase=="begin" && {_supplyState<0} && {_valid}) exitWith {};
 if (_phase=="begin") exitWith {
     private _reason="The IV is no longer available.";
     private _plan=[false,_reason,"",0];
     if (_valid) then {
         _plan=[_state,_action,[_patient,_row] call ACME_fnc_ivFinishPatency,_row param [7,0]] call ACME_fnc_ivFinishPlan;
         if (count _job>0 && {(_job param [6,0])>=_now}) then {_plan=[false,"This IV is already being worked on.","",0];};
-        if (_action=="flush" && {count _receipt!=4 || {(_receipt param [1,""])!="ACM_SalineFlush_10"}}) then {
+        if (_action=="flush" && {_supplyState!=1 || {count _receipt!=4}
+            || {(_history findIf {(_x param [9,""])==(_receipt param [3,""]) && {_x param [6,false]}})>=0}}) then {
             _plan=[false,"A 10 mL saline flush is required.","",0];
         };
         if (_field) then {
             private _item=if (_action=="field14") then {"ACM_IV_14g"} else {"ACM_IV_16g"};
-            if (count _receipt!=4 || {(_receipt param [1,""])!=_item} || {(_receipt param [3,""])==""}
+            if (_supplyState!=1 || {count _receipt!=4} || {(_receipt param [1,""])!=_item} || {(_receipt param [3,""])==""}
                 || {(_history findIf {(_x param [9,""])==(_receipt param [3,""]) && {_x param [6,false]}})>=0}) then {
                 _plan=[false,"The selected catheter is not available.","",0];
             };

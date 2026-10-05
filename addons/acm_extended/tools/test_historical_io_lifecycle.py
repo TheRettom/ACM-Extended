@@ -10,12 +10,13 @@ import pytest
 from source_scan import lex, matching
 from test_menu_death_lifecycle import ROOT, adapt, execute
 from test_historical_medication_preparation import line_setup
+from test_historical_vial_execution import map_defaults
 
 F=ROOT/'addons/acm_extended/functions'
 
 
 def adapted(text):
-    return adapt(text.replace('local _patient','_patientLocal').replace('owner _patient','_patientOwner'))
+    return adapt(map_defaults(text.replace('local _patient','_patientLocal').replace('owner _patient','_patientOwner')))
 
 
 def function(name):
@@ -24,6 +25,7 @@ def function(name):
 
 def setup():
     return function('clinicalEpoch')+function('ioPainResponse')+'''
+        private _mapDefault={params ["_map","_args"];_args params ["_key","_default"];if (_key in _map) then {_map get _key} else {_default}};
         private _patientLocal=true;
         private _patientOwner=7;
         private _painWrites=[]; private _fallbackWrites=[]; private _sounds=[];

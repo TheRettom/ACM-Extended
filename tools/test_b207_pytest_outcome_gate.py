@@ -227,11 +227,18 @@ def test_cli_rejects_new_failure_and_writes_reviewable_json(tmp_path):
 def test_workflow_wires_all_release_generations_and_strict_focused_gate():
     workflow = Path(__file__).resolve().parents[1] / ".github/workflows/b204-network-audit.yml"
     source = workflow.read_text()
-    for required in ("test_b205*py", "test_b206*py", "test_b207*py",
-                     "test_native_bvm_dp.py", "test_bounded_pressure_contracts.py",
-                     "test_b207_pytest_outcome_gate.py", "compare_pytest_outcomes.py require-pass"):
-        assert required in source
-    assert '"tools/compare_pytest_outcomes.py", "compare"' in source
-    assert '"--before-exit-code", str(old_exit)' in source
-    assert '"--after-exit-code", str(new_exit)' in source
-    assert "states[key] = state" not in source
+    from run_sharded_regressions import current_selection
+    root=workflow.parents[2]
+    selected=current_selection(root)
+    for n in (205,206,207,235,236):
+        files=list((root/'addons/acm_extended/tools').glob(f'test_b{n}*.py'))
+        assert files and all(p.relative_to(root).as_posix() in selected for p in files)
+    for required in ('test_native_bvm_dp.py','test_bounded_pressure_contracts.py','test_b207_pytest_outcome_gate.py'):
+        assert any(Path(p).name==required for p in selected)
+    runner=(root/'tools/run_sharded_regressions.py').read_text()
+    assert 'run_sharded_regressions.py aggregate' in source and '--require-green' in source
+    assert 'compare_reports(before,after)' in runner
+    assert "read_report(out/'before.xml',old_exit)" in runner
+    assert "read_report(out/'after.xml',new_exit)" in runner
+    assert "if case.state!='passed'" in runner
+    assert "states[key] = state" not in runner

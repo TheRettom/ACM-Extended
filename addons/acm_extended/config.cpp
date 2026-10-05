@@ -2341,6 +2341,9 @@ class CfgFunctions {
             class visualBruiseState {};
             class ivMinigameAddMark {};
             class ivMarkCommit {};
+            class ivSupplyBind {};
+            class ivSupplyScopeCheck {};
+            class ivSupplyRelease {};
             class ivFinishPlan {};
             class ivFieldTransition {};
             class ivFieldPoint {};

@@ -33,6 +33,7 @@ def setup():
         private _patientLocal=true;
         private _finite={_this isEqualType 0 && {_this > -1e30} && {_this < 1e30}};
         private _units=[_patient];
+        ACME_clinical_ownedUnits=[_patient]; // Current owner-registry boundary; original assertions retained.
         private _medResult=0;
         private _medCalls=0;
         private _linear={params ["_lo","_hi","_x","_a","_b",["_clamp",false]];

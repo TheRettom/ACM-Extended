@@ -44,8 +44,9 @@ def test_restore_is_visible_reverse_sequence():
     s = read("addons/acm_extended/functions/fn_chestAccessVestRestore.sqf")
     begin = s.split("private _beginRestore = {", 1)[1]
     grab = begin.index('"ACME_HeadElevPatientGrab"')
-    loadout = begin.index("_loadout set [4,+_saved]")
+    loadout = begin.index("call ACME_fnc_carrierInventoryRestore")
     release = begin.index('"ACME_HeadElevPatientRelease"')
+    # B218 delegates exact carrier/cargo custody; do not restore the unsafe whole loadout.
     assert grab < loadout < release
     assert '"chestAccessVestProvider", [_medic, _patient, "start"' not in s
 

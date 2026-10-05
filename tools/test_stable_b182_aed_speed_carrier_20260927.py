@@ -169,7 +169,7 @@ def test_manual_carrier_row_is_pinned_above_all_menu_categories():
     menu = read("addons/gui/overrides/fnc_updateActions.sqf")
     assert "private _manualCarrier = _menuActions select {" in menu
     assert "_row set [1, _selectedCategory];" in menu
-    assert "_menuActions = _manualCarrier + _stopPressure + _pressure + _menuActions + _dogTags;" in menu
+    assert "_menuActions = _manualCarrier + _bvmEmma + _stopPressure + _pressure + _menuActions + _dogTags;" in menu
 
 
 def test_manual_carrier_auto_returns_on_wake_getup_transport_and_movement():

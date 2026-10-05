@@ -32,6 +32,13 @@ _medic setVariable ["ACME_IV_FinishSerial",_serial];
 private _token=format ["ivfinish:%1:%2:%3",clientOwner,netId _medic,_serial];
 private _epoch=[_patient] call ACME_fnc_clinicalEpoch;
 private _deadline=serverTime+(if (_action in ["field14","field16"]) then {90} else {30});
+// Publish the exact reservation before sending BEGIN. The owner waits for
+// replication rather than rejecting an otherwise valid first packet.
+if (_receipt isNotEqualTo [] && {!([_medic,_patient,_uid,_action,_token,_epoch,_deadline,_receipt] call ACME_fnc_ivSupplyBind)}) exitWith {
+    [_receipt] call ACME_fnc_treatmentSupplyRefund;
+    ["The IV supply reservation is no longer available.",2,_medic] call ace_common_fnc_displayTextStructured;
+    true
+};
 private _context=[_d,+(uiNamespace getVariable ["ACME_IV_Session",[]]),_d getVariable ["ACME_IV_ViewGeneration",0],_bp,_view];
 private _pending=[_patient,_token,_uid,_action,_epoch,_deadline,_receipt,_context,false];
 _medic setVariable ["ACME_IV_FinishPending",_pending];

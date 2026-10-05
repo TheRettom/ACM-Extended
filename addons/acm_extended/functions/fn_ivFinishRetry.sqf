@@ -5,7 +5,10 @@ private _p=_medic getVariable ["ACME_IV_FinishPending",[]];
 if (count _p<9 || {(_p select 1)!=_token}) exitWith {};
 if (serverTime>(_p select 5)+2) exitWith {
     // Unknown result: do not recreate a syringe the patient owner may have used.
-    if ((_p select 6) isNotEqualTo []) then {[_p select 6,false] call ACME_fnc_treatmentSupplyRefund;};
+    if ((_p select 6) isNotEqualTo []) then {
+        [_medic,_token,_p select 6] call ACME_fnc_ivSupplyRelease;
+        [_p select 6,false] call ACME_fnc_treatmentSupplyRefund;
+    };
     if ((_p select 7) call ACME_fnc_ivMinigameViewValid) then {[] call ACME_fnc_ivFieldClear;};
     _medic setVariable ["ACME_IV_FinishPending",[]];
     private _d=(_p select 7) select 0;

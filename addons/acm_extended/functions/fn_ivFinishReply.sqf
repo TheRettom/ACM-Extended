@@ -6,6 +6,7 @@ private _pending=+(_medic getVariable ["ACME_IV_FinishPending",[]]);
 if (count _pending<9 || {!((_pending select 0) isEqualTo _patient)} || {(_pending select 1)!=_token}) exitWith {};
 private _receipt=_pending select 6;
 if (_receipt isNotEqualTo []) then {
+    [_medic,_token,_receipt] call ACME_fnc_ivSupplyRelease;
     [_receipt,!_accepted] call ACME_fnc_treatmentSupplyRefund;
     _pending set [6,[]];_medic setVariable ["ACME_IV_FinishPending",_pending];
 };

@@ -22,20 +22,20 @@ concurrency:
   group: stable-network-audit-${{ github.ref }}
   cancel-in-progress: true
 
+# B236: parity is a development gate, not release approval. The independent
+# strict job intentionally remains red while inherited failures/errors exist.
 jobs:
-  validate:
+  static:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           persist-credentials: false
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-
       - name: Install pinned validation toolchain
         run: |
           set -euo pipefail
@@ -48,190 +48,134 @@ jobs:
           chmod +x /tmp/acme-tools/hemtt /tmp/acme-tools/sqfvm_linux_x64_gcc/sqfvm
           python -m pip install 'pytest==9.0.2' 'numpy==2.3.5' 'Pillow==12.3.0' 'soundfile==0.13.1'
 
-      - name: Native-state ownership diagnostic
-        run: python tools/audit_acme_native_owner_writes.py --strict
-
-      - name: Focused networking and ownership gates
+      - name: Source and native-state ownership gates
         run: |
-          set -euo pipefail
-          mkdir -p /tmp/acme-network-results
-          pytest_status=0
-          python -m pytest \
-            addons/acm_extended/tools/test_b204_network_full_audit_20260929.py \
-            addons/acm_extended/tools/test_bug_audit_batch09_network.py \
-            addons/acm_extended/tools/test_b203_network_backpressure_20260929.py \
-            addons/acm_extended/tools/test_owner_locality_audit_20260920.py \
-            addons/acm_extended/tools/test_build_version_tag.py \
-            tools/test_fork_phase23_runtime_ownership.py \
-            tools/test_fork_phase48_native_iv_bag_owner.py \
-            tools/test_fork_phase49_airway_state_owner.py \
-            tools/test_fork_phase50_core_state_owner.py \
-            tools/test_fork_phase51_breathing_state_owner.py \
-            tools/test_fork_phase52_circulation_state_owner.py \
-            tools/test_fork_phase67_persistent_state_owner_restore.py \
-            tools/test_fork_phase80_ett_migration_owner.py \
-            tools/test_fork_phase84_thora_side_state_owner.py \
-            tools/test_fork_phase85_thora_output_state_owner.py \
-            tools/test_fork_phase134_named_remote_command_endpoints.py \
-            tools/test_fork_phase135_remoteexec_whitelist_closure.py \
-            tools/test_fork_phase136_remoteexec_target_registration.py \
-            --junitxml=/tmp/acme-network-results/focused-ownership.xml -q || pytest_status=$?
-          python tools/compare_pytest_outcomes.py require-pass \
-            --report /tmp/acme-network-results/focused-ownership.xml \
-            --exit-code "$pytest_status" --label focused-ownership \
-            --json-report /tmp/acme-network-results/focused-ownership-gate.json
-
-      - name: Network execution regressions
-        env:
-          SQFVM: /tmp/acme-tools/sqfvm_linux_x64_gcc/sqfvm
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/acme-network-results
-          pytest_status=0
-          python -m pytest \
-            tools/test_b207_native_owner_audit_gate.py \
-            tools/test_b207_pytest_outcome_gate.py \
-            addons/acm_extended/tools/test_b205*py \
-            addons/acm_extended/tools/test_b206*py \
-            addons/acm_extended/tools/test_b207*py \
-            addons/acm_extended/tools/test_b208*py \
-            addons/acm_extended/tools/test_b209*py \
-            addons/acm_extended/tools/test_b210*py \
-            addons/acm_extended/tools/test_b211*py \
-            addons/acm_extended/tools/test_b212*py \
-            addons/acm_extended/tools/test_b213*py \
-            addons/acm_extended/tools/test_b214*py \
-            addons/acm_extended/tools/test_b215*py \
-            addons/acm_extended/tools/test_b216*py \
-            addons/acm_extended/tools/test_debug_single_overlay.py \
-            addons/acm_extended/tools/test_native_bvm_dp.py \
-            addons/acm_extended/tools/test_bounded_pressure_contracts.py \
-            addons/acm_extended/tools/test_network_medication_iv_execution.py \
-            addons/acm_extended/tools/test_ventilator_audio_registry_20260930.py \
-            addons/acm_extended/tools/test_treatment_pose_sync.py \
-            addons/acm_extended/tools/test_head_collision_restore_20260930.py \
-            addons/acm_extended/tools/test_bounded_head_completion.py \
-            addons/acm_extended/tools/test_bounded_head_pose_contracts.py \
-            --junitxml=/tmp/acme-network-results/focused-network.xml -q || pytest_status=$?
-          python tools/compare_pytest_outcomes.py require-pass \
-            --report /tmp/acme-network-results/focused-network.xml \
-            --exit-code "$pytest_status" --label focused-network \
-            --json-report /tmp/acme-network-results/focused-network-gate.json
-
-      - name: Repaired behavioral regressions
-        env:
-          SQFVM: /tmp/acme-tools/sqfvm_linux_x64_gcc/sqfvm
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/acme-network-results
-          pytest_status=0
-          python -m pytest \
-            addons/acm_extended/tools/test_b156_patient_supplies.py \
-            addons/acm_extended/tools/test_b156_procedure_supplies.py \
-            addons/acm_extended/tools/test_b156_shared_action_gates.py \
-            addons/acm_extended/tools/test_b161_flip_and_breathing.py \
-            addons/acm_extended/tools/test_bounded_assessment_contracts.py \
-            addons/acm_extended/tools/test_bounded_draw_endpoints.py \
-            addons/acm_extended/tools/test_bounded_flush_preview_contracts.py \
-            addons/acm_extended/tools/test_bounded_head_cancel_generation.py \
-            addons/acm_extended/tools/test_bounded_head_locality_retirement.py \
-            addons/acm_extended/tools/test_bounded_head_movement_menu.py \
-            addons/acm_extended/tools/test_bounded_head_provider_consciousness.py \
-            addons/acm_extended/tools/test_bounded_head_provider_sequence.py \
-            addons/acm_extended/tools/test_bounded_head_weapon_contract.py \
-            addons/acm_extended/tools/test_bounded_stethoscope_exit_generation.py \
-            addons/acm_extended/tools/test_historical_medication_preparation.py \
-            addons/acm_extended/tools/test_historical_medication_rows.py \
-            addons/acm_extended/tools/test_historical_pose_lifecycle.py \
-            addons/acm_extended/tools/test_historical_state_cleanup.py \
-            addons/acm_extended/tools/test_historical_vial_execution.py \
-            addons/acm_extended/tools/test_cpr_lifecycle.py \
-            addons/acm_extended/tools/test_semifowler_cpr_entry.py \
-            addons/acm_extended/tools/test_historical_source.py \
-            tools/test_fork_phase87_narc_store_owner.py \
-            --junitxml=/tmp/acme-network-results/focused-behavior.xml -q || pytest_status=$?
-          python tools/compare_pytest_outcomes.py require-pass \
-            --report /tmp/acme-network-results/focused-behavior.xml \
-            --exit-code "$pytest_status" --label focused-behavior \
-            --json-report /tmp/acme-network-results/focused-behavior-gate.json
-
+          git diff --check 90e47ed7a2fc457099255f477f2b476fdae2ce9b HEAD
+          python tools/audit_acme_native_owner_writes.py --strict
       - name: HEMTT static validation
         run: /tmp/acme-tools/hemtt check
 
-      # The historical full suite is not green. This comparison preserves and
-      # reports identical baseline failures/errors, while every new case must
-      # pass and no existing test occurrence may disappear or regress.
-      - name: Compare full regression outcomes to B215 baseline
-        env:
-          BASE: d89b6a3347235cdb684b543b6c678b708f8d765b
-          SQFVM: /tmp/acme-tools/sqfvm_linux_x64_gcc/sqfvm
+  full-regression-shards:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: addon
+            shard: 0
+          - group: addon
+            shard: 1
+          - group: addon
+            shard: 2
+          - group: addon
+            shard: 3
+          - group: addon
+            shard: 4
+          - group: addon
+            shard: 5
+          - group: addon
+            shard: 6
+          - group: addon
+            shard: 7
+          - group: root
+            shard: 0
+          - group: root
+            shard: 1
+          - group: root
+            shard: 2
+          - group: root
+            shard: 3
+    env:
+      SQFVM: /tmp/acme-tools/sqfvm_linux_x64_gcc/sqfvm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install pinned validation toolchain
         run: |
           set -euo pipefail
-          python - <<'PY'
-          import os, pathlib, subprocess, sys
-          from concurrent.futures import ThreadPoolExecutor
+          mkdir -p /tmp/acme-tools
+          curl -fLsS --retry 2 https://github.com/BrettMayson/HEMTT/releases/download/v1.22.0/linux-x64 -o /tmp/acme-tools/hemtt
+          echo '58c0f2c1d88041ebce24753e920ac80efb7624d28e8af9b7960c669117695770  /tmp/acme-tools/hemtt' | sha256sum --check
+          curl -fLsS --retry 2 https://github.com/SQFvm/runtime/releases/download/v2026.04.03-ed9f5f5/sqfvm_linux_x64_gcc.zip -o /tmp/acme-tools/sqfvm.zip
+          echo 'bb4e3bb415305d2ef2c4cdb75e98f442baea3a4575887c6570a11435a780615b  /tmp/acme-tools/sqfvm.zip' | sha256sum --check
+          unzip -q /tmp/acme-tools/sqfvm.zip -d /tmp/acme-tools
+          chmod +x /tmp/acme-tools/hemtt /tmp/acme-tools/sqfvm_linux_x64_gcc/sqfvm
+          python -m pip install 'pytest==9.0.2' 'numpy==2.3.5' 'Pillow==12.3.0' 'soundfile==0.13.1'
 
-          root = pathlib.Path.cwd()
-          before = pathlib.Path("/tmp/acme-network-before")
-          out = pathlib.Path("/tmp/acme-network-results")
-          out.mkdir(exist_ok=True)
-          base = os.environ["BASE"]
+      - name: Prepare immutable audited B235 baseline
+        run: git worktree add --detach /tmp/acme-before 90e47ed7a2fc457099255f477f2b476fdae2ce9b
+      - name: Run every allocated module and compare all case occurrences
+        run: >-
+          python tools/run_sharded_regressions.py shard
+          --baseline /tmp/acme-before
+          --group ${{ matrix.group }} --shard ${{ matrix.shard }}
+          --out /tmp/acme-results/${{ matrix.group }}-${{ matrix.shard }}
+          --timeout 600
+      - name: Preserve complete shard reports even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: b236-shard-${{ matrix.group }}-${{ matrix.shard }}-${{ github.run_id }}
+          path: /tmp/acme-results/
+          if-no-files-found: error
 
-          def cmd(args, cwd=root, timeout=900):
-              return subprocess.run(
-                  args, cwd=cwd, text=True, stdout=subprocess.PIPE,
-                  stderr=subprocess.STDOUT, timeout=timeout
-              )
-
-          r = cmd(["git", "fetch", "--depth=1", "origin", base], timeout=120)
-          assert r.returncode == 0, r.stdout[-12000:]
-          r = cmd(["git", "worktree", "add", "--detach", str(before), base], timeout=120)
-          assert r.returncode == 0, r.stdout[-12000:]
-
-          diff = cmd(["git", "diff", "--check", base, "HEAD"], timeout=120)
-          assert diff.returncode == 0, diff.stdout[-12000:]
-
-          def suite(label, cwd, target):
-              xml = out / f"{label}.xml"
-              try:
-                  r = cmd([
-                      sys.executable, "-m", "pytest", target, "-q", "--tb=no",
-                      "--continue-on-collection-errors", f"--junitxml={xml}"
-                  ], cwd=cwd, timeout=850)
-                  output, exit_code = r.stdout, r.returncode
-              except subprocess.TimeoutExpired as exc:
-                  output = exc.stdout or ""
-                  if isinstance(output, bytes):
-                      output = output.decode("utf-8", errors="replace")
-                  output += "\nERROR: pytest exceeded the full-suite timeout\n"
-                  exit_code = 124
-              (out / f"{label}.log").write_text(output)
-              (out / f"{label}.exit-code").write_text(str(exit_code) + "\n")
-              return xml, exit_code
-
-          failed = False
-          for label, target in (("addon", "addons/acm_extended/tools"), ("root", "tools")):
-              with ThreadPoolExecutor(max_workers=2) as ex:
-                  old = ex.submit(suite, label + "-before", before, target)
-                  new = ex.submit(suite, label + "-after", root, target)
-                  old_xml, old_exit = old.result()
-                  new_xml, new_exit = new.result()
-              gate = cmd([
-                  sys.executable, "tools/compare_pytest_outcomes.py", "compare",
-                  "--before", str(old_xml), "--before-exit-code", str(old_exit),
-                  "--after", str(new_xml), "--after-exit-code", str(new_exit),
-                  "--label", label, "--json-report", str(out / f"{label}-comparison.json")
-              ], timeout=30)
-              (out / f"{label}-comparison.log").write_text(gate.stdout)
-              print(gate.stdout, end="")
-              failed = failed or gate.returncode != 0
-          raise SystemExit(1 if failed else 0)
-          PY
-
-      - name: Preserve validation outcomes and known baseline failures
+  regression-parity:
+    if: always()
+    needs: [full-regression-shards]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: b236-shard-*-${{ github.run_id }}
+          merge-multiple: true
+          path: /tmp/acme-results
+      - name: Require all modules, current regression gates, and no worsening
+        run: python tools/run_sharded_regressions.py aggregate --out /tmp/acme-results
+      - name: Preserve aggregate and explicit remaining-failure register
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: stable-network-validation-${{ github.run_id }}
-          path: /tmp/acme-network-results/
-          if-no-files-found: warn
+          path: /tmp/acme-results/
+          if-no-files-found: error
+
+  strict-full-suite:
+    if: always()
+    needs: [static, regression-parity]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: actions/download-artifact@v4
+        with:
+          name: stable-network-validation-${{ github.run_id }}
+          path: /tmp/acme-results
+      - name: Require genuinely clean full suite (no baseline exemptions)
+        run: python tools/run_sharded_regressions.py aggregate --out /tmp/acme-results --require-green
+      - name: Require all prerequisite jobs
+        env:
+          STATIC_RESULT: ${{ needs.static.result }}
+          PARITY_RESULT: ${{ needs.regression-parity.result }}
+        run: test "$STATIC_RESULT" = success && test "$PARITY_RESULT" = success
+      # Native Windows/Arma dedicated-server acceptance is a separate recorded
+      # manual requirement. This workflow never publishes or certifies it.

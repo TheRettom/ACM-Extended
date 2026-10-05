@@ -11,13 +11,19 @@ from test_menu_death_lifecycle import ROOT, read, adapt, execute
 from test_historical_vial_execution import map_defaults
 
 ASSETS = ROOT / 'addons/acm_extended/ui/iv/finish'
-FUNCTIONS = ['ivFieldTransition','ivFieldClear','ivFieldAccessoryRow','ivFinishPlan','ivFinishFrame','ivFinishPatency','ivFinishCommit',
+FUNCTIONS = ['ivSupplyBind','ivSupplyScopeCheck','ivSupplyRelease','ivFieldTransition','ivFieldClear','ivFieldAccessoryRow','ivFinishPlan','ivFinishFrame','ivFinishPatency','ivFinishCommit',
              'ivMarkCommit','ivFinishReply','ivFinishAbort','ivFinishRetry']
 
 def source(name):
     s=adapt(read(name)).replace('serverTime','_serverTime')
     # Native clock finiteness and UI handles use explicit scalar/namespace stand-ins.
-    s=s.replace('finite _deadline','(_deadline isEqualType 0)')
+    s=s.replace('finite _deadline','(_deadline isEqualType 0)').replace('finite _epoch','(_epoch isEqualType 0)')
+    # Only the native OBJECT type boundary is adapted: namespace stand-ins
+    # represent donor/provider objects; objNull remains the vehicle sentinel.
+    for idx in (0,2):
+        native=f'(_receipt select {idx}) isEqualType objNull'
+        s=s.replace(native, '('+native+f' || {{(_receipt select {idx}) isEqualType missionNamespace}})')
+    s=map_defaults(s)
     return s
 
 def rules():
@@ -25,6 +31,12 @@ def rules():
 
 SETUP = r'''
 private _serverTime=100;
+private _mapDefault={params ["_map","_args"];_args params ["_key","_default"];if (_key in _map) then {_map get _key} else {_default}};
+missionNamespace setVariable ["ACME_supplyReceipts",createHashMap];
+missionNamespace setVariable ["ACME_IV_SupplyScopes",createHashMap];
+_medic setVariable ["ACME_IV_SupplyBindings",[]];
+private _fixtureIssued=[];
+
 private _testClinicalEpoch=7;
 private _hasIV=true;
 private _viewValid=true;
@@ -51,6 +63,13 @@ uiNamespace setVariable ["ACME_IV_DLG",_d];
 uiNamespace setVariable ["ACME_IV_Medic",_medic];
 private _invoke={
     params ["_phase","_action",["_token","token"],["_receiptArg",[]],["_uid","ivhub:7:1"],["_ep",7],["_deadline",130]];
+    // Native inventory is a fixture boundary. Mint each fixture receipt once;
+    // production binding/scope checks execute unchanged. Never rebind a replay.
+    if (_phase=="begin" && {count _receiptArg==4} && {!((_receiptArg select 3) in _fixtureIssued)}) then {
+        _fixtureIssued pushBack (_receiptArg select 3);
+        (missionNamespace getVariable "ACME_supplyReceipts") set [_receiptArg select 3,+_receiptArg];
+        [_medic,_patient,_uid,_action,_token,_ep,_deadline,_receiptArg] call ACME_fnc_ivSupplyBind;
+    };
     [_patient,_medic,_phase,_uid,_action,_token,_ep,_deadline,_receiptArg] call ACME_fnc_ivFinishCommit;
 };
 private _getRow={(_patient getVariable ["ACME_IV_Marks",[]]) select 0};
@@ -277,7 +296,10 @@ private _mapDefault={params ["_map","_args"];_args params ["_key","_default"];if
 private _testAxis=[0,-1];private _testPixelW=1/1920;private _testPixelH=1/1080;
 private _clicks=0;private _cursorHidden=false;private _takes=0;private _stock=true;private _testSupplyReceipt=+_receipt;
 ACME_fnc_ivUiValid={true};
-ACME_fnc_treatmentSupplyTake={_takes=_takes+1;if (_stock) then {_testSupplyReceipt} else {[]}};
+ACME_fnc_treatmentSupplyTake={_takes=_takes+1;if (_stock) then {
+    (missionNamespace getVariable "ACME_supplyReceipts") set [_testSupplyReceipt select 3,+_testSupplyReceipt];
+    _testSupplyReceipt
+} else {[]}};
 uiNamespace setVariable ["ACME_IV_Patient",_patient];
 uiNamespace setVariable ["ACME_IV_BodyPart","leftarm"];
 uiNamespace setVariable ["ACME_IV_View","front"];
