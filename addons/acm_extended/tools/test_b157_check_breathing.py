@@ -1,7 +1,7 @@
 """Current Check Breathing preparation, timed work, and exact completion gates.
 
-Historical test identities are retained. B212 intentionally replaced the held carrier
-frame during assessment with two seconds of Dr_medic4 (prone equivalent when needed).
+Historical test identities are retained. B218 starts native progress with provider
+entry and uses the configured full Dr_medic4 duration (prone equivalent when needed).
 Engine rendering is a boundary; production sequence and carrier/event cleanup execute.
 """
 import pytest
@@ -32,11 +32,11 @@ def test_no_carrier_timer_waits_for_freeze_and_does_not_end_pose_at_launch():
     execute(setup()+r'''
         _request call ACME_fnc_assessmentStart;
         call _frame; call _frame;
-        [count _nativeCalls==0,"timer ran during animation preparation"] call _check;
+        [count _nativeCalls==1,"entry did not share the single clinical timer"] call _check;
         [((_medic getVariable ["ACME_treatmentPoseState",[]]) select 2)=="AinvPknlMstpSnonWnonDr_medic4","wrong clinical animation"] call _check;
         call _ready;
         [count _nativeCalls==1 && {count _poseStops==0},"clinical launch retired its own work"] call _check;
-        [["CheckBreathing"] call ACME_fnc_assessmentTime==2,"wrong breathing duration"] call _check;
+        [["CheckBreathing"] call ACME_fnc_assessmentTime==-_configuredSpeed,"wrong breathing duration"] call _check;
         [((_medic getVariable ["ACME_treatmentPoseState",[]]) select 11)==-1,"assessment inherited carrier freeze"] call _check;
     ''')
 
@@ -71,7 +71,7 @@ def test_preparation_invalidation_does_not_start_breathing_timer(invalidation):
         [count _nativeCalls==1 && {count _poseStops==0},"death blocked otherwise eligible assessment"] call _check;
     ''' if invalidation=='_patientAlive=false;' else r'''
         call _frame;
-        [count _nativeCalls==0 && {count _poseStops==1},"invalid prep started timer or retained work"] call _check;
+        [count _nativeCalls==1 && {count _poseStops==1},"invalid prep relaunched timer or retained work"] call _check;
         [(_medic getVariable ["ACME_assessment",[]]) isEqualTo [],"invalid prep retained lock"] call _check;
     '''))
 
@@ -80,7 +80,7 @@ def test_missing_pose_bounded_timeout_aborts_without_unfrozen_timer():
     execute(setup()+r'''
         _request call ACME_fnc_assessmentStart;
         CBA_missionTime=16; call _frame;
-        [count _nativeCalls==0 && {count _poseStops==1},"missing work timed out into success"] call _check;
+        [count _nativeCalls==1 && {count _poseStops==1},"missing work relaunched timer or retained sequence"] call _check;
         [(_medic getVariable ["ACME_assessment",[]]) isEqualTo [],"timeout retained lock"] call _check;
     ''')
 
@@ -89,16 +89,16 @@ def test_second_click_cannot_launch_while_first_check_is_preparing():
     execute(setup()+r'''
         _request call ACME_fnc_assessmentStart;
         private _second=_request call ACME_fnc_assessmentStart;
-        [!_second && {count _nativeCalls==0} && {count _handlers==1},"second click replaced pending assessment"] call _check;
+        [!_second && {count _nativeCalls==1} && {count _handlers==1},"second click replaced pending assessment"] call _check;
     ''')
 
 
 def test_native_rejection_releases_frozen_episode():
     execute(setup()+r'''
-        _request call ACME_fnc_assessmentStart;
-        _nativeAccepted=false; call _ready;
+        _nativeAccepted=false;
+        _request call ACME_fnc_assessmentStart; call _frame;
         [count _poseStops==1 && {(_medic getVariable ["ACME_assessment",[]]) isEqualTo []},"native rejection retained work"] call _check;
-        [count _removed==2,"native rejection leaked cancel inputs"] call _check;
+        [count _removed==0 && {count _added==0} && {!((_handlers select 0) select 2)},"native rejection retained PFH or redundant inputs"] call _check;
     ''')
 
 
@@ -151,7 +151,7 @@ def test_deleted_patient_releases_pending_provider_and_preparation_lock():
         // Model deleted object references becoming objNull while preparation is pending.
         ((_medic getVariable ["ACME_assessment",[]]) select 1) set [1,objNull];
         call _frame;
-        [count _nativeCalls==0 && {count _poseStops==1},"deleted patient leaked prepared provider"] call _check;
+        [count _nativeCalls==1 && {count _poseStops==1},"deleted patient leaked prepared provider"] call _check;
         [(_medic getVariable ["ACME_assessment",[]]) isEqualTo [],"deleted patient retained pending lock"] call _check;
     ''')
 

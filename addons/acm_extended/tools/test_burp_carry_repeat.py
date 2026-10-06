@@ -1,6 +1,7 @@
 """Run repeated seal burps and real Carry Assist input callbacks in SQF-VM.
 
 The engine clock, display events, animation and physiology effects are simulated.
+B224 requires full resealing before a new relief cycle; no elapsed-time delay is required.
 The production wheel handlers, ownership checks, transactions and cancellation paths run.
 """
 import re
@@ -50,7 +51,7 @@ def burp_setup(kind):
         _patient setVariable ["ACME_thora_sealed_right", true];
         _patient setVariable ["ACM_breathing_ChestSeal_State", true];
     '''
-    for name in ['chestSealBurpReady', 'thoraDrainBloodLocal', 'chestSealBurp', 'thoraAftercareRequest', 'thoraAftercareLocal', 'chestSealScroll', 'thoraSealScroll']:
+    for name in ['chestSealScrollStep', 'chestSealBurpReady', 'thoraDrainBloodLocal', 'chestSealBurp', 'thoraAftercareRequest', 'thoraAftercareLocal', 'chestSealScroll', 'thoraSealScroll']:
         code += f'ACME_fnc_{name} = {{' + burp_source(name) + '};\n'
     code += 'private _panelLog = {' + burp_source('chestSealLogOnce') + '};'
     code += '''
@@ -82,9 +83,9 @@ def test_same_corner_can_burp_repeatedly_without_advancing_time(kind, direction)
         [_logs == 1 && {_effects == 1} && {_gestures == _gesturePerBurp},"first burp failed"] call _check;
         for "_i" from 1 to 4 do {[_direction] call _wheel;};
         [_logs == 1 && {_burpRequests == 1},"partial peel repeated treatment"] call _check;
-        [_direction] call _wheel;
+        [-_direction] call _lift; [_direction] call _lift;
         [_logs == ([1,2] select _surgical) && {_effects == 2} && {_gestures == (2 * _gesturePerBurp)},"immediate second burp remained blocked"] call _check;
-        [_direction] call _lift;
+        [-_direction] call _lift; [_direction] call _lift;
         [_logs == ([1,3] select _surgical) && {_burpRequests == 3},"immediate third cycle failed"] call _check;
     ''')
 
@@ -131,7 +132,7 @@ def test_corpse_seals_remain_reusable_without_restarting_physiology(kind):
     execute(burp_setup(kind) + '''
         _patientAlive = false;
         [1] call _lift;
-        [1] call _lift;
+        [-1] call _lift; [1] call _lift;
         [_logs == ([1,2] select _surgical) && {_gestures == (2 * _gesturePerBurp)},"corpse seal became unusable"] call _check;
         [_effects == 0,"burp restarted corpse physiology"] call _check;
     ''')
@@ -141,7 +142,7 @@ def test_existing_cooldown_record_cannot_block_repeated_burps():
     execute(burp_setup('trauma') + '''
         _patient setVariable ["ACME_CS_burpCooldown", [1, 10000, "serverTime"]];
         [1] call _lift;
-        [1] call _lift;
+        [-1] call _lift; [1] call _lift;
         [_logs == ([1,2] select _surgical) && {_effects == 2},"old cooldown record blocked a burp"] call _check;
     ''')
 

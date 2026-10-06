@@ -32,6 +32,11 @@ def test_current_source_matches_explicit_contract():
     (FILES[2],'ACME_buildBatch = "B238";','ACME_buildBatch = "B238"; ACME_buildBatch = "B237";'),
 ])
 def test_identity_drift_is_rejected(tmp_path,path,old,new):
+    # Keep the original mutation IDs as provenance, while targeting the explicit
+    # current contract rather than assuming every future source still says B238.
+    expected = json.loads((ROOT / "tools/current_build_contract.json").read_text())
+    old = old.replace("B238", expected["batch"])
+    new = new.replace("B238", expected["batch"])
     root=fixture(tmp_path);p=root/path;text=p.read_text();assert old in text;p.write_text(text.replace(old,new))
     with pytest.raises(AssertionError):assert_current_build(root)
 
