@@ -1,5 +1,6 @@
 """Execute the immediate Direct Pressure bridge without assuming an immediate ACK."""
 import pytest
+from historical_source import assert_release_identity as _assert_current_build
 from test_menu_death_lifecycle import ROOT, adapt, execute
 from test_b204_network_full_audit_20260929 import global_sound_calls
 
@@ -48,5 +49,5 @@ def test_every_release_component_carries_its_own_build_stamp():
         assert f'ACME_BUILD_CONFIG("{component}");' in source
         assert 'script_build.hpp"' in source
     header = (ROOT / "addons/main/script_build.hpp").read_text()
-    assert 'acmeBuildBatch = "B237"' in header
+    _assert_current_build()
     assert 'acmeNetworkProtocol = 1' in header
