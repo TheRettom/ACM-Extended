@@ -162,12 +162,23 @@ def test_owner_accepts_once_and_uses_owner_clock():
         ACME_headElev_lowerAnimTime = 3;
         call _request; call _request;
         [count _animRequests == 1 && {count _holdClears == 1}, "retry duplicated lower"] call _check;
+        private _acceptedEpoch = _patient getVariable ["ACME_headElev_startEpoch",0];
+        [_acceptedEpoch == 1, "retry advanced lower generation twice before completion"] call _check;
         [(_patient getVariable ["ACME_cprLowerReady", []]) isEqualTo [_medic,42,-2], "lower acknowledged before owner completion"] call _check;
         _serverClock = 1003;
         [_waits select 0] call _deliver;
         [(_patient getVariable ["ACME_cprLowerReady", []]) isEqualTo [_medic,42,1003], "completion ack used provider clock"] call _check;
         [count _provider == 0, "lower installed competing provider theatre"] call _check;
-        [(_patient getVariable ["ACME_headElev_startEpoch",0]) == 1, "retry advanced lower generation twice"] call _check;
+        // B238 consumes the accepted generation exactly once on completion; a request retry still does not advance it.
+        private _retiredEpoch = _patient getVariable ["ACME_headElev_startEpoch",0];
+        [_retiredEpoch == _acceptedEpoch + 1, "completion did not retire its accepted generation"] call _check;
+        private _restoredOnce = count _restores;
+        _serverClock = 1004;
+        call _request;
+        [_waits select 0] call _deliver;
+        [(_patient getVariable ["ACME_headElev_startEpoch",0]) == _retiredEpoch, "completed request or callback retired twice"] call _check;
+        [(_patient getVariable ["ACME_cprLowerReady", []]) isEqualTo [_medic,42,1003], "duplicate callback republished a new completion time"] call _check;
+        [count _restores == _restoredOnce && {count _animRequests == 1}, "completed request or callback repeated presentation"] call _check;
     ''')
 
 
