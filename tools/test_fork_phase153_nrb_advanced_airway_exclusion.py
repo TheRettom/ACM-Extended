@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """RC7 regression: NRB may coexist only with no adjunct, OPA and/or NPA, never i-gel/ETT/surgical airway."""
+from build_contract import assert_current_build as _assert_current_build
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -45,7 +46,7 @@ assert 'ACME_nrb_on' in laryngo and 'ACME_ETT_Inserted' in laryngo
 assert 'if !([_u] call ACME_fnc_nrbAirwayCompatible) then {' in tick
 assert 'NRB removed: advanced airway now requires BVM or ventilator support.' in tick
 
-assert 'ACME_buildBatch = "B123";' in startup
+_assert_current_build()
 assert 'ACME_debugRevision = "rc7";' in startup
 
 print("PASS rc7: NRB only with no airway adjunct, OPA and/or NPA")

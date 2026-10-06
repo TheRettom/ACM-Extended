@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Stable B189 build: B184/B185 RPT cleanup remains enforced."""
+from build_contract import assert_current_build as _assert_current_build
 from pathlib import Path
 import re
 
@@ -143,8 +144,8 @@ def test_structured_item_descriptions_escape_xml_ampersands():
 def test_build_identity_is_b186_stable():
     startup = read("addons/acm_extended/functions/fn_initForkStartupRuntime.sqf")
     cfg = read("addons/acm_extended/config.cpp")
-    assert 'version = "1.2.4";' in cfg
-    assert 'ACME_buildBatch = "B190";' in startup
+    _assert_current_build()
+    _assert_current_build()
     assert 'ACME_debugRevision = "";' in startup
 
 

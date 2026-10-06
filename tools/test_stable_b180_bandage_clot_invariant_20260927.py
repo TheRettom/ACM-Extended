@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Stable B216 build: B180 clot-only reopening plus B199 physical-dressing invariants remain enforced."""
+from build_contract import assert_current_build as _assert_current_build
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -112,8 +113,8 @@ def test_generic_reopen_helper_is_future_proofed_to_clots_only():
 def test_build_identity_is_b203_stable():
     startup = read("addons/acm_extended/functions/fn_initForkStartupRuntime.sqf")
     cfg = read("addons/acm_extended/config.cpp")
-    assert 'version = "1.2.4.1";' in cfg
-    assert 'ACME_buildBatch = "B237";' in startup
+    _assert_current_build()
+    _assert_current_build()
     assert 'ACME_debugRevision = "";' in startup
 
 

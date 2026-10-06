@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """RC3 regression: sidearms must fully holster before provider theatre and prone auscultation must roll, never teleport."""
+from build_contract import assert_current_build as _assert_current_build
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,7 +57,7 @@ assert "class stethoscopeEntryFlipTick {};" in cfg
 # The preserve-head flag survives owner dispatch for remote patients.
 assert '[_patient, _target, _force, _provider, _preserveSuspendedHeadElevation]' in roll
 
-assert 'ACME_buildBatch = "B119";' in startup
+_assert_current_build()
 assert 'ACME_debugRevision = "rc3";' in startup
 
 print("PASS rc3: serialized sidearm holster + animated prone auscultation entry")

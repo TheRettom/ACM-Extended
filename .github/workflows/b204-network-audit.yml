@@ -51,9 +51,10 @@ jobs:
       - name: Source and native-state ownership gates
         run: |
           git diff --check 90e47ed7a2fc457099255f477f2b476fdae2ce9b HEAD
+          python tools/build_contract.py
           python tools/audit_acme_native_owner_writes.py --strict
       - name: HEMTT static validation
-        run: /tmp/acme-tools/hemtt check
+        run: /tmp/acme-tools/hemtt check --error-on-all
 
   full-regression-shards:
     runs-on: ubuntu-24.04

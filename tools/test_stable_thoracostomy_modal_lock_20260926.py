@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Stable B189: thoracostomy modal launch must not strand menu/weapon/provider state."""
+from build_contract import assert_current_build as _assert_current_build
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,9 +80,9 @@ def test_abort_and_close_restore_free_provider_input_state_without_normal_provid
 def test_stable_debug_identity_is_b183_without_hotfix_suffix():
     startup = read("addons/acm_extended/functions/fn_initForkStartupRuntime.sqf")
     cfg = read("addons/acm_extended/config.cpp")
-    assert 'ACME_buildBatch = "B237";' in startup
+    _assert_current_build()
     assert 'ACME_debugRevision = "";' in startup
-    assert 'version = "1.2.4";' in cfg
+    _assert_current_build()
 
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):

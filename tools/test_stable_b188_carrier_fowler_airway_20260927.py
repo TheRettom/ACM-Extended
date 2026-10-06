@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Stable B188: manual plate carrier and Semi-Fowler share one physical custody/animation lifecycle."""
+from build_contract import assert_current_build as _assert_current_build
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -141,8 +142,8 @@ def test_airway_removal_still_disconnects_ventilator():
 def test_build_identity_is_b188_stable():
     startup = read("addons/acm_extended/functions/fn_initForkStartupRuntime.sqf")
     cfg = read("addons/acm_extended/config.cpp")
-    assert 'version = "1.2.4";' in cfg
-    assert 'ACME_buildBatch = "B190";' in startup
+    _assert_current_build()
+    _assert_current_build()
     assert 'ACME_debugRevision = "";' in startup
 
 

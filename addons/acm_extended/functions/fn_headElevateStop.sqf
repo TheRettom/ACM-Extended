@@ -181,9 +181,13 @@ if (_visibleLower) then {
         params ["_patient", "_rest", "_animToken", "_medic", "_cprEpoch", "_cprOwner", "_lowerStateEpoch", "_validCPROwner"];
         if (isNull _patient || {!local _patient} || {!alive _patient}) exitWith {};
         if (_patient getVariable ["ACME_headElevated", false]) exitWith {};
-        if (_cprEpoch >= 0 && {(_patient getVariable ["ACME_headElev_startEpoch", 0]) != _lowerStateEpoch}) exitWith {};
+        // B238: manual lowering has the same lifecycle boundary as an automatic CPR lower.
+        if ((_patient getVariable ["ACME_headElev_startEpoch", 0]) != _lowerStateEpoch) exitWith {};
+        if ((_patient getVariable ["ACME_headElev_poseToken", ""]) != "") exitWith {};
         private _ownsAnim = _animToken != "" && {((_patient getVariable ["ACME_patientAnimLock", []]) param [0, ""]) == _animToken};
-        if (_cprEpoch >= 0 && {!_ownsAnim}) exitWith {};
+        if ((_cprEpoch >= 0 || {_animToken != ""}) && {!_ownsAnim}) exitWith {};
+        // Retire this completion before gear/presentation writes. A repeated delivery cannot restore twice.
+        _patient setVariable ["ACME_headElev_startEpoch", _lowerStateEpoch + 1, false];
         if (_ownsAnim) then {[_patient, _animToken] call ACME_fnc_patientAnimRelease;};
         // A newer elevation must finish its own lift before normal collision returns.
         if (_ownsAnim) then {[_patient, true] call ACME_fnc_headElevCollision;};

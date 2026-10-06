@@ -1,3 +1,4 @@
+from historical_source import assert_release_identity as _assert_current_build
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -103,7 +104,7 @@ def test_medic_thoracostomy_and_doctor_only_chest_tube_tray():
 
 def test_hotfix_keeps_stable_123_debug_identity():
     startup = acme("functions/fn_initForkStartupRuntime.sqf")
-    assert 'ACME_buildBatch = "B171";' in startup
+    _assert_current_build()
     assert 'ACME_debugRevision = "";' in startup
 
 
