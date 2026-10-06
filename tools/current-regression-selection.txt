@@ -96,3 +96,17 @@ tools/test_fork_phase153_nrb_advanced_airway_exclusion.py
 tools/test_fork_phase64_ett_airway_state_writer.py
 tools/test_fork_phase68_blood_thermal_state_writer.py
 tools/test_fork_phase79_aajt_state_owner.py
+
+# B240 reviewed current lifecycle, owner routes, UI and build expectations.
+addons/acm_extended/tools/test_b156_reset_lifecycle.py
+addons/acm_extended/tools/test_b36_ej_orientation.py
+addons/acm_extended/tools/test_b72_chest_tag_head_provider.py
+addons/acm_extended/tools/test_bounded_head_provider_sequence.py
+addons/acm_extended/tools/test_push_seconds_execution.py
+tools/test_fork_phase112_ace_override_target_contract.py
+tools/test_fork_phase125_chest_firstpass_flip.py
+tools/test_fork_phase129_hang_bag_visual_animation.py
+tools/test_fork_phase140_hemtt_runtime_warnings_gate.py
+tools/test_fork_phase142_getup_acre_babel_gate.py
+tools/test_fork_phase145_zone3_reboa_smart_bandage.py
+tools/test_fork_phase8_getup.py

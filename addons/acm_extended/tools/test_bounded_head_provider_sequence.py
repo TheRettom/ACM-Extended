@@ -20,7 +20,7 @@ def provider_contract(text=None):
         'private _forcePose = _rest;',
         'private _first = [_medic, "'+FIRST+'", _prone] call ACME_fnc_providerAnimation;',
         'private _second = if (_prone) then {_rest} else {"'+SECOND+'"};',
-        'if !(_mode in ["elevate", "lower", "contactexit", "chestsealexit"]) exitWith {};',
+        'if !(_mode in ["elevate", "lower", "contactexit", "chestsealexit", "mask"]) exitWith {};',
         '} else {[_medic] call ACME_fnc_medicAnimationPrep};',
         'if ((_u getVariable ["ACME_headElev_medicAnimToken", -1]) != _token) exitWith {',
         'private _nextAlreadyRunning = _state == _secondLC && {!_prone || {_seen && {_now - _stageAt >= _proneWorkTime}}};',
