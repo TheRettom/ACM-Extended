@@ -67,3 +67,27 @@ def test_inline_parser_ignores_strings_comments_and_keeps_nested_scopes():
         switch (_op) do { case "selected": {if (true) then {call writer;};}; };
     '''
     assert inline_case(source, 'selected').strip() == 'if (true) then {call writer;};'
+
+
+def test_reviewed_historical_modules_are_mandatory_not_only_baseline_comparisons():
+    from run_sharded_regressions import current_selection
+    # This independent list guards against accidentally dropping a repaired module.
+    reviewed = {
+        'addons/acm_extended/tools/test_b156_medication_accuracy.py',
+        'addons/acm_extended/tools/test_b157_check_breathing.py',
+        'addons/acm_extended/tools/test_b157_native_rate.py',
+        'addons/acm_extended/tools/test_bounded_selector_lifetime.py',
+        'addons/acm_extended/tools/test_burp_carry_repeat.py',
+        'addons/acm_extended/tools/test_historical_medication_retirement.py',
+        'tools/test_fork_phase109_upstream_acm_class_gate.py',
+        'tools/test_fork_phase126_vent_roc_assessment.py',
+        'tools/test_fork_phase127_sedation_debug_consistency.py',
+        'tools/test_fork_phase128_pressure_vehicle_pulse.py',
+        'tools/test_fork_phase153_nrb_advanced_airway_exclusion.py',
+        'tools/test_fork_phase64_ett_airway_state_writer.py',
+        'tools/test_fork_phase68_blood_thermal_state_writer.py',
+        'tools/test_fork_phase79_aajt_state_owner.py',
+    }
+    selected = set(current_selection(ROOT))
+    assert reviewed <= selected, sorted(reviewed - selected)
+    assert all((ROOT / name).is_file() for name in reviewed)

@@ -81,3 +81,18 @@ addons/acm_extended/tools/test_bounded_head_completion.py
 addons/acm_extended/tools/test_bounded_head_pose_contracts.py
 tools/test_b207_native_owner_audit_gate.py
 tools/test_b207_pytest_outcome_gate.py
+# B239: reviewed formerly failing/blocked contracts are required to stay green.
+addons/acm_extended/tools/test_b156_medication_accuracy.py
+addons/acm_extended/tools/test_b157_check_breathing.py
+addons/acm_extended/tools/test_b157_native_rate.py
+addons/acm_extended/tools/test_bounded_selector_lifetime.py
+addons/acm_extended/tools/test_burp_carry_repeat.py
+addons/acm_extended/tools/test_historical_medication_retirement.py
+tools/test_fork_phase109_upstream_acm_class_gate.py
+tools/test_fork_phase126_vent_roc_assessment.py
+tools/test_fork_phase127_sedation_debug_consistency.py
+tools/test_fork_phase128_pressure_vehicle_pulse.py
+tools/test_fork_phase153_nrb_advanced_airway_exclusion.py
+tools/test_fork_phase64_ett_airway_state_writer.py
+tools/test_fork_phase68_blood_thermal_state_writer.py
+tools/test_fork_phase79_aajt_state_owner.py
