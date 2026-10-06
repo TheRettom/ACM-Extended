@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Diagnose literal native-state writes from Extended; --strict makes them a CI gate.
 
-Scope: literal ACM core/airway/breathing/circulation keys in setVariable or direct
+Scope: literal ACM core/airway/breathing/circulation/damage/CBRN and ACE keys in setVariable or direct
 calls to ACME_fnc_setVarNet/Approx. Comments, ordinary strings, reads and native
 setter calls are excluded. This lexical check is not a data-flow analysis of
 computed keys/aliased functions or a policy for legacy bare global assignments.
@@ -18,7 +18,8 @@ EXT = ROOT / "addons" / "acm_extended" / "functions"
 sys.path.insert(0, str(ROOT / "addons" / "acm_extended" / "tools"))
 from source_scan import code_streams, matching, split_args
 
-PREFIXES = ("ACM_core_", "ACM_breathing_", "ACM_circulation_", "ACM_airway_")
+PREFIXES = ("ACM_core_", "ACM_breathing_", "ACM_circulation_", "ACM_airway_",
+            "ACM_damage_", "ACM_CBRN_", "ace_")
 
 
 @dataclass(frozen=True)

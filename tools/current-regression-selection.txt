@@ -110,3 +110,19 @@ tools/test_fork_phase140_hemtt_runtime_warnings_gate.py
 tools/test_fork_phase142_getup_acre_babel_gate.py
 tools/test_fork_phase145_zone3_reboa_smart_bandage.py
 tools/test_fork_phase8_getup.py
+
+# B241 native-state boundary repairs, legacy checks retained as named tests.
+tools/test_fork_phase53_no_extended_acm_writers.py
+tools/test_fork_phase54_ace_medical_state_bridge.py
+tools/test_fork_phase55_gui_pfh_owner.py
+tools/test_fork_phase56_no_extended_ace_writers.py
+
+addons/acm_extended/tools/test_b37_menu_state.py
+
+addons/acm_extended/tools/test_b34_tray_silhouettes.py
+
+addons/acm_extended/tools/test_b64_syringe_tag_carousel_refinement.py
+
+addons/acm_extended/tools/test_b169_menu_renderer_owner.py
+
+addons/acm_extended/tools/test_b199_physical_dressing_invariant_20260928.py

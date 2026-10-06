@@ -35,7 +35,10 @@ def cargo_source(name):
 
 
 def setup():
-    return r'''
+    native = ''.join('ACM_core_fnc_' + name + '={' +
+        namespace_public_arguments((ROOT / 'addons/core/functions' / ('fnc_' + name + '.sqf')).read_text().split('#include "..\\script_component.hpp"', 1)[-1].replace(', _public]', ']')) + '};'
+        for name in ('setDraggingCapability', 'setCargoLoadCapability'))
+    return native + r'''
         _medic="GroundWeaponHolder" createVehicle [0,0,0];
         _patient="GroundWeaponHolder" createVehicle [0,0,0];
         private _wornVest="Vest_A";

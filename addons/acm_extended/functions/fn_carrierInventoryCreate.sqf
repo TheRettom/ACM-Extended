@@ -16,9 +16,8 @@ if !([_snapshot, [_cargo] call ACME_fnc_carrierCargoSnapshot] call ACME_fnc_carr
 _cargo allowDamage false;
 _cargo setVariable ["ACME_carrierPatient", _patient, true];
 _cargo setVariable ["ACME_carrierSavedVar", _savedVar, true];
-_cargo setVariable ["ace_dragging_canDrag", false, true];
-_cargo setVariable ["ace_dragging_canCarry", false, true];
-_cargo setVariable ["ace_cargo_canLoad", false, true];
+[_cargo, false, false, true] call ACM_core_fnc_setDraggingCapability;
+[_cargo, false, true] call ACM_core_fnc_setCargoLoadCapability;
 _patient setVariable ["ACME_carrierCargo", _cargo, true];
 _patient setVariable [_savedVar + "Live", true, true];
 _patient setVariable [_savedVar + "Settled", false, true];

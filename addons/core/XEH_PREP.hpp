@@ -47,3 +47,7 @@ PREP(setCursorInteractionMode);
 
 PREP(continuousHoldRelease);
 PREP(registerContinuousRuntime);
+
+PREP(setCargoLoadCapability);
+PREP(registerDownedProtectionReason);
+PREP(suppressPhysicalBandageReopening);

@@ -98,7 +98,8 @@ def setup():
 
 
 def production():
-    return setup() + ''.join('ACME_fnc_' + name + '={' + engine(read(name)) + '};'
+    bridge = (ROOT / 'addons/core/functions/fnc_registerDownedProtectionReason.sqf').read_text()
+    return setup() + 'ACM_core_fnc_registerDownedProtectionReason={' + engine(bridge) + '};' + ''.join('ACME_fnc_' + name + '={' + engine(read(name)) + '};'
                              for name in ('aiProtectionWanted', 'aiProtectionSync', 'aiProtectionTick', 'aiProtectionInit'))
 
 

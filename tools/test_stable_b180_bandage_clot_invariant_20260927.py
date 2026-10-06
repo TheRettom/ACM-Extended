@@ -25,7 +25,7 @@ def test_applied_bandage_commit_has_no_reopen_scheduler():
 def test_custom_clot_pop_never_reads_or_writes_physical_dressings():
     s = read("addons/acm_extended/functions/fn_popClots.sqf")
     assert 'getVariable ["ACM_damage_ClottedWounds", createHashMap]' in s
-    assert 'setVariable ["ACM_damage_ClottedWounds", _clotted, true]' in s
+    assert '[["clottedWounds", _clotted]], true] call ACM_damage_fnc_setWoundState;' in s
     for forbidden in (
         "ace_medical_bandagedWounds",
         "GET_BANDAGED_WOUNDS",

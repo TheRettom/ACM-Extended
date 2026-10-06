@@ -73,11 +73,7 @@
                 || {_epoch != (uiNamespace getVariable ["ACME_medicalMenuRendererEpoch", -1])}
                 || {_rendererPFH != (uiNamespace getVariable ["ACME_medicalMenuRendererPFH", -1])}) exitWith {};
 
-            private _acePFH = missionNamespace getVariable ["ace_medical_gui_menuPFH", -1];
-            if (_acePFH isEqualType 0 && {_acePFH >= 0} && {_acePFH != _rendererPFH}) then {
-                [_acePFH] call CBA_fnc_removePerFrameHandler;
-            };
-            missionNamespace setVariable ["ace_medical_gui_menuPFH", -1];
+            private _acePFH = [_rendererPFH] call ACM_GUI_fnc_retireMedicalMenuPFH;
 
             if (call ACME_fnc_debugEnabled) then {
                 diag_log format ["[ACME MENU RENDERER] owner epoch=%1 renderer=%2 retiredACE=%3 target=%4",

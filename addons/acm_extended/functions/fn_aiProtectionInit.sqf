@@ -9,15 +9,8 @@ if !(missionNamespace getVariable ["ACME_aiProtection_installed", false]) then {
 };
 if !(missionNamespace getVariable ["ace_common_settingsInitFinished", false]) exitWith {};
 if (isNil "ace_common_fnc_statusEffect_set" || {isNil "ace_common_fnc_statusEffect_sendEffects"}) exitWith {};
-private _reasons = missionNamespace getVariable ["ace_common_statusEffects_setHidden", []];
-// Never let clients concurrently append different reason indices through statusEffect_set. Preserve ACE's
-// pre-seeded reasons and wait for that registered effect before the server publishes our one stable addition.
-if (isServer && {!(_reasons isEqualTo [])} && {!("acme_medical_downed" in _reasons)}) then {
-    _reasons = +_reasons;
-    _reasons pushBack "acme_medical_downed";
-    missionNamespace setVariable ["ace_common_statusEffects_setHidden", _reasons, true];
-};
-if !("acme_medical_downed" in _reasons) exitWith {};
+// The native core bridge preserves the server-only append and stable ACE indices.
+if !(call ACM_core_fnc_registerDownedProtectionReason) exitWith {};
 missionNamespace setVariable ["ACME_aiProtection_ready", true];
 if !(missionNamespace getVariable ["ACME_aiProtection_announced", false]) then {
     missionNamespace setVariable ["ACME_aiProtection_announced", true];

@@ -86,8 +86,7 @@ if (!isNil "ACM_circulation_fnc_cprSessionValid" && {!isNil "ACM_circulation_fnc
             _released = [_medic, _patient, _session select 1] call ACM_circulation_fnc_cprRelease;
         };
         if (!_released) then {
-            _patient setVariable ["ace_medical_CPR_provider", objNull, true];
-            [_patient, [["cprMedic", objNull], ["cprSession", []]], true] call ACM_circulation_fnc_setRuntimeState;
+            [_patient, [["cprProvider", objNull], ["cprMedic", objNull], ["cprSession", []]], true] call ACM_circulation_fnc_setRuntimeState;
         };
         "CPR reservation" call _mark;
     };
@@ -188,7 +187,7 @@ if (["ACME_reconcileInvalidHangAt", _hangInvalid, 2] call _debouncedInvalid) the
 private _progress = _patient getVariable ["ACM_damage_BandageProgress", createHashMap];
 if !(_progress isEqualType createHashMap) then {
     _progress = createHashMap;
-    _patient setVariable ["ACM_damage_BandageProgress", _progress, true];
+    [_patient, [["bandageProgress", _progress]], true] call ACM_damage_fnc_setWoundState;
     "Bandage progress shape" call _mark;
 };
 private _progressChanged = false;
@@ -209,7 +208,7 @@ private _progressChanged = false;
     };
 } forEach +(keys _progress);
 if (_progressChanged) then {
-    _patient setVariable ["ACM_damage_BandageProgress", _progress, true];
+    [_patient, [["bandageProgress", _progress]], true] call ACM_damage_fnc_setWoundState;
     if (!isNil "ace_medical_status_fnc_updateWoundBloodLoss") then {
         [_patient] call ace_medical_status_fnc_updateWoundBloodLoss;
     };

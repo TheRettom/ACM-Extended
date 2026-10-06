@@ -1,8 +1,8 @@
 ACME_infusion_version = getText (configFile >> "CfgPatches" >> "ACM_Extended" >> "version");
 if (ACME_infusion_version == "") then { ACME_infusion_version = "1.2.4.1"; };
-ACME_buildBatch = "B240";
+ACME_buildBatch = "B241";
 ACME_debugRevision = "";
-ACME_networkAuditRevision = "NA8-B240-1.2.4.1-candidate";
+ACME_networkAuditRevision = "NA8-B241-1.2.4.1-candidate";
 
 /*
  * B199 physical-dressing invariant.
@@ -11,10 +11,10 @@ ACME_networkAuditRevision = "NA8-B240-1.2.4.1-candidate";
  * bookkeeping, but make ACE's final reopening roll impossible on every machine. Only ACME's explicit
  * unsecured-clot path may create a spontaneous reopen.
  */
-missionNamespace setVariable ["ace_medical_treatment_woundReopenChance", -1, false];
+call ACM_core_fnc_suppressPhysicalBandageReopening;
 // Re-assert after CBA's server-setting synchronization as well; this keeps JIP clients on the same invariant.
 ["CBA_settingsInitialized", {
-    missionNamespace setVariable ["ace_medical_treatment_woundReopenChance", -1, false];
+    call ACM_core_fnc_suppressPhysicalBandageReopening;
 }] call CBA_fnc_addEventHandler;
 call ACME_fnc_chestSealNetInit;
 [] call ACME_fnc_ventCustodyInit;

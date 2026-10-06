@@ -73,13 +73,8 @@ private _now = CBA_missionTime;
             private _retain = (0.15 + (0.80 * _reserve)) * (1 - (0.55 * _lungPenalty));
             private _buffered = _spo2 + ((_lastSpo2 - _spo2) * (_retain max 0 min 0.92));
             if (_buffered > _spo2) then {
-                if (!isNil "ACM_core_fnc_setAceMedicalState") then {
-                    [_u, [["spo2", (_buffered min 100), true, true]]] call ACM_core_fnc_setAceMedicalState;
-                    _spo2 = _buffered;
-                } else {
-                    _u setVariable ["ace_medical_spo2", _buffered min 100, true];
-                    _spo2 = _buffered;
-                };
+                [_u, [["spo2", (_buffered min 100), true, true]]] call ACM_core_fnc_setAceMedicalState;
+                _spo2 = _buffered;
             };
         };
     } else {

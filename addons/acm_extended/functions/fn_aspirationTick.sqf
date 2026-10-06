@@ -89,9 +89,7 @@ private _now = CBA_missionTime;
         if (_spo2 > _ceiling) then {
             private _fall = (0.03 + (0.18 * _injury)) * _dt;
             private _new = (_spo2 - _fall) max _ceiling;
-            if (!isNil "ACM_core_fnc_setAceMedicalState") then {
-                [_u, [["spo2",_new,true,true]]] call ACM_core_fnc_setAceMedicalState;
-            } else {_u setVariable ["ace_medical_spo2",_new,true];};
+            [_u, [["spo2",_new,true,true]]] call ACM_core_fnc_setAceMedicalState;
         };
     };
 
