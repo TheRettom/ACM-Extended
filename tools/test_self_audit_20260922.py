@@ -66,6 +66,9 @@ def test_prior_fix_restored_without_rewrite(path, expected):
         assert '"ACME_carrierSavedVar", ""' in code and '"ACME_CS_vestLoadout"' in code
         return
     reviewed_tests = {
+        # B238: run the reviewed continuous-pressure contract; retain this historical
+        # case identity and original hash as provenance, not an immutable test-body requirement.
+        'tools/test_fork_phase155_blood_flow_policy.py': ['test_current_contract'],
         'tools/test_fork_phase164_chest_access_animation_flow.py': ['test_restoration_is_patient_lift_revest_release_without_extra_provider_medic4'],
         'tools/test_fork_phase164_chest_animation_contract.py': ['test_restore_is_visible_reverse_sequence'],
         'addons/acm_extended/tools/test_seizure_gesture_unification.py': [
