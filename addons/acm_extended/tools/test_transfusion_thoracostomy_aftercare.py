@@ -160,7 +160,8 @@ def test_seal_hit_test_and_scroll_are_wired_to_visible_art():
     assert 'displayAddEventHandler ["MouseZChanged"' in init
     assert 'ctrlAddEventHandler ["MouseZChanged"' in init
     scroll = read("functions/fn_thoraSealScroll.sqf")
-    assert '_frame >= 5 && {!_fired}' in scroll
+    assert "ACME_fnc_chestSealScrollStep" in scroll
+    assert 'if (_complete) then' in scroll
     assert '"burp"' in scroll
     assert "ACME_fnc_thoraAftercareRequest" in scroll
     assert "ACME_fnc_ownerDispatch" in read("functions/fn_thoraAftercareRequest.sqf")
