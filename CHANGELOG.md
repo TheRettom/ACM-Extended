@@ -1,5 +1,14 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B243
+
+- IV component click capture widened to 1.8% while preserving the 5.2% attraction field and 0.4% hard-seat.
+- Field IV second-catheter placement keeps both 14g and 16g selections and supports direct gauge switching.
+- Extension/line geometry seats 20 authored pixels deeper into the catheter hub with aligned downstream targets.
+- Historical import-time regression modules are being converted to named current-behavior checks so collection can complete.
+- Public version remains 1.2.4.1; runtime marker is B243 / NA8-B243-1.2.4.1-candidate.
+
+
 ## 1.2.4.1 — B207
 
 Updated 30 September 2026.
