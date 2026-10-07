@@ -58,7 +58,7 @@ def test_medic3_is_reserved_for_actual_seal_placement():
     assert "chestSealBurpGesture" not in thora
     assert 'case "chestSealBurpGesture"' not in dispatch
     ncd = read("addons/acm_extended/functions/fn_chestSealApplyNCD.sqf")
-    assert '[_medic,"ncdSeat",2.0] call ACME_fnc_treatmentGesture' in ncd
+    assert '[_medic,"ncdSeat",2.0,_patient] call ACME_fnc_treatmentGesture' in ncd
     assert 'call ACME_fnc_treatmentGesture' not in apply
     assert '[_medic,"ncdSeat"' not in apply
     assert '[_medic, "ncdSeat"' not in apply
@@ -100,7 +100,7 @@ def test_chestseal_and_stethoscope_use_semifowler_putdown_exit():
     assert '[_flipMedic,"chestsealexit",uiNamespace getVariable ["ACME_CS_SessionToken", ""]] call ACME_fnc_headElevMedicSeq' in chest
     assert '[_medic, ["lower", "contactexit"] select _ambulatoryContact] call ACME_fnc_headElevMedicSeq' in steth
     assert '[_flipMedic,_poseMode,_poseEpoch,true] call ACME_fnc_treatmentPoseStop' in chest
-    assert '[_medic,"stethoscope",_poseEpoch,true] call ACME_fnc_treatmentPoseStop' in steth
+    assert '[_medic,"stethoscope",_poseEpoch,_temporaryCarrier] call ACME_fnc_treatmentPoseStop' in steth
     assert steth_controller.count('"stethoscope", _poseEpoch, true') >= 2
     assert '"chestAccessVestProvider", [_medic, _patient, "start"' not in restore
 
