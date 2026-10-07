@@ -91,6 +91,7 @@ private _circNeeds = (_circState getOrDefault ["shockActive", false])
     || {(_circState getOrDefault ["ionizedCa", 1.15]) < 0.999}
     || {(_circState getOrDefault ["temp", 37]) < 35.99}
     || {(_circState getOrDefault ["salineAcidosis", 0]) > 0.001}
+    || {(_patient getVariable ["ACME_circ_salineGivenMl", 0]) > 0}
     || {(_circState getOrDefault ["totalAcidosis", 0]) > 0.001}
     || {(_circState getOrDefault ["paCO2", 40]) > 40.1}
     || {(_circState getOrDefault ["respiratoryAcidosisDeficit", 0]) > 0.001}
