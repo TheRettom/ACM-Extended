@@ -192,6 +192,12 @@ def hub_block():
     return s[ts[i].offset+1:ts[pairs[i]].offset]
 
 
+def test_field_click_guard_cannot_fall_through_to_skin_when_not_close():
+    """Retain the audited B235 case identity against B242's wider click contract."""
+    for gauge in (14, 16):
+        test_field_click_guard_accepts_large_bore_near_lock_without_skin_fallthrough(gauge)
+
+
 def test_actual_mark_creation_order_puts_lock_and_extension_under_hub():
     s=hub_block().replace('_dlg','_d')
     s=re.sub(r'_d ctrlCreate (\[[^;\n]+?\])',r'(\1 call _create)',s)
@@ -258,7 +264,7 @@ def test_production_socket_maps_drive_actual_seated_axis_and_all_downstream_poin
     [abs ((_childHub select 0)-(_expected select 0))<0.00001 && {{abs ((_childHub select 1)-(_expected select 1))<0.00001}},"downstream child seated"] call _check;
     private _port=[_row,[_row] call ACME_fnc_ivFieldPort] call ACME_fnc_ivFieldPoint;
     private _acc=[_row,false] call ACME_fnc_ivFieldAccessoryRow;
-    private _shown=[_acc,[1033.02/2048,1386.52/2048]] call ACME_fnc_ivFinishPoint;
+    private _shown=[_acc,[1033.02/2048,1386.52/2048],[1006.5/2048,1052/2048]] call ACME_fnc_ivFinishPoint;
     [abs ((_port select 0)-(_shown select 0))<0.00001 && {{abs ((_port select 1)-(_shown select 1))<0.00001}},"extension/syringe share measured axis"] call _check;
     ''')
 
