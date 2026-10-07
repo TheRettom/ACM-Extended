@@ -33,7 +33,7 @@ class B17Release(unittest.TestCase):
         io=read('functions/fn_ioPainResponse.sqf'); th=read('functions/fn_thoraMouseUp.sqf')
         # IO placement/medication pain itself never hard-drops consciousness. Fluid through an IO
         # deliberately schedules one delayed owner-local syncope episode under the later B115 contract.
-        placement=io[io.index('if (_mode == "placement") exitWith'):io.index('// Actual IO flow')]
+        placement=io[io.index('if (_mode == "placement") exitWith'):io.index('// Actual admitted IO fluid')]
         self.assertNotIn('setUnconscious',placement)
         self.assertIn('adjustPainLevel',placement)
         self.assertIn('if (_mode == "fluid" && {!_isUncon}) then {',io)
