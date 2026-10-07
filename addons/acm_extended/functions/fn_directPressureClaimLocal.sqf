@@ -79,6 +79,17 @@ if (!_currentValid && {!isNull _currentMedic || {!(_claim isEqualTo [])}}) then 
     if ((_patient getVariable [_pressKey,objNull]) isEqualTo _currentMedic) then {
         _patient setVariable [_pressKey,objNull,true];
     };
+    // Before a new claim is granted, restore generic marker and bleeding state
+    // for this expired provider without modifying another medic's marker.
+    if ((_patient getVariable ["ACME_DP_TorsoMedic",objNull]) isEqualTo _currentMedic) then {
+        _patient setVariable ["ACME_DP_TorsoMedic",objNull,true];
+    };
+    if ((_patient getVariable ["ACME_DP_LimbMedic",objNull]) isEqualTo _currentMedic) then {
+        _patient setVariable ["ACME_DP_LimbMedic",objNull,true];
+    };
+    if (_part in ["leftarm","rightarm","leftleg","rightleg"]) then {
+        [_patient] call ace_medical_status_fnc_updateWoundBloodLoss;
+    };
     _claim = [];
     _currentMedic = objNull;
     _currentToken = "";
