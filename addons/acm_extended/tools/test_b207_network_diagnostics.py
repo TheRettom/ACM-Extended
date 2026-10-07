@@ -113,14 +113,24 @@ def test_counter_deltas_are_snapshots_and_partial_resets_are_marked():
         _nowTime = 11;
         private _first = ["sample"] call ACME_fnc_networkDiagnostics;
         [(_first get "helperRequestDeltas") isEqualTo [[3,false],[5,false],[0,false]], "snapshot mutated with source counters"] call _check;
+        private _firstFields=_first get "helperRequestFields";
+        [((_firstFields select 0) get "a") isEqualTo [3,false],"sent field delta missing"] call _check;
+        [((_firstFields select 1) get "a") isEqualTo [5,false],"saved field delta missing"] call _check;
+        [count (_firstFields select 2)==0,"zero field delta was reported"] call _check;
         // a resets while b increases enough to hide it in the aggregate total.
         ACME_net_sent set ["a",1]; ACME_net_sent set ["b",200];
         ACME_net_saved = createHashMap;
         _nowTime = 12;
         private _second = ["sample"] call ACME_fnc_networkDiagnostics;
         [(_second get "helperRequestDeltas") isEqualTo [[191,true],[0,true],[0,false]], "counter reset produced misleading delta"] call _check;
+        private _secondFields=_second get "helperRequestFields";
+        [((_secondFields select 0) get "a") isEqualTo [1,true],"reset field delta missing"] call _check;
+        [((_secondFields select 0) get "b") isEqualTo [190,false],"nonreset field delta missing"] call _check;
+        [((_secondFields select 1) get "a") isEqualTo [0,true],"removed field reset missing"] call _check;
         [(ACME_net_sent get "a") == 1 && {(ACME_net_sent get "b") == 200}, "sample modified helper counters"] call _check;
-        ["NOT wire" in ((["report"] call ACME_fnc_networkDiagnostics) get "counterMeaning"), "wire-stat disclaimer missing"] call _check;
+        private _diagReport=["report"] call ACME_fnc_networkDiagnostics;
+        ["NOT wire" in (_diagReport get "counterMeaning"), "wire-stat disclaimer missing"] call _check;
+        ["variable -> [request delta, counter reset]" in (_diagReport get "fieldDeltaMeaning"), "field-delta meaning missing"] call _check;
     ''')
 
 
