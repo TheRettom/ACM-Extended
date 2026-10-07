@@ -59,12 +59,14 @@ def test_idle_physiology_uses_one_shared_slow_discovery():
     assert 'ACME_preox_activePatients = _preox;' in discovery
     assert 'ACME_aspiration_activePatients = _aspiration;' in discovery
     assert 'ACME_shock_activePatients = _shock;' in discovery
+    assert 'ACME_rhythmThreshold_activePatients = _rhythmThreshold;' in discovery
     assert '[{ call ACME_fnc_idlePhysDiscovery; }, 2, []] call CBA_fnc_addPerFrameHandler;' in runtime
 
     for name, registry in {
         "preoxygenationTick": "ACME_preox_activePatients",
         "aspirationTick": "ACME_aspiration_activePatients",
         "shockPhenotypeTick": "ACME_shock_activePatients",
+        "rhythmThresholdTick": "ACME_rhythmThreshold_activePatients",
     }.items():
         s = src(name)
         assert registry in s
@@ -113,7 +115,7 @@ def test_b201_idle_broadcaster_shapes_cannot_return():
 
 def test_locality_transfer_retires_idle_physiology_registries():
     s = src("ownerInit")
-    for registry in ("ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients"):
+    for registry in ("ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients", "ACME_rhythmThreshold_activePatients"):
         assert f'"{registry}"' in s
 
 
@@ -143,7 +145,7 @@ def _healthy_vm(name):
 def test_actual_healthy_idle_models_issue_zero_publication_requests():
     definitions = "ACME_fnc_idlePhysDiscovery={" + _healthy_vm("idlePhysDiscovery") + "};" + "".join(
         f"ACME_fnc_{name}={{" + _healthy_vm(name) + "}};"
-        for name in ("preoxygenationTick", "aspirationTick", "shockPhenotypeTick")
+        for name in ("preoxygenationTick", "aspirationTick", "shockPhenotypeTick", "rhythmThresholdTick")
     )
     execute(definitions + r'''
         private _exactRequests=0;
@@ -159,10 +161,12 @@ def test_actual_healthy_idle_models_issue_zero_publication_requests():
 
         call ACME_fnc_idlePhysDiscovery;
         [ACME_preox_activePatients isEqualTo [] && {ACME_aspiration_activePatients isEqualTo []}
-            && {ACME_shock_activePatients isEqualTo []},"healthy discovery enrolled idle physiology"] call _check;
+            && {ACME_shock_activePatients isEqualTo []}
+            && {ACME_rhythmThreshold_activePatients isEqualTo []},"healthy discovery enrolled idle physiology"] call _check;
         call ACME_fnc_preoxygenationTick;
         call ACME_fnc_aspirationTick;
         call ACME_fnc_shockPhenotypeTick;
+        call ACME_fnc_rhythmThresholdTick;
 
         [_exactRequests==0,"healthy idle path issued exact network publication"] call _check;
         [_approxRequests==0,"healthy idle path issued approximate network publication"] call _check;
