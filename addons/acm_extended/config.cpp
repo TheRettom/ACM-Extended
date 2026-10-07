@@ -2020,6 +2020,7 @@ class CfgFunctions {
             class initForkStartupRuntime {};
 
             // Cumulative physiology / Megacode systems introduced after Batch 1.
+            class idlePhysDiscovery {};
             class preoxygenationTick {};
             class shockPhenotypeTick {};
             class shockSetPhenotype {};
