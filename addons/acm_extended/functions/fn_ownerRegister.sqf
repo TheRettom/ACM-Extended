@@ -12,6 +12,13 @@ _patient setVariable ["ACME_ownerRegisterSeen", owner _patient, false];
 
 [_patient] call ACME_fnc_aiProtectionSync;
 [_patient] call ACME_fnc_transientStateReconcile;
+private _rhythmRegistry = missionNamespace getVariable ["ACME_rhythm_activePatients", []];
+if ((_patient getVariable ["ACME_rhythm_active", 0]) >= 100) then {
+    _rhythmRegistry pushBackUnique _patient;
+} else {
+    _rhythmRegistry = _rhythmRegistry - [_patient];
+};
+missionNamespace setVariable ["ACME_rhythm_activePatients", _rhythmRegistry];
 
 // Migrate old bilateral inguinal AAJT saves exactly once. The physical AAJT-S has one wedge, so an old
 // ACME_AAJT_legs=[leftleg,rightleg] state must become one deterministic side instead of silently retaining
