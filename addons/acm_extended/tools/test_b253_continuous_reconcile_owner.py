@@ -13,6 +13,7 @@ def _setup():
     body=body.replace("local _provider", "true")
     # SQF-VM does not implement finite. These fixtures use numeric heartbeat values.
     body=body.replace("finite _lastSeen", "(_lastSeen isEqualType 0)")
+    body=body.replace("finite _invalidAt", "(_invalidAt isEqualType 0)")
     body=body.replace("finite _startedAt", "(_startedAt isEqualType 0)")
     body=body.replace("finite _requestedAt", "(_requestedAt isEqualType 0)")
     return """

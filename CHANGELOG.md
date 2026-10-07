@@ -1,5 +1,14 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B254
+
+- BVM provider tracking now remembers the owning machine and detects ownership migration with a server-side 1 Hz worker over **tracked BVM sessions only**. Old session tokens are released atomically; paused BVM still has no heartbeat expiry.
+- The same worker retires finished/cancelled session records after the existing 3-second out-of-order network grace so abandoned registry entries no longer accumulate.
+- Added execution regressions for owner transfer, replacement-session safety, normal retirement and non-expiring paused BVM.
+- Fixed the SQF-VM-only B253 regression failure by adapting the unsupported finite check for the numeric timer fixture.
+- Public version remains 1.2.4.1; B254 / NA8-B254-1.2.4.1-candidate.
+
+
 ## 1.2.4.1 — B253
 
 - Reconciler now compares a recorded continuous-action worker's original provider-locality generation with the current provider generation. A stopped worker can therefore release stale BVM/head-tilt/other continuous reservations after a rapid away/back transfer without waiting for its six-second heartbeat expiry (existing one-second invalid-state debounce retained).
