@@ -4,6 +4,34 @@
  * compensatory SVR/HR and exposes a phenotype for pulse/skin/training systems.
  */
 private _now = CBA_missionTime;
+private _candidate = {
+    params ["_u"];
+    if (isNull _u || {!local _u} || {!alive _u}) exitWith {false};
+    private _prior = (toLowerANSI (_u getVariable ["ACME_shock_phenotype","none"])) != "none"
+        || {abs (_u getVariable ["ACME_shock_severity",0]) > 0.001}
+        || {abs (_u getVariable ["ACME_shock_resistDelta",0]) > 0.01}
+        || {abs (_u getVariable ["ACME_shock_hrAdj",0]) > 0.01}
+        || {_u getVariable ["ACME_shock_warm",false]}
+        || {_u getVariable ["ACME_shock_ownsCirc",false]};
+    private _forced = _u getVariable ["ACME_shock_forced", []];
+    private _forcedLive = _forced isEqualType [] && {count _forced >= 2}
+        && {(_forced param [2,-1]) < 0 || {_now <= (_forced param [2,-1])}};
+    private _circ = _u getVariable ["ACME_circ_State", createHashMap];
+    _prior || {_forcedLive}
+        || {_u getVariable ["ACM_breathing_TensionPneumothorax_State", false]}
+        || {(_u getVariable ["ACM_breathing_Hemothorax_Fluid",0]) >= 0.75}
+        || {_circ isEqualType createHashMap && {_circ getOrDefault ["shockActive",false]}}
+        || {(_u getVariable ["ACM_circulation_Blood_Volume",6]) < 5.1}
+};
+private _patients = (missionNamespace getVariable ["ACME_shock_activePatients", []]) select {[_x] call _candidate};
+private _discoverAt = missionNamespace getVariable ["ACME_shockDiscoveryNextAt", -1];
+if (_discoverAt < 0 || {_now >= _discoverAt}) then {
+    missionNamespace setVariable ["ACME_shockDiscoveryNextAt", _now + 2];
+    {
+        if ([_x] call _candidate) then {_patients pushBackUnique _x};
+    } forEach _patients;
+ACME_shock_activePatients = _patients select {[_x] call _candidate};
+};
 {
     private _u = _x;
     if (isNull _u || {!local _u} || {!alive _u}) then {continue};
