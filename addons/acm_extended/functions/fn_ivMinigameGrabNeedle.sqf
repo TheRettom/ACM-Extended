@@ -7,10 +7,11 @@ params [["_gauge", 16]];
 // Keep the active catheter in control until it is completed or this face is suspended.
 if ((uiNamespace getVariable ["ACME_IV_InsStage", ""]) in ["advance", "thread", "retract"]) exitWith {};
 private _dlg = uiNamespace getVariable ["ACME_IV_DLG", displayNull];
-if (uiNamespace getVariable ["ACME_IV_Held", "none"] == "needle") exitWith {
+if (uiNamespace getVariable ["ACME_IV_Held", "none"] == "needle"
+    && {(uiNamespace getVariable ["ACME_IV_Gauge",16]) == _gauge}) exitWith {
     uiNamespace setVariable ["ACME_IV_Held", "none"];
     (_dlg displayCtrl 86506) ctrlShow false;
-    playSound "ACME_IVCap";  // cap click. placing the catheter BACK in its slot
+    playSound "ACME_IVCap";  // cap click. placing the same catheter BACK in its slot
     [] call ACME_fnc_ivMinigameRefreshBandSlot;
 };
 uiNamespace setVariable ["ACME_IV_PullIdx", -1];  // any pull in progress is abandoned here.
