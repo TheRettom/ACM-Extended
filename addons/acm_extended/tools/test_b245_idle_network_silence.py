@@ -115,8 +115,10 @@ def test_b201_idle_broadcaster_shapes_cannot_return():
 
 def test_locality_transfer_retires_idle_physiology_registries():
     s = src("ownerInit")
+    owner_register = src("ownerRegister")
     for registry in ("ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients", "ACME_rhythmThreshold_activePatients"):
-        assert f'"{registry}"' in s
+        assert s.count(f'"{registry}"') >= 2
+    assert '[[_patient]] call ACME_fnc_idlePhysDiscovery;' in owner_register
 
 
 def test_manual_carrier_recovery_does_not_dispatch_every_healthy_unit():
