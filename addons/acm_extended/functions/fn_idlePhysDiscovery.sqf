@@ -3,11 +3,18 @@
  * only a missed-transition/locality safety net. Healthy units are read-only and
  * never published from here.
  */
+params [["_units", [], [[]]]];
+private _fullAudit = _units isEqualTo [];
+if (_fullAudit) then {
+    _units = missionNamespace getVariable ["ACME_clinical_ownedUnits", []];
+} else {
+    _units = _units select {!isNull _x && {local _x} && {alive _x}};
+};
 private _now = CBA_missionTime;
-private _preox = [];
-private _aspiration = [];
-private _shock = [];
-private _rhythmThreshold = [];
+private _preox = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_preox_activePatients", []]) - _units};
+private _aspiration = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_aspiration_activePatients", []]) - _units};
+private _shock = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_shock_activePatients", []]) - _units};
+private _rhythmThreshold = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_rhythmThreshold_activePatients", []]) - _units};
 private _autoSVT = missionNamespace getVariable ["ACME_rhythmAutoSVTFromRateEnabled", false];
 private _svtHR = missionNamespace getVariable ["ACME_rhythmCustomSVTHR", missionNamespace getVariable ["ACME_rhythmCriticalSVTHR", 190]];
 private _acmHighHR = missionNamespace getVariable ["ACME_rhythmACMFatalHighHR", 220];
@@ -98,7 +105,7 @@ private _acmHighHR = missionNamespace getVariable ["ACME_rhythmACMFatalHighHR", 
     if (_rhythmActive >= 100 || {_thresholdPending} || {_legacyHold} || {_lidoCandidate} || {_autoCandidate}) then {
         _rhythmThreshold pushBack _u;
     };
-} forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
+} forEach _units;
 
 ACME_preox_activePatients = _preox;
 ACME_aspiration_activePatients = _aspiration;
