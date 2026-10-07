@@ -42,6 +42,7 @@ def gauge_reference(entries, types, labels=('Upper','Middle','Lower')):
 
 class QuietOutput(unittest.TestCase):
     def test_no_unapproved_rpt_emitters_in_shipped_sqf_or_callbacks(self):
+        self.maxDiff = None
         # B22 restores the pre-B20 quiet debug overlay. No shipped runtime SQF or config callback may
         # emit RPT traffic; diagnostic dumping/tracing was explicitly reverted with the tabbed overlay.
         # Later reliability work added a small, explicit set of event/error diagnostics.
