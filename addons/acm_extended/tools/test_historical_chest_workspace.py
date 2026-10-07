@@ -49,7 +49,7 @@ def setup():
         private _lifeState="HEALTHY";
         private _vest=""; private _loadout=[[],[],[],[],[],[],"","",[],[]];
         private _loadouts=[]; private _detaches=[]; private _deletes=[];
-        private _rolls=[]; private _animRequests=[]; private _releases=[];
+        private _rolls=[]; private _animRequests=[]; private _releases=[]; private _dispatches=[];
         private _headResume=[]; private _yielded=0; private _acquired=0;
         private _blocked=false; private _leaseAllowed=true;
         private _finite={_this isEqualType 0};
@@ -83,6 +83,7 @@ def setup():
         // roll request so workspace timing tests do not depend on rendering the medic4 provider RTM.
         ACME_fnc_ownerDispatch={
             params ["_owner","_op","_args"];
+            _dispatches pushBack [_owner,_op,+_args];
             if (_op=="chestSealEntryFrontRoll") then {
                 _args params ["_m","_p"];
                 [_p,"front",false,_m,true] call ACME_fnc_chestSealRoll;
@@ -321,7 +322,7 @@ def test_same_side_request_is_a_noop_and_nonlocal_request_is_forwarded(side):
         [count _animRequests==0 && {count _waits==0},"same-side request invented a roll"] call _check;
         _patientLocal=false;
     '''+f'[_patient,"{side}",true,_medic,true] call ACME_fnc_chestSealRoll;'+'''
-        [count _events==1 && {((_events select 0) select 1)=="chestSealRoll"},"nonlocal request not forwarded"] call _check;
+        [count _dispatches==1 && {((_dispatches select 0) select 1)=="chestSealRoll"},"nonlocal request not forwarded"] call _check;
         [count _animRequests==0,"nonowner animated patient"] call _check;
     ''')
 
