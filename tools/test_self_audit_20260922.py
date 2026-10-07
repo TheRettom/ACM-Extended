@@ -104,6 +104,9 @@ REVIEWED_CURRENT_COVERAGE = {
     'tools/test_fork_phase162_wake_state_reconciliation.py': ['addons/acm_extended/tools/test_b224_polish_wake.py'],
     'tools/test_fork_phase165_airway_seizure_regressions.py': ['addons/acm_extended/tools/test_b206_seizure_gesture_locality_execution.py'],
     'tools/test_fork_phase167_chest_minigame_animation_contract.py': ['addons/acm_extended/tools/test_b213_chest_exit.py'],
+    'tools/test_fork_phase150_flip_cancel.py': ['tools/test_fork_phase150_flip_cancel.py'],
+    'tools/test_fork_phase151_junctional_chest_workspace.py': ['tools/test_fork_phase151_junctional_chest_workspace.py'],
+    'tools/test_fork_phase160_chest_animation_rollback.py': ['tools/test_fork_phase160_chest_animation_rollback.py'],
 }
 @pytest.mark.parametrize("path,expected", sorted(PROTECTED.items()))
 def test_prior_fix_restored_without_rewrite(path, expected):
