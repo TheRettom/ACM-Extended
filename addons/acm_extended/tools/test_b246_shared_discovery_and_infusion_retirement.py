@@ -42,6 +42,13 @@ def test_shared_discovery_cannot_erase_fresh_direct_enrollment_before_first_hot_
         assert '!isNull _x' in row and 'local _x' in row and 'alive _x' in row
 
 
+def test_preserved_shared_registries_cannot_accumulate_duplicate_patients():
+    discovery = src("idlePhysDiscovery")
+    assert 'if (_needsCirc) then {_circPatients pushBackUnique _u;};' in discovery
+    assert '_coag pushBackUnique _u;' in discovery
+    assert '_infusion pushBackUnique _u;' in discovery
+
+
 def test_empty_medicated_infusion_publishes_final_clear_then_retires():
     worker = src("handleInfusions")
     commit = src("infusionMedicationStateCommit")
