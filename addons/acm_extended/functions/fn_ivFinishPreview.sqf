@@ -29,7 +29,7 @@ if (_target isNotEqualTo []) then {
     private _g=[_paintRow] call ACME_fnc_ivFinishGeometry;
     if (_g isNotEqualTo []) then {
         _g params ["_x","_y","_w","_h","_angle"];
-        private _pivot=if (_field) then {[0.5,0.5]} else {[1006.5/2048,1032/2048]};
+        private _pivot=if (_field) then {[0.5,0.5]} else {if (_tool in ["extension","flush","line"]) then {[1006.5/2048,1052/2048]} else {[1006.5/2048,1032/2048]}};
         if (_field) then {_w=_w*2;_h=_h*2;};
         private _rect=[_x-_w*(_pivot select 0),_y-_h*(_pivot select 1),_w,_h];
         private _body=uiNamespace getVariable ["ACME_IV_BodyRect",[0,0,1,1]];
