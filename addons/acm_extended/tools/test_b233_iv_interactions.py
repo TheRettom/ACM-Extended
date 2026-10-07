@@ -47,7 +47,7 @@ def test_socket_and_port_share_catheter_transform(family,angle,aspect):
     h=.8*.62;w=h*aspect
     x=.1+.7*.5+w*((hub[0]-anchor[0])*math.cos(rad)-(hub[1]-anchor[1])*math.sin(rad))
     y=.05+.8*.5+h*((hub[0]-anchor[0])*math.sin(rad)+(hub[1]-anchor[1])*math.cos(rad))
-    du=(1033.02-1006.5)/2048;dv=(1386.52-1032)/2048
+    du=(1033.02-1006.5)/2048;dv=(1386.52-1052)/2048
     px=x+w*(du*math.cos(theta)-dv*math.sin(theta));py=y+h*(du*math.sin(theta)+dv*math.cos(theta))
     execute(SETUP+rules()+START_SETUP+f'''
         _testPixelW={aspect};_testPixelH=1;_testAxis={json.dumps(axis)};
@@ -59,7 +59,7 @@ def test_socket_and_port_share_catheter_transform(family,angle,aspect):
         private _g=[_row] call ACME_fnc_ivFinishGeometry;
         [abs ((_g select 0)-{x})<0.00001 && {{abs ((_g select 1)-{y})<0.00001}},"real hub socket"] call _check;
         [abs (((_g select 2)/(_g select 3))-{aspect})<0.00001,"physical square"] call _check;
-        private _port=[_row,[1033.02/2048,1386.52/2048]] call ACME_fnc_ivFinishPoint;
+        private _port=[_row,[1033.02/2048,1386.52/2048],[1006.5/2048,1052/2048]] call ACME_fnc_ivFinishPoint;
         [abs ((_port select 0)-{px})<0.00001 && {{abs ((_port select 1)-{py})<0.00001}},"real distal socket"] call _check;
         private _hit=[{px},{py},"flush"] call ACME_fnc_ivFinishTarget;
         [count _hit==3 && {{((_hit select 0) select 14)=="ivhub:7:1"}},"same magnet and click target"] call _check;
