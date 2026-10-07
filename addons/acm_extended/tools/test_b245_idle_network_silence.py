@@ -141,7 +141,10 @@ def _healthy_vm(name):
     s = re.sub(r'\blocal _u\b', 'true', s)
     s = re.sub(r'\balive _u\b', 'true', s)
     s = re.sub(r'alive \(_u getVariable \["ACM_breathing_BVM_Medic",\s*objNull\]\)', 'false', s)
-    return adapt(s)
+    # Keep the production body otherwise intact. The generic historical adapter
+    # rewrites unrelated syntax deep in these functions; for this healthy-idle
+    # execution case we only need the explicit engine boundaries above.
+    return s.replace("toLowerANSI", "toLower")
 
 
 def test_actual_healthy_idle_models_issue_zero_publication_requests():
