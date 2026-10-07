@@ -28,14 +28,6 @@ private _candidate = {
     _fresh || {_load > 0.0005} || {_edema > 0.0005} || {_residue}
 };
 private _patients = (missionNamespace getVariable ["ACME_aspiration_activePatients", []]) select {[_x] call _candidate};
-private _discoverAt = missionNamespace getVariable ["ACME_aspirationDiscoveryNextAt", -1];
-if (_discoverAt < 0 || {_now >= _discoverAt}) then {
-    missionNamespace setVariable ["ACME_aspirationDiscoveryNextAt", _now + 2];
-    {
-        if ([_x] call _candidate) then {_patients pushBackUnique _x};
-    } forEach _patients;
-ACME_aspiration_activePatients = _patients select {[_x] call _candidate};
-};
 {
     private _u = _x;
     if (isNull _u || {!local _u} || {!alive _u}) then {continue};
@@ -144,4 +136,5 @@ ACME_aspiration_activePatients = _patients select {[_x] call _candidate};
     _u setVariable ["ACME_aspiration_lastRRAdj",_adj,false];
     [_u,"ACME_aspiration_RRDrive",_adj,([0.02,0] select (_adj == 0)),0] call ACME_fnc_setVarNetApprox;
     [_u,"ACME_aspiration_shunt",0.30 * _injury,([0.0005,0] select (_injury == 0)),0] call ACME_fnc_setVarNetApprox;
-} forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
+} forEach _patients;
+ACME_aspiration_activePatients = _patients select {[_x] call _candidate};
