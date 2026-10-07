@@ -89,6 +89,8 @@ jobs:
             shard: 3
     env:
       SQFVM: /tmp/acme-tools/sqfvm_linux_x64_gcc/sqfvm
+      HEMTT: /tmp/acme-tools/hemtt
+      HEMTT_BINARY: /tmp/acme-tools/hemtt
     steps:
       - uses: actions/checkout@v4
         with:
