@@ -62,7 +62,9 @@ private _alive = [];
     // ACM_breathing_RespirationRate to it and is the single writer of that value. the full pattern, including the
     // apneic drop to 0, still carries, because check breathing reads it and ACM's capnography follows, and nothing
     // here writes the live rate directly any more, so this debug demo can never fight the sole-writer.
-    [_p, "ACME_cs_rrDrive", _rr] call ACME_fnc_setVarNet;
+    if ((_p getVariable ["ACME_cs_rrDrive", -1]) != _rr) then {
+        [_p, "ACME_cs_rrDrive", _rr] call ACME_fnc_setVarNet;
+    };
     // the target, or desired, rate must never be 0, because ACM's updateoxygen divides by
     // ACM_core_TargetVitals_RespirationRate, at around line 191 of fnc_updateoxygen, so a 0 target throws a zero
     // divisor. keep the target at a safe nonzero floor, because it represents the central drive the body is aiming
