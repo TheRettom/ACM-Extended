@@ -52,7 +52,7 @@ def test_narc_box_vascular_highlight_matches_acm_green():
 def test_stethoscope_dialog_does_not_depend_on_pose_episode():
     s = text('functions/fn_beginStethoscopeAction.sqf')
     assert 'private _poseEnded' not in s
-    cancel = s[s.index('if (_patientCondition'):]
+    cancel = s[s.index('private _patientCondition'):]
     assert '_poseEnded' not in cancel
     assert 'if (_key == 0x01)' in s
     assert '["shouldReopen", true]' in s
