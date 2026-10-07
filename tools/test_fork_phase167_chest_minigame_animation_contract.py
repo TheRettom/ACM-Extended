@@ -38,7 +38,7 @@ def test_workspace_is_hands_on_chest_without_medic3():
     init = read("addons/acm_extended/functions/fn_initChestSealProcedureRuntime.sqf")
     assert "class ACME_ChestSealWorkspace: ACM_CPR_Stop" in cfg
     assert "class ACME_ChestSealWorkspace: AinvPknlMstpSnonWnonDnon_medic3" not in cfg
-    assert '["chestSealWorkspace"' not in init
+    assert '["chestSealWorkspace", "AinvPknlMstpSnonWnonDnon_medicUp4"]' in init
 
 def test_medic3_is_reserved_for_actual_seal_placement():
     pose = read("addons/acm_extended/functions/fn_treatmentPoseStart.sqf")
@@ -50,7 +50,8 @@ def test_medic3_is_reserved_for_actual_seal_placement():
     assert 'case "chestSeal": {"AinvPknlMstpSnonWnonDnon_medic3"};' in pose
     assert 'ACME_CS_applyAnimSeconds = 2.65;' in init
     assert '[_medic, "chestSeal", _duration, _patient] call ACME_fnc_treatmentPoseStart' in apply
-    assert '"AinvPknlMstpSnonWnonDnon_medic3", 1] call ACME_fnc_doAnim' in apply
+    assert '[_medic, "chestSeal", _duration, _patient] call ACME_fnc_treatmentPoseStart' in apply
+    assert 'call ACME_fnc_doAnim' not in apply
     assert '}, [_medic, _patient, _placeEpoch, _serial], _duration] call CBA_fnc_waitAndExecute;' in apply
     assert "ACME_fnc_chestSealProviderHoldStart" in apply
     assert "chestSealBurpGesture" not in burp
@@ -97,7 +98,7 @@ def test_chestseal_and_stethoscope_use_semifowler_putdown_exit():
     head = read("addons/acm_extended/functions/fn_headElevMedicSeq.sqf")
 
     assert '[_flipMedic,"chestsealexit",uiNamespace getVariable ["ACME_CS_SessionToken", ""]] call ACME_fnc_headElevMedicSeq' in chest
-    assert '[_medic,"lower"] call ACME_fnc_headElevMedicSeq' in steth
+    assert '[_medic, ["lower", "contactexit"] select _ambulatoryContact] call ACME_fnc_headElevMedicSeq' in steth
     assert '[_flipMedic,_poseMode,_poseEpoch,true] call ACME_fnc_treatmentPoseStop' in chest
     assert '[_medic,"stethoscope",_poseEpoch,true] call ACME_fnc_treatmentPoseStop' in steth
     assert steth_controller.count('"stethoscope", _poseEpoch, true') >= 2
