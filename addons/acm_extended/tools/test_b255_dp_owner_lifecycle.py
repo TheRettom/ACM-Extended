@@ -45,11 +45,16 @@ def test_transfer_loss_releases_claim_without_writing_successor_state():
         _medic setVariable ["ACME_DP_ClaimEpoch",7];
         _medic setVariable ["ACME_DP_PFH",12];
         _medic setVariable ["ACME_DP_KeyIDs",["key"]];
+        _medic setVariable ["ACME_DP_InPose",true];
+        _medic setVariable ["ACME_DP_TreatmentBusy",true];
         call _move;
         [count _dpEvents==1,"departed owner left claim behind"] call _check;
         [_medic getVariable ["ACME_DP_Active",false],"former owner mutated successor provider state"] call _check;
         [count _removedDP==2 && {(_medic getVariable ["ACME_DP_PFH",0])==-1},
             "departing input/worker handles not removed"] call _check;
+        [!(_medic getVariable ["ACME_DP_InPose",true])
+            && {!(_medic getVariable ["ACME_DP_TreatmentBusy",true])},
+            "departing machine retained stale stance hints"] call _check;
     """)
 
 def test_pending_claim_cannot_reactivate_after_migration():
