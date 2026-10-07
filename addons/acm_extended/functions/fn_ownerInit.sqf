@@ -126,6 +126,12 @@ ACME_NA2_ownerInstalled = true;
         private _dpDraw = _unit getVariable ["ACME_DP_Draw3D", -1];
         if (_dpDraw >= 0) then {removeMissionEventHandler ["Draw3D", _dpDraw];};
         _unit setVariable ["ACME_DP_Draw3D", -1, false];
+        // These are local stance hints, never persistent clinical state.
+        // The former owner no longer has a PFH to retire them on its next tick.
+        _unit setVariable ["ACME_DP_InPose", false, false];
+        _unit setVariable ["ACME_DP_TreatmentBusy", false, false];
+        _unit setVariable ["ACME_DP_Paused", false, false];
+        _unit setVariable ["ACME_DP_Mode", "", false];
     };
     // End B255 DP locality cleanup.
     // Pending prone-to-Semi-Fowler normalization has no active pose yet. Retire it on BOTH local transitions,
