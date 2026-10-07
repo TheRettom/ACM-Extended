@@ -160,20 +160,28 @@ def test_chest_seal_patient_roll_interpolates_without_priority_two():
 
 
 def test_generic_treatment_preflight_uses_transition_priority_one_and_never_restores_weapon():
-    from test_historical_weapon_preflight import test_native_treatment_waits_for_logical_and_visible_holster_then_crouch, test_current_weapon_paths_do_not_invoke_optional_sling_or_direct_reselection
-    for stance in ('STAND','PRONE','CROUCH'):
-        test_native_treatment_waits_for_logical_and_visible_holster_then_crouch(stance)
-    test_current_weapon_paths_do_not_invoke_optional_sling_or_direct_reselection()
+    # B177 removed the generic presentation wait: clinical treatment starts
+    # immediately after the one-shot holster request. Keep this historical
+    # identity bound to the current responsiveness and no-reselection contract.
+    from test_historical_weapon_preflight import (
+        test_treatment_bridge_contains_no_generic_presentation_wait,
+        test_native_treatment_is_called_directly_after_presentation_setup,
+        test_no_direct_weapon_reselection_was_reintroduced,
+    )
+    test_treatment_bridge_contains_no_generic_presentation_wait()
+    test_native_treatment_is_called_directly_after_presentation_setup()
+    test_no_direct_weapon_reselection_was_reintroduced()
 
 
 def test_custom_pose_exit_remains_crouched_and_releases_stance_lock():
     stop = txt('functions/fn_treatmentPoseStop.sqf')
     start = txt('functions/fn_treatmentPoseStart.sqf')
     assert 'private _upright = false;' in start
-    assert '_currentMode in ["roll","inspect","pulse"]' in stop
-    assert '"AmovPknlMstpSnonWnonDnon"' in stop
-    assert '"AmovPercMstpSnonWnonDnon_AmovPknlMstpSnonWnonDnon", 1' in stop
+    assert 'private _enteredProne =' in stop
+    assert 'call ACME_fnc_providerAnimation' in stop
+    assert '[_medic, _exitAnim, 1] call ACME_fnc_doAnim;' in stop
     assert '_u setUnitPos "AUTO";' in stop
+    assert 'call ACME_fnc_providerStanceOwned' in stop
 
 
 def test_other_current_medical_transition_entries_use_priority_one():
