@@ -55,7 +55,7 @@ def test_semifowler_start_rolls_front_before_grab():
     assert "private _needFrontFirst" in s
     assert 'setVariable ["ACME_CS_facing","front",true]' in s
 
-def test_semifowler_suspend_resume_and_lower_preserve_constructed_faceup_invariant():
+def test_semifowler_suspend_resume_and_lower_all_normalize_front_first():
     suspend = read("addons/acm_extended/functions/fn_headElevSuspend.sqf")
     resume = read("addons/acm_extended/functions/fn_headElevResume.sqf")
     lower = read("addons/acm_extended/functions/fn_headElevateStop.sqf")
