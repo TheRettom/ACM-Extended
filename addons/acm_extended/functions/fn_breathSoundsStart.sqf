@@ -133,7 +133,7 @@ private _pfh = [{
                     if ((_now > (_u getVariable ["ACME_bs_phase2At", 1e9])) && {(random 1) < 0.4}) then {
                         [{
                             params ["_u"];
-                            if (isNull _u || {!alive _u} || {(_u getVariable ["ACME_bs_mode", ""]) != "biot"}) exitWith {};
+                            if (isNull _u || {!alive _u} || {!local _u} || {(_u getVariable ["ACME_bs_mode", ""]) != "biot"}) exitWith {};
                             if (((serverTime - (_u getVariable ["ACME_bvm_lastBreathServer", -99])) max 0) < (missionNamespace getVariable ["ACME_bs_bvmHold", 6.5])) exitWith {};
                             private _dist = missionNamespace getVariable ["ACME_bs_distance", 15];
                             private _tg = allPlayers inAreaArray [ASLToAGL getPosASL _u, _dist, _dist, 0, false, _dist];
