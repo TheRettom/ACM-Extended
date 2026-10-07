@@ -1,7 +1,7 @@
-/* B245: one bounded discovery pass for idle-capable physiology.
- * Active registries run at their original clinical cadence; this 0.5 Hz pass is
- * only a missed-transition/locality safety net. Healthy units are read-only and
- * never published from here.
+/* B246: one bounded owner discovery pass for idle-capable physiology and maintenance registries.
+ * Active registries run at their original clinical cadence; this 1 Hz pass is only a
+ * missed-transition/locality safety net. Healthy units are read-only and never published from here.
+ * Circulation, coagulation and infusion no longer perform their own broad owner scans.
  */
 params [["_units", [], [[]]]];
 private _fullAudit = _units isEqualTo [];
@@ -15,6 +15,9 @@ private _preox = if (_fullAudit) then {[]} else {(missionNamespace getVariable [
 private _aspiration = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_aspiration_activePatients", []]) - _units};
 private _shock = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_shock_activePatients", []]) - _units};
 private _rhythmThreshold = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_rhythmThreshold_activePatients", []]) - _units};
+private _circPatients = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_circ_activePatients", []]) - _units};
+private _coag = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_coag_activePatients", []]) - _units};
+private _infusion = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_infusion_activePatients", []]) - _units};
 private _autoSVT = missionNamespace getVariable ["ACME_rhythmAutoSVTFromRateEnabled", false];
 private _svtHR = missionNamespace getVariable ["ACME_rhythmCustomSVTHR", missionNamespace getVariable ["ACME_rhythmCriticalSVTHR", 190]];
 private _acmHighHR = missionNamespace getVariable ["ACME_rhythmACMFatalHighHR", 220];
@@ -74,14 +77,82 @@ private _acmHighHR = missionNamespace getVariable ["ACME_rhythmACMFatalHighHR", 
     private _forced = _u getVariable ["ACME_shock_forced", []];
     private _forcedLive = _forced isEqualType [] && {count _forced >= 2}
         && {(_forced param [2,-1]) < 0 || {_now <= (_forced param [2,-1])}};
-    private _circ = _u getVariable ["ACME_circ_State", createHashMap];
-    private _circShock = _circ isEqualType createHashMap && {_circ getOrDefault ["shockActive",false]};
+    private _circState = _u getVariable ["ACME_circ_State", createHashMap];
+    private _circShock = _circState isEqualType createHashMap && {_circState getOrDefault ["shockActive",false]};
     if (_priorShock || {_forcedLive}
         || {_u getVariable ["ACM_breathing_TensionPneumothorax_State", false]}
         || {(_u getVariable ["ACM_breathing_Hemothorax_Fluid",0]) >= 0.75}
         || {_circShock}
         || {(_u getVariable ["ACM_circulation_Blood_Volume",6]) < 5.1}) then {
         _shock pushBack _u;
+    };
+
+
+    // Circulation missed-transition discovery. This exactly replaces the former
+    // one-second owner scan inside the 4 Hz circulation worker.
+    private _circArrest = _u getVariable ["ace_medical_inCardiacArrest", false];
+    private _circUncon = _u getVariable ["ACE_isUnconscious", false];
+    private _circRR = _u getVariable ["ACM_breathing_RespirationRate", 18];
+    private _rrTarget = _u getVariable ["ACM_core_TargetVitals_RespirationRate", 16];
+    if (_rrTarget <= 6) then {_rrTarget = 16;};
+    private _circStateNeeds = (_circState getOrDefault ["shockActive", false])
+        || {abs (_circState getOrDefault ["shockDrop", 0]) > 0.01}
+        || {abs (_circState getOrDefault ["pressorSupport", 0]) > 0.01}
+        || {abs (_circState getOrDefault ["pushDoseSupport", 0]) > 0.01}
+        || {(_circState getOrDefault ["ichRisk", 0]) > 0.001}
+        || {(_circState getOrDefault ["ionizedCa", 1.15]) < 0.999}
+        || {(_circState getOrDefault ["temp", 37]) < 35.99}
+        || {(_circState getOrDefault ["salineAcidosis", 0]) > 0.001}
+        || {(_circState getOrDefault ["totalAcidosis", 0]) > 0.001}
+        || {(_circState getOrDefault ["paCO2", 40]) > 40.1}
+        || {(_circState getOrDefault ["respiratoryAcidosisDeficit", 0]) > 0.001}
+        || {(_circState getOrDefault ["hyperSpike", 0]) > 0.001};
+    private _needsCirc = _circArrest
+        || {_u getVariable ["ACME_vent_connected", false]}
+        || {_u getVariable ["ACME_ETT_Inserted", false]}
+        || {_u getVariable ["ACME_nrb_on", false]}
+        || {(_u getVariable ["ACME_blastLung_State", 0]) > 0}
+        || {count (_u getVariable ["ace_medical_medications", []]) > 0}
+        || {count (_u getVariable ["ACME_yFlushJobs", createHashMap]) > 0}
+        || {_circUncon}
+        || {_circStateNeeds}
+        || {_u getVariable ["ACME_tbi_HasTBI", false]}
+        || {_circRR < (_rrTarget * 0.85)}
+        || {(_u getVariable ["ACME_circ_salineGivenMl", 0]) > 0}
+        || {(_u getVariable ["ACM_circulation_Saline_Volume", 0]) > 0}
+        || {(_u getVariable ["ACME_lido_serumLevel", 0]) > 0.05}
+        || {(_u getVariable ["ACME_lido_seizureState", ""]) != ""}
+        || {count (_u getVariable ["ACM_circulation_IV_Bags", createHashMap]) > 0};
+    if (_needsCirc) then {_circPatients pushBack _u;};
+
+    // Coagulation missed-transition discovery. Expensive base reconstruction is
+    // skipped for healthy units unless an input can actually move the lethal-triad base.
+    private _platelets = (_u getVariable ["ACM_circulation_Platelet_Count", 3]) max 0;
+    private _saline = (_u getVariable ["ACM_circulation_Saline_Volume", 0]) max 0;
+    private _plasmaVol = (_u getVariable ["ACM_circulation_Plasma_Volume", 0]) max 0;
+    private _givenMl = (_u getVariable ["ACME_circ_salineGivenMl", 0]) max 0;
+    private _hasTXA = ((_u getVariable ["ace_medical_medications", []]) findIf {(_x param [0, ""]) == "TXA_IV"}) >= 0;
+    private _coagTemp = _u getVariable ["ACME_hypo_temp", 37];
+    private _coagAcid = _circState getOrDefault ["acidosis", 0];
+    private _transfused = _u getVariable ["ACM_circulation_TransfusedBlood_Volume", 0];
+    private _baseSuspect = _coagTemp < (missionNamespace getVariable ["ACME_hypo_coagStartTemp", 35])
+        || {_coagAcid > (missionNamespace getVariable ["ACME_acidosis_coagThreshold", 0.3])}
+        || {_transfused > (missionNamespace getVariable ["ACME_ca_citrateThreshold", 1.0])};
+    private _baseNeeds = _baseSuspect && {(([_u] call ACME_fnc_coagulationBase) select 0) > 1};
+    private _hadCoagEffect = (_u getVariable ["ACME_ca_coagMult", 1]) != 1
+        || {(_u getVariable ["ACME_ca_coagBaseMult", 1]) != 1}
+        || {(_u getVariable ["ACME_coag_clotStrength", 1]) != 1}
+        || {(_u getVariable ["ACME_coag_dilutionSeverity", 0]) != 0}
+        || {(_u getVariable ["ACME_coag_extraMult", 1]) != 1};
+    if (_baseNeeds || {_platelets < 3} || {_saline > 0} || {_plasmaVol > 0} || {_givenMl > 0} || {_hasTXA} || {_hadCoagEffect}) then {
+        _coag pushBack _u;
+    };
+
+    // Medicated-infusion discovery is a safety net only. Normal bag registration
+    // enrolls immediately; the active worker retires after its final empty-state commit.
+    if (count (_u getVariable ["ACME_infusion_BagMedications", []]) > 0
+        || {_u getVariable ["ACME_infusion_HasBagMedications", false]}) then {
+        _infusion pushBack _u;
     };
 
 
@@ -111,3 +182,6 @@ ACME_preox_activePatients = _preox;
 ACME_aspiration_activePatients = _aspiration;
 ACME_shock_activePatients = _shock;
 ACME_rhythmThreshold_activePatients = _rhythmThreshold;
+ACME_circ_activePatients = _circPatients;
+ACME_coag_activePatients = _coag;
+ACME_infusion_activePatients = _infusion;
