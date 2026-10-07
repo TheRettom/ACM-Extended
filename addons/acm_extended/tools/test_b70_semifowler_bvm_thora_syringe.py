@@ -56,7 +56,7 @@ def test_adjust_thoracostomy_requires_actual_existing_procedure_and_is_in_chest(
     assert "[_medic, _patient, true] call ACME_fnc_thoraCanOpen" in cfg
     assert 'toLowerANSI _bodyPart, _className] call ace_medical_treatment_fnc_canTreat' in dead
     assert '"acme_adjustthoracostomy"' in menu
-    assert '["airway", "chest", false]' in menu
+    assert '["airway", "ventilation", false]' in menu
     assert '"Adjust Thoracostomy"' in groups
 
 
