@@ -1,5 +1,14 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B255
+
+- On both provider-locality edges, retire the exact Direct Pressure claim and cancel any pending ACK token, including rapid away/back changes that prevent the original worker from running.
+- Departing machines dispose of their own pressure input/PFH handles. The incoming owner retires inherited provider pressure state without clearing a replacement token.
+- Patient-owner invalid claim cleanup immediately clears matching torso/limb markers and recalculates external limb blood loss.
+- Normal stops and dedicated-server disconnect/death cleanup now replicate the body-part reset, preventing stale site labels.
+- Added SQF-VM/source regression coverage. Public version remains 1.2.4.1, candidate build B255.
+
+
 ## 1.2.4.1 — B254
 
 - BVM provider tracking now remembers the owning machine and detects ownership migration with a server-side 1 Hz worker over **tracked BVM sessions only**. Old session tokens are released atomically; paused BVM still has no heartbeat expiry.
