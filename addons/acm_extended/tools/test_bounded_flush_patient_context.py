@@ -32,6 +32,7 @@ def setup():
         private _sounds=[]; private _access=[]; private _refreshes=0; private _staged=[];
         private _iv=true; private _io=true; private _exactIV=true;
         private _isLocal=true; private _medicVehicle=objNull; private _patientVehicle=objNull;
+        ACME_fnc_carrierInventoryGet={objNull};
         // This fixture represents an injected and settled Body Map.
         uiNamespace setVariable ["ACME_SK_CloseEpoch",1];
         _drawDisplay setVariable ["ACME_SK_CloseEpoch",1];
