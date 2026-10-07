@@ -65,6 +65,10 @@ class SourceContracts(unittest.TestCase):
     def test_passive_carrier_removal_excludes_manual_custody_and_blocked_animation(self):
         t=src("headElevateStart")
         self.assertIn('if (!_manual && {!_hasBag} && {!_manualCarrierSupport} && {!([_patient] call ACME_fnc_animBlocked)}) then {',t)
+    def test_vest_vehicle_not_removed(self):
+        # Historical identity: vehicle/animation custody is now represented by
+        # the shared animBlocked guard on passive carrier removal.
+        self.test_passive_carrier_removal_excludes_manual_custody_and_blocked_animation()
     def test_vest_restore_has_no_alive_or_vehicle_gate(self):
         t=code(src("headElevVestRestore"))
         self.assertNotIn("alive",t);self.assertNotIn("animBlocked",t);self.assertNotIn("objectParent",t)
@@ -73,6 +77,9 @@ class SourceContracts(unittest.TestCase):
         self.assertIn('[_patient, _saved, "ACME_headElev_vestLoadout"] call ACME_fnc_carrierInventoryRestore',t)
         self.assertNotIn("setUnitLoadout",t);self.assertNotIn("addItemToVest",t)
         self.assertIn('if (vest _patient == "") then {',t)
+    def test_vest_restore_current_slot_only(self):
+        # Historical identity bound to the current exact-custody restore path.
+        self.test_vest_restore_delegates_exact_carrier_custody_only()
     def test_restore_reentrant_atomic(self):
         t=code(src("headElevVestRestore"))
         self.assertIn("isNil {",t);self.assertIn("!local _patient",t);self.assertIn('if (vest _patient == "")',t)
