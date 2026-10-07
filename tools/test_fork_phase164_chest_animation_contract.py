@@ -69,8 +69,8 @@ def test_chest_seal_workspace_hold_and_flip_handoff():
     cfg = read("addons/acm_extended/functions/fn_initChestSealProcedureRuntime.sqf")
     assert "ACME_fnc_chestSealProviderHoldStart" in start
     assert '["chestSealWorkspace", "AinvPknlMstpSnonWnonDnon_medicUp4"]' in cfg
-    assert '[_provider,"chestSealWorkspace",_holdEpoch,true] call ACME_fnc_treatmentPoseStop' in flip
-    assert '[_provider,"roll",_epoch,_current] call ACME_fnc_treatmentPoseStop' in tick
+    assert '[_provider, _oldMode, _oldEpoch, true] call ACME_fnc_treatmentPoseStop;' in flip
+    assert '[_provider,"roll",_epoch] call ACME_fnc_treatmentPoseStop;' in tick
     assert "ACME_fnc_chestSealProviderHoldStart" in tick
 
 def test_workspace_close_uses_semifowler_provider_exit():
