@@ -151,6 +151,12 @@ class FlushSource(unittest.TestCase):
         target=int(re.search(r'\[(\d+), _flushClass\] call ACME_fnc_skApplySize',s).group(1))
         for previous in [1,3,5,10]:
             with self.subTest(previous=previous):self.assertEqual(target,10)
+    def test_every_previous_size_opens_ten(self):
+        # Historical B235 identity: opening was replaced by an in-place switch.
+        self.test_every_previous_size_switches_to_ten()
+    def test_flush_reopens_native_dialog_with_ten(self):
+        # Historical identity retained against the current no-reopen behavior.
+        self.test_flush_switches_existing_native_dialog_to_ten_in_place()
     def test_does_not_require_empty_ten_ml_syringe(self):
         for f in ['skPickFlush','skWasteBegin','skOpenDraw']:
             self.assertNotIn('ACM_Syringe_10',tokens(f))
@@ -160,6 +166,10 @@ class FlushSource(unittest.TestCase):
         self.assertIn('if (_hadPendingCompound) then {_autoSaved = call ACME_fnc_skCompoundCommit;};',s)
         self.assertIn('if (_hadPendingCompound && {!_autoSaved}) exitWith {false};',s)
         self.assertLess(s.index('call ACME_fnc_skCompoundCommit'),s.index('uiNamespace setVariable ["ACME_SK_CurSize",_size]'))
+    def test_pending_compound_is_committed_before_close(self):
+        # Historical identity: the old close/reopen flow is now an in-place
+        # size switch, but the compound must still settle before that transition.
+        self.test_pending_compound_is_committed_before_in_place_size_switch()
     def test_flush_full_state_initialized_at_entry(self):
         s=sqf('skWasteBegin')
         for part in ['private _cap = 10;', '["ACME_SK_WasteFill", _cap]',
