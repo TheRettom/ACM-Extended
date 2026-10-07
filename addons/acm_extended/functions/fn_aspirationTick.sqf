@@ -5,6 +5,37 @@
  * erase material that has already entered the lungs.
  */
 private _now = CBA_missionTime;
+private _candidate = {
+    params ["_u"];
+    if (isNull _u || {!local _u} || {!alive _u}) exitWith {false};
+    private _load = (_u getVariable ["ACME_aspiration_load",0]) max 0;
+    private _edema = (_u getVariable ["ACME_aspiration_edema",0]) max 0;
+    private _event = _u getVariable ["ACME_laryngo_emesis", []];
+    private _vomitState = _u getVariable ["ACM_airway_AirwayObstructionVomit_State",0];
+    private _eventKey = if (_event isEqualType [] && {count _event >= 3}) then {
+        format ["%1:%2:%3:%4", _event param [0,""], _event param [1,0], _event param [2,0], _vomitState]
+    } else {
+        format ["native:%1",_vomitState]
+    };
+    private _fresh = (_eventKey != (_u getVariable ["ACME_aspiration_lastEmesisKey",""]))
+        && {_vomitState > 0 || {count _event >= 3}};
+    private _residue = (_u getVariable ["ACME_aspiration_injury",0]) > 0.0005
+        || {(_u getVariable ["ACME_aspiration_SpO2Penalty",0]) > 0.001}
+        || {abs (_u getVariable ["ACME_aspiration_RRDrive",0]) > 0.001}
+        || {(_u getVariable ["ACME_aspiration_shunt",0]) > 0.0001}
+        || {_u getVariable ["ACME_aspiration_edemaActive",false]}
+        || {abs (_u getVariable ["ACME_aspiration_lastRRAdj",0]) > 0.001};
+    _fresh || {_load > 0.0005} || {_edema > 0.0005} || {_residue}
+};
+private _patients = (missionNamespace getVariable ["ACME_aspiration_activePatients", []]) select {[_x] call _candidate};
+private _discoverAt = missionNamespace getVariable ["ACME_aspirationDiscoveryNextAt", -1];
+if (_discoverAt < 0 || {_now >= _discoverAt}) then {
+    missionNamespace setVariable ["ACME_aspirationDiscoveryNextAt", _now + 2];
+    {
+        if ([_x] call _candidate) then {_patients pushBackUnique _x};
+    } forEach _patients;
+ACME_aspiration_activePatients = _patients select {[_x] call _candidate};
+};
 {
     private _u = _x;
     if (isNull _u || {!local _u} || {!alive _u}) then {continue};
