@@ -1,5 +1,13 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B253
+
+- Reconciler now compares a recorded continuous-action worker's original provider-locality generation with the current provider generation. A stopped worker can therefore release stale BVM/head-tilt/other continuous reservations after a rapid away/back transfer without waiting for its six-second heartbeat expiry (existing one-second invalid-state debounce retained).
+- Legacy continuous controllers with no locality-generation field retain their heartbeat recovery fallback.
+- Repaired the B72 historical stance regression contract to recognize B251's new locality parameter rather than demanding retired callback signatures. New SQF-VM checks cover new, healthy and legacy controller ownership.
+- Public version remains 1.2.4.1, B253 candidate.
+
+
 ## 1.2.4.1 — B252
 
 - Continuous-treatment workers now bind to the provider's locality generation. Rapid away/back transfers cancel stale controllers and release their clinical reservation and global action gate instead of letting old PFHs continue.

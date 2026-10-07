@@ -10,6 +10,13 @@ private _recorded = _controller isEqualType [] && {count _controller == 6}
 private _provider = if (_recorded) then {_controller select 0} else {
     if (hasInterface && {!isNil "ACE_player"}) then {ACE_player} else {objNull}
 };
+// B253: B252 continuous workers carry their provider-locality generation as the
+// final worker argument. A callback may stop ticking during an away/back transfer;
+// recover its reservation even if the old heartbeat is not yet six seconds old.
+// Legacy 17-field controllers have no generation and keep the existing safeguards.
+private _localityGeneration = if (_recorded && {count (_controller select 4) >= 18}) then {
+    (_controller select 4) param [17, -1, [0]]
+} else {-1};
 
 if (_active) then {
     private _session = if (isNull _provider) then {[]} else {_provider getVariable ["ACM_core_ContinuousAction_Session", []]};
@@ -23,7 +30,9 @@ if (_active) then {
         || {(_session param [1, -2]) != _epoch}
         || {isNull _patient}
         || {!(_lastSeen isEqualType 0 && {finite _lastSeen})}
-        || {CBA_missionTime - _lastSeen > 6};
+        || {CBA_missionTime - _lastSeen > 6}
+        || {_localityGeneration >= 0
+            && {(_provider getVariable ["ACME_providerLocalityEpoch", 0]) != _localityGeneration}};
 
     // A previous controller's recovery deadline must not carry into a new actor/generation.
     private _identity = [_provider, _epoch];

@@ -166,8 +166,10 @@ def test_provider_stance_lock_is_released_after_native_and_custom_treatment_end(
     assert '} forEach ["ace_treatmentSucceded", "ace_treatmentFailed"];' in post
     assert '_m setUnitPos "AUTO";' in post
     assert '_u setUnitPos "AUTO";' in stop
-    assert '[_medic,_currentEpoch,_releaseIfFree], 0.35] call CBA_fnc_waitAndExecute;' in stop
-    assert '[_medic,_currentEpoch,_releaseIfFree], 4.25] call CBA_fnc_waitAndExecute;' in stop
+    # B251 carries the provider locality epoch through both bounded stance releases.
+    assert '[_medic,_currentEpoch,_localityEpoch,_releaseIfFree], 0.35] call CBA_fnc_waitAndExecute;' in stop
+    assert '[_medic,_currentEpoch,_localityEpoch,_releaseIfFree], 4.25] call CBA_fnc_waitAndExecute;' in stop
+    assert '(_u getVariable ["ACME_providerLocalityEpoch", 0]) != _localityEpoch' in stop
     assert 'if ((_u getVariable ["ACME_treatmentPoseEpoch",0]) != _endedEpoch) exitWith {};' in stop
     assert 'if ([_u] call ACME_fnc_providerStanceOwned) exitWith {};' in stop
 
