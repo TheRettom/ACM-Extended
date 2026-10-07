@@ -33,7 +33,7 @@ def assert_entry_exit_contract(start, stop, enter=None):
     has(exit_source, 'private _anim = "AinvPknlMstpSnonWnonDnon_medicEnd";')
     has(exit_source, '[_medic, _anim, 1] call ACME_fnc_doAnim;')
     has(exit_source, '_m setAnimSpeedCoef 1.5;')
-    has(exit_source, 'ACME_DP_ExitSpeedOwner')
+    has(exit_source, '"ACME_DP_ExitSpeedOwner"')
     has(exit_source, '!local _medic')
     has(exit_source, '!alive _medic')
     has(exit_source, '[_medic] call ACME_fnc_animBlocked')
