@@ -250,7 +250,16 @@ def test_cbrn_treatment_accepts_pair_from_the_real_scalar_medication_reader():
 def test_supplied_ace_function_runs_with_actual_pair_return_contract():
     path = ROOT.parent / 'references/ACE3-master/ACE3-master/addons/medical_status/functions/fnc_getMedicationCount.sqf'
     if not path.is_file():
-        pytest.skip('supplied ACE checkout required for external contract execution')
+        # CI does not vendor ACE. Exercise the owned compatibility boundary with
+        # the current ACE pair shape instead of skipping the case.
+        compat = read('medicationCountCompat')
+        assert 'param [1, 0, [0]]' in compat
+        execute(setup() + 'ACME_fnc_medicationCountCompat={' + code(compat) + '};' + '''
+            ace_medical_status_fnc_getMedicationCount={[900,0.8]};
+            private _v=[_patient,"TXA_IV",false] call ACME_fnc_medicationCountCompat;
+            [abs (_v-0.8)<0.000001,"ACE pair effectiveness slot was not preserved"] call _check;
+        ''')
+        return
     source = path.read_text().replace('VAR_MEDICATIONS', '"ace_medical_medications"')
     source = re.sub(r'^TRACE_\d+\([^\n]*\);\s*$', '', source, flags=re.M)
     assert '[_medDose, _effectiveness]' in source
