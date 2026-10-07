@@ -1,5 +1,12 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B247
+
+- Cheyne–Stokes: unchanged rounded respiration rates no longer invoke the network publication helper at 10 Hz; actual RR changes still publish immediately.
+- Delayed post-ROSC Biot gasp audio now verifies patient locality, preventing a departed owner from emitting an extra sound after migration.
+- Added regression contracts. Public version stays 1.2.4.1, runtime build B247 (release candidate).
+
+
 
 ## 1.2.4.1 — B246
 
