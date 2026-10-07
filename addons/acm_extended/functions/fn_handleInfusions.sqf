@@ -1,15 +1,9 @@
-/* Scheduler maintains throttles/pending tails; actual delivered mg originate only in fluidCommit. */
-// Bag registration and owner recovery explicitly maintain the active registry.
-// Keep only a slow 2 s discovery safety net for legacy/missed flags instead of
-// rescanning every healthy owned unit four times per second.
-private _patients = +ACME_infusion_activePatients;
-private _discoverAt = missionNamespace getVariable ["ACME_infusionDiscoveryNextAt", -1];
-if (_discoverAt < 0 || {CBA_missionTime >= _discoverAt}) then {
-    missionNamespace setVariable ["ACME_infusionDiscoveryNextAt", CBA_missionTime + 2];
-    {if (_x getVariable ["ACME_infusion_HasBagMedications", false]) then {_patients pushBackUnique _x;};}
-        forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
-};
-ACME_infusion_activePatients = _patients select {!isNull _x && {alive _x} && {local _x}};
+/* Scheduler maintains throttles/pending tails; actual delivered mg originate only in fluidCommit.
+ * B246: bag registration/owner recovery enroll immediately and the shared 1 Hz discovery pass
+ * repairs missed legacy transitions. This 4 Hz worker never scans every owned unit.
+ */
+private _patients = ACME_infusion_activePatients select {!isNull _x && {alive _x} && {local _x}};
+private _kept = [];
 {
     private _p = _x;
     private _entries = _p getVariable ["ACME_infusion_BagMedications", []];
@@ -40,4 +34,9 @@ ACME_infusion_activePatients = _patients select {!isNull _x && {alive _x} && {lo
         _updated pushBack _e;
     } forEach _entries;
     [_p, _updated] call ACME_fnc_infusionMedicationStateCommit;
-} forEach ACME_infusion_activePatients;
+    // The signature change to [] publishes the final clear immediately. Do not retain
+    // an empty patient afterward or the 1 s structured-state snapshot cadence becomes
+    // a permanent post-treatment heartbeat.
+    if !(_updated isEqualTo []) then {_kept pushBack _p;};
+} forEach _patients;
+ACME_infusion_activePatients = _kept;
