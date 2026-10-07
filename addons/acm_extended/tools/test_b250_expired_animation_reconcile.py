@@ -12,10 +12,13 @@ def _reconcile_setup():
     fragment = source.split("// Expired patient animation lease.", 1)[1].split(
         "if !(_repairs isEqualTo []) then {", 1
     )[0]
+    # SQF-VM cannot execute the Arma finite primitive. The test supplies only
+    # finite numbers and separately retains the source-shape assertion.
+    fragment = fragment.replace("finite _expires", "(_expires isEqualType 0)")
     return (
         patient_setup()
         + 'private _repairLease={params ["_patient"]; private _netNow=_serverTime; '
-        + 'private _mark={};'
+        + 'private _mark={}; private _collisionRestored=0; ACME_fnc_headElevCollision={_collisionRestored=_collisionRestored+1;};'
         + adapt(fragment)
         + '};'
     )
@@ -29,7 +32,7 @@ def test_expired_moving_lease_releases_rate_and_keeps_token_reusable():
         [_patient] call _repairLease;
         [(_patient getVariable ["ACME_patientAnimLock",[]]) isEqualTo [], "expired lease still locked patient"] call _check;
         [(_patient getVariable ["ACME_patientAnimSpeedToken","?"]) == "", "expired lease stranded animation speed owner"] call _check;
-        [_testAnimationSpeed == 1, "expired lease stranded accelerated casualty"] call _check;
+        [_testAnimationSpeed == 1 && {_collisionRestored == 1}, "expired lease stranded accelerated casualty/collision"] call _check;
         [! ("old" in (_patient getVariable ["ACME_patientAnimRetired",[]])), "natural expiry tombstoned a reusable transaction"] call _check;
     """)
 
@@ -43,6 +46,7 @@ def test_active_moving_lease_is_not_reset_by_reconciliation():
         [((_patient getVariable ["ACME_patientAnimLock",[]]) select 0) == "new", "valid lease cleared early"] call _check;
         [_testAnimationSpeed == 1.5 && {(_patient getVariable ["ACME_patientAnimSpeedToken",""])=="new"},
             "valid lease lost acceleration"] call _check;
+        [_collisionRestored == 0, "active lease reset collision mass"] call _check;
     """)
 
 
@@ -54,7 +58,7 @@ def test_malformed_expired_record_cleans_orphan_speed_token():
         [_patient] call _repairLease;
         [(_patient getVariable ["ACME_patientAnimLock",[]]) isEqualTo [], "malformed expired lease not cleared"] call _check;
         [(_patient getVariable ["ACME_patientAnimSpeedToken","?"]) == "", "orphan speed token not retired"] call _check;
-        [_testAnimationSpeed == 1, "orphan speed token left casualty accelerated"] call _check;
+        [_testAnimationSpeed == 1 && {_collisionRestored == 1}, "orphan speed token left casualty accelerated/collision"] call _check;
     """)
 
 

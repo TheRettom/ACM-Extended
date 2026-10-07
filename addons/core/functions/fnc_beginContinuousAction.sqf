@@ -42,6 +42,10 @@ if (isNull _medic || {isNull _patient} || {!local _medic} || {!alive _medic}
 // Bind only a session started by the local controlled unit. AI/local scripted
 // providers retain their existing behavior when the player changes units.
 private _playerBound = hasInterface && {!isNil "ACE_player"} && {_medic isEqualTo ACE_player};
+// B252: a continuous-action generation is machine-local. The same provider can
+// leave and return before its PFH samples a nonlocal frame, so bind this action
+// to the locality generation advanced by ACME_fnc_ownerInit on both edges.
+private _localityEpoch = _medic getVariable ["ACME_providerLocalityEpoch", 0];
 
 // B127: every continuous action gets a generation. The old implementation used only the shared Active boolean, so
 // a delayed stance callback or PFH from action A could wake back up after action B set Active=true and then animate,
@@ -128,17 +132,18 @@ if (_notInVehicle && {!_suppressProviderAnim}) then {
             [_medic, "AmovPercMstpSnonWnonDnon_AmovPknlMstpSnonWnonDnon", 1] call ACEFUNC(common,doAnimation); // 0.650
 
             [{
-                params ["_medic", "_epoch", "_playerBound"];
+                params ["_medic", "_epoch", "_playerBound", "_localityEpoch"];
                 if (GVAR(ContinuousAction_Active) && {GVAR(ContinuousAction_Epoch) == _epoch}
                     && {local _medic} && {alive _medic} && {isNull objectParent _medic}
-                    && {!_playerBound || {_medic isEqualTo ACE_player}}) then {
+                    && {!_playerBound || {_medic isEqualTo ACE_player}}
+                    && {(_medic getVariable ["ACME_providerLocalityEpoch", 0]) == _localityEpoch}) then {
                     // The provider can go prone while the standing entry is still queued.
                     private _current = toLowerANSI animationState _medic;
                     private _proneNow = stance _medic == "PRONE" || {(_current find "prone") >= 0}
                         || {(_current find "ppne") >= 0 && {(_current find "pknl") < 0}};
                     [_medic, ["ACM_GenericContinuous", "ACM_ProneContinuous"] select _proneNow, 1] call ACEFUNC(common,doAnimation);
                 };
-            }, [_medic, _epoch, _playerBound], 0.65 / _choreographyRate] call CBA_fnc_waitAndExecute;
+            }, [_medic, _epoch, _playerBound, _localityEpoch], 0.65 / _choreographyRate] call CBA_fnc_waitAndExecute;
         };
         case "PRONE": {
             [_medic, "ACM_ProneContinuous", 1] call ACEFUNC(common,doAnimation);
@@ -156,7 +161,7 @@ if (currentWeapon _medic != "") then {
 
 private _worker = {
     params ["_args", "_idPFH"];
-    _args params ["_medic", "_patient", "_bodyPart", "_extraArgs", "_notInVehicle", "_isProne", "_perFrame", "_onCancel", "_dialogID", "_epoch", "_keyID", "_isDialog", "_dialogStartupUntil", "_playerBound", "_suppressProviderAnim", "_reopenOnEnd", "_startupComplete"];
+    _args params ["_medic", "_patient", "_bodyPart", "_extraArgs", "_notInVehicle", "_isProne", "_perFrame", "_onCancel", "_dialogID", "_epoch", "_keyID", "_isDialog", "_dialogStartupUntil", "_playerBound", "_suppressProviderAnim", "_reopenOnEnd", "_startupComplete", "_localityEpoch"];
 
     // Superseded action. Retire only this PFH and its own key id. Never run the old cancellation/reopen path against
     // the newer generation.
@@ -173,7 +178,8 @@ private _worker = {
 
     private _patientCondition = (isNull _patient);
     private _identityChanged = _playerBound && {!(_medic isEqualTo ACE_player)};
-    private _medicCondition = (isNull _medic || {!local _medic} || {!(alive _medic)} || {IS_UNCONSCIOUS(_medic)});
+    private _localityChanged = (_medic getVariable ["ACME_providerLocalityEpoch", 0]) != _localityEpoch;
+    private _medicCondition = (isNull _medic || {!local _medic} || {_localityChanged} || {!(alive _medic)} || {IS_UNCONSCIOUS(_medic)});
     private _vehicleCondition = (objectParent _medic isNotEqualTo objectParent _patient);
     private _enteredVehicle = _notInVehicle && {!isNull objectParent _medic};
     private _distanceCondition = (!isNull _patient) && {(_patient distance2D _medic) > ACEGVAR(medical_gui,maxDistance)};
@@ -236,14 +242,15 @@ private _worker = {
             private _animation = ["AmovPknlMstpSnonWnonDnon", "AmovPpneMstpSnonWnonDnon"] select _proneNow;
             [_medic, _animation, 1] call ACEFUNC(common,doAnimation);
             [{
-                params ["_medic", "_epoch", "_poseEpoch"];
+                params ["_medic", "_epoch", "_poseEpoch", "_localityEpoch"];
                 if (isNull _medic || {!local _medic}) exitWith {};
+                if ((_medic getVariable ["ACME_providerLocalityEpoch", 0]) != _localityEpoch) exitWith {};
                 if (GVAR(ContinuousAction_Epoch) != _epoch || {GVAR(ContinuousAction_Active)}) exitWith {};
                 if ((_medic getVariable ["ACME_treatmentPoseEpoch", -1]) != _poseEpoch) exitWith {};
                 if (!isNil "ACME_fnc_providerStanceOwned" && {[_medic] call ACME_fnc_providerStanceOwned}) exitWith {};
                 _medic setAnimSpeedCoef 1;
                 [QACEGVAR(common,setAnimSpeedCoef), [_medic, 1]] call CBA_fnc_globalEvent;
-            }, [_medic, _epoch, _medic getVariable ["ACME_treatmentPoseEpoch", -1]], 0.85 / _rate] call CBA_fnc_waitAndExecute;
+            }, [_medic, _epoch, _medic getVariable ["ACME_treatmentPoseEpoch", -1], _localityEpoch], 0.85 / _rate] call CBA_fnc_waitAndExecute;
         } else {
             if (!_suppressProviderAnim && {local _medic} && {GVAR(ContinuousAction_Epoch) == _epoch}
                 && {!GVAR(ContinuousAction_Active)}) then {
@@ -278,7 +285,7 @@ private _worker = {
         _medic setVariable [QGVAR(ContinuousAction_LastSeen), CBA_missionTime, true];
     };
 };
-private _workerArgs = [_medic, _patient, _bodyPart, _extraArgs, _notInVehicle, _isProne, _perFrame, _onCancel, _dialogID, _epoch, _keyID, _isDialog, _dialogStartupUntil, _playerBound, _suppressProviderAnim, _reopenOnEnd, false];
+private _workerArgs = [_medic, _patient, _bodyPart, _extraArgs, _notInVehicle, _isProne, _perFrame, _onCancel, _dialogID, _epoch, _keyID, _isDialog, _dialogStartupUntil, _playerBound, _suppressProviderAnim, _reopenOnEnd, false, _localityEpoch];
 private _pfh = [_worker, 0, _workerArgs] call CBA_fnc_addPerFrameHandler;
 
 GVAR(ContinuousAction_PFH) = _pfh;

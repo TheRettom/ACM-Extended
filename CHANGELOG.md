@@ -1,5 +1,13 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B252
+
+- Continuous-treatment workers now bind to the provider's locality generation. Rapid away/back transfers cancel stale controllers and release their clinical reservation and global action gate instead of letting old PFHs continue.
+- Delayed crouch-entry animations and deferred animation-speed resets verify the original provider locality generation, so old callbacks cannot overwrite the returning/new owner's pose.
+- Repaired B250 SQF-VM test incompatibility with the unimplemented finite primitive; added collision-restoration assertions and five B252 regression checks.
+- Public version remains 1.2.4.1; B252 / NA8-B252-1.2.4.1-candidate.
+
+
 ## 1.2.4.1 — B251
 
 - Delayed treatment-pose exits now capture and verify the provider's locality generation. The 0.12 s crouch correction, subsequent timed stance release, and both 0.35 s / 4.25 s handoff callbacks cannot change a provider after an away/back locality transition, even when the old treatment-pose epoch is unchanged.
