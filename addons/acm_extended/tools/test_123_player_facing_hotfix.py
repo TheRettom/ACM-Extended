@@ -58,7 +58,7 @@ def test_carousel_hover_never_repaints_or_promotes_opacity():
     assert '|| {!isNull _actionFocus && {(ctrlIDC _actionFocus) == 84831}};' in tick
     assert 'ACME_SK_NextBodyAction' in tick
     assert 'call ACME_fnc_skBodyActionRender;' in render
-    assert 'if (!_durFocused || {_durationFor == ""}) then {' in action
+    assert 'if (!_durFocused || {_durationFor == ""}) then {' in render
     assert 'ACME_SK_PushDurationDrafts' in action
 
 
