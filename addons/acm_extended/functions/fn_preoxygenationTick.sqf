@@ -24,14 +24,6 @@ private _candidate = {
     abs (_reserve - 0.30) > 0.001 || {_support} || {_physiology}
 };
 private _patients = (missionNamespace getVariable ["ACME_preox_activePatients", []]) select {[_x] call _candidate};
-private _discoverAt = missionNamespace getVariable ["ACME_preoxDiscoveryNextAt", -1];
-if (_discoverAt < 0 || {_now >= _discoverAt}) then {
-    missionNamespace setVariable ["ACME_preoxDiscoveryNextAt", _now + 2];
-    {
-        if ([_x] call _candidate) then {_patients pushBackUnique _x};
-    } forEach _patients;
-ACME_preox_activePatients = _patients select {[_x] call _candidate};
-};
 {
     private _u = _x;
     if (isNull _u || {!local _u} || {!alive _u}) then {continue};
@@ -137,4 +129,5 @@ ACME_preox_activePatients = _patients select {[_x] call _candidate};
     _u setVariable ["ACME_preox_lastSpO2", _spo2, false];
     // Publish only the coarse label transition; setVarNet suppresses unchanged state.
     [_u,"ACME_preox_state",if (_reserve >= 0.80) then {"preoxygenated"} else {if (_reserve >= 0.40) then {"partial"} else {"low"}}] call ACME_fnc_setVarNet;
-} forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
+} forEach _patients;
+ACME_preox_activePatients = _patients select {[_x] call _candidate};
