@@ -52,6 +52,23 @@ def test_shock_neutral_state_has_no_heartbeat():
         assert ",0] call ACME_fnc_setVarNetApprox" in row
 
 
+def test_idle_physiology_uses_active_registries_with_slow_discovery():
+    contracts = {
+        "preoxygenationTick": ("ACME_preox_activePatients", "ACME_preoxDiscoveryNextAt"),
+        "aspirationTick": ("ACME_aspiration_activePatients", "ACME_aspirationDiscoveryNextAt"),
+        "shockPhenotypeTick": ("ACME_shock_activePatients", "ACME_shockDiscoveryNextAt"),
+    }
+    for name, (registry, clock) in contracts.items():
+        s = src(name)
+        assert registry in s
+        assert clock in s
+        assert 'CBA_missionTime + 2' in s or '_now + 2' in s
+        assert f'{registry} = _patients select' in s
+        # Full-owner enumeration appears only in the bounded discovery branch,
+        # never as the hot physiology loop's final forEach.
+        assert '} forEach _patients;' in s
+
+
 def test_circulation_full_owner_discovery_is_not_four_hz():
     s = src("circHandle")
     assert 'ACME_circDiscoveryNextAt' in s
@@ -88,6 +105,12 @@ def test_b201_idle_broadcaster_shapes_cannot_return():
         assert all(",0] call ACME_fnc_setVarNetApprox" in line for line in rows), (name, rows)
 
 
+
+
+def test_locality_transfer_retires_idle_physiology_registries():
+    s = src("ownerInit")
+    for registry in ("ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients"):
+        assert f'"{registry}"' in s
 
 
 def test_manual_carrier_recovery_does_not_dispatch_every_healthy_unit():
