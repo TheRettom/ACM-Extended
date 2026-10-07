@@ -39,7 +39,8 @@ def test_scope_display_owns_exact_pose_and_action_generations():
 
 def test_unload_clears_matching_continuous_action_and_pose():
     s = read(FN / "fn_stethoscopeClose.sqf")
-    assert 'ACM_core_ContinuousAction_Active = false;' in s
+    assert 'call ACM_core_fnc_setContinuousActionState;' in s
+    assert '["active", false]' in s
     assert '[_medic,"stethoscope",_poseEpoch,true] call ACME_fnc_treatmentPoseStop;' in s
     assert 'getAnimSpeedCoef _medic == 0' in s
     assert 'ACME_stethPatientAnimLease' in s
