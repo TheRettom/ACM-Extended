@@ -116,7 +116,7 @@ switch (toLowerANSI _operation) do {
             "ACME_clinical_ownedUnits", "ACME_clinical_activePatients", "ACME_circ_activePatients",
             "ACME_coag_activePatients", "ACME_infusion_activePatients", "ACME_tbi_activePatients",
             "ACME_nrb_activePatients", "ACME_hpmk_activePatients", "ACME_cs_activePatients",
-            "ACME_autoBP_patients", "ACME_vent_serverPatients", "ACME_hpmk_serverPatients",
+            "ACME_autoBP_patients", "ACME_rhythm_activePatients", "ACME_vent_serverPatients", "ACME_hpmk_serverPatients",
             "ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients",
             "ACME_rhythmThreshold_activePatients"
         ] apply {
