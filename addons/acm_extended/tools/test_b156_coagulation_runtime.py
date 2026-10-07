@@ -58,7 +58,7 @@ def test_neutral_units_have_no_drug_lookup_packets_or_active_membership():
     ''')
 
 
-def test_shared_discovery_owns_fallback_and_active_patients_keep_five_hz_response():
+def test_discovery_is_bounded_and_active_patients_keep_five_hz_response():
     tick = read("coagulationTick")
     discovery = read("idlePhysDiscovery")
     assert 'ACME_clinical_ownedUnits' not in tick
