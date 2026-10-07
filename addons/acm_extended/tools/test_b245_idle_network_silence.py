@@ -136,7 +136,7 @@ def _healthy_vm(name):
     s = re.sub(r'\bisNull _u\b', '(_u isEqualTo objNull)', s)
     s = re.sub(r'\blocal _u\b', 'true', s)
     s = re.sub(r'\balive _u\b', 'true', s)
-    s = s.replace('alive (_u getVariable ["ACM_breathing_BVM_Medic", objNull])', 'false')
+    s = re.sub(r'alive \(_u getVariable \["ACM_breathing_BVM_Medic",\s*objNull\]\)', 'false', s)
     return adapt(s)
 
 
