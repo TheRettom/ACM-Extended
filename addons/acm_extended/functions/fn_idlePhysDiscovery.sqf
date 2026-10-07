@@ -15,9 +15,17 @@ private _preox = if (_fullAudit) then {[]} else {(missionNamespace getVariable [
 private _aspiration = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_aspiration_activePatients", []]) - _units};
 private _shock = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_shock_activePatients", []]) - _units};
 private _rhythmThreshold = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_rhythmThreshold_activePatients", []]) - _units};
-private _circPatients = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_circ_activePatients", []]) - _units};
-private _coag = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_coag_activePatients", []]) - _units};
-private _infusion = if (_fullAudit) then {[]} else {(missionNamespace getVariable ["ACME_infusion_activePatients", []]) - _units};
+// These three hot workers own their own retirement. Preserve an already enrolled local patient
+// through the discovery pass so a direct treatment/event enrollment cannot be erased before its first tick.
+private _circPatients = if (_fullAudit) then {
+    (missionNamespace getVariable ["ACME_circ_activePatients", []]) select {!isNull _x && {local _x} && {alive _x}}
+} else {(missionNamespace getVariable ["ACME_circ_activePatients", []]) - _units};
+private _coag = if (_fullAudit) then {
+    (missionNamespace getVariable ["ACME_coag_activePatients", []]) select {!isNull _x && {local _x} && {alive _x}}
+} else {(missionNamespace getVariable ["ACME_coag_activePatients", []]) - _units};
+private _infusion = if (_fullAudit) then {
+    (missionNamespace getVariable ["ACME_infusion_activePatients", []]) select {!isNull _x && {local _x} && {alive _x}}
+} else {(missionNamespace getVariable ["ACME_infusion_activePatients", []]) - _units};
 private _autoSVT = missionNamespace getVariable ["ACME_rhythmAutoSVTFromRateEnabled", false];
 private _svtHR = missionNamespace getVariable ["ACME_rhythmCustomSVTHR", missionNamespace getVariable ["ACME_rhythmCriticalSVTHR", 190]];
 private _acmHighHR = missionNamespace getVariable ["ACME_rhythmACMFatalHighHR", 220];
