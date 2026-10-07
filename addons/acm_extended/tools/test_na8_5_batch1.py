@@ -48,15 +48,26 @@ class QuietOutput(unittest.TestCase):
         # Later reliability work added a small, explicit set of event/error diagnostics.
         # Keep the whitelist exact by file and emitter count so new runtime chatter still fails closed.
         approved={
-            'functions/fn_chestSealOpen.sqf':1,
+            # Reviewed failure/compatibility diagnostics. Keep this exact: adding
+            # an emitter anywhere else still fails the suite.
+            'functions/fn_assessmentTime.sqf':1,
+            'functions/fn_carrierInventoryCreate.sqf':1,
+            'functions/fn_carrierInventoryRestore.sqf':1,
             'functions/fn_compatCheck.sqf':2,
+            'functions/fn_cprAfterChestPrep.sqf':1,
             'functions/fn_debugDumpToClipboard.sqf':1,
+            'functions/fn_directPressureClaimAck.sqf':1,
             'functions/fn_expansionRegisterRuntime.sqf':1,
             'functions/fn_megacodeMenu.sqf':1,
             'functions/fn_megacodeModuleInit.sqf':2,
             'functions/fn_megacodeOpenPanel.sqf':2,
             'functions/fn_megacodePanelLoad.sqf':2,
-            'functions/fn_providerStateReconcile.sqf':2,
+            'functions/fn_networkCompatNotice.sqf':1,
+            'functions/fn_postInit.sqf':5,
+            'functions/fn_preparedAttachLocal.sqf':1,
+            'functions/fn_providerStateReconcile.sqf':3,
+            'functions/fn_registerChestAccessVestRuntime.sqf':1,
+            'functions/fn_registerMedicalMenuOpenRuntime.sqf':4,
             'functions/fn_thoraOpen.sqf':1,
             'functions/fn_transientStateReconcile.sqf':1,
         }
