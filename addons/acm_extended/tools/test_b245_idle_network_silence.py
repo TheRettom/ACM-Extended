@@ -25,7 +25,7 @@ def test_preoxygenation_healthy_room_air_is_silent_and_neutral():
     assert 'private _supplemental = _fio2Frac > 0.22;' in s
     assert 'if (_effectiveVent && {_supplemental} && {_spo2 >= 92}) then {' in s
     assert 'if (_reserve > 0.30) then {_reserve = (_reserve - _baselineStep) max 0.30;};' in s
-    assert '[_u,"ACME_preox_reserve",_reserve,0.005,0] call ACME_fnc_setVarNetApprox;' in s
+    assert '([0.005,0] select (abs (_reserve - 0.30) <= 0.000001)),0] call ACME_fnc_setVarNetApprox;' in s
 
 
 def test_aspiration_neutral_state_has_no_heartbeat():
@@ -94,9 +94,9 @@ def _healthy_vm(name):
     # Only adapt object/locality commands that occur before each function's healthy
     # early exit. Any unsupported command beyond that guard would fail the VM,
     # making accidental fall-through visible rather than silently mocked.
-    s = re.sub(r'\\bisNull _u\\b', '(_u isEqualTo objNull)', s)
-    s = re.sub(r'\\blocal _u\\b', 'true', s)
-    s = re.sub(r'\\balive _u\\b', 'true', s)
+    s = re.sub(r'\bisNull _u\b', '(_u isEqualTo objNull)', s)
+    s = re.sub(r'\blocal _u\b', 'true', s)
+    s = re.sub(r'\balive _u\b', 'true', s)
     s = s.replace('alive (_u getVariable ["ACM_breathing_BVM_Medic", objNull])', 'false')
     return adapt(s)
 
