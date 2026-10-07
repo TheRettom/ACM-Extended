@@ -178,14 +178,17 @@ def test_actual_healthy_idle_models_issue_zero_publication_requests():
         _patient setVariable ["ace_medical_spo2",97];
         _patient setVariable ["ACM_circulation_Blood_Volume",6];
 
-        call ACME_fnc_idlePhysDiscovery;
-        [ACME_preox_activePatients isEqualTo [] && {ACME_aspiration_activePatients isEqualTo []}
-            && {ACME_shock_activePatients isEqualTo []}
-            && {ACME_rhythmThreshold_activePatients isEqualTo []},"healthy discovery enrolled idle physiology"] call _check;
-        call ACME_fnc_preoxygenationTick;
-        call ACME_fnc_aspirationTick;
-        call ACME_fnc_shockPhenotypeTick;
-        call ACME_fnc_rhythmThresholdTick;
+        for "_i" from 0 to 119 do {
+            CBA_missionTime = 10 + _i;
+            call ACME_fnc_idlePhysDiscovery;
+            [ACME_preox_activePatients isEqualTo [] && {ACME_aspiration_activePatients isEqualTo []}
+                && {ACME_shock_activePatients isEqualTo []}
+                && {ACME_rhythmThreshold_activePatients isEqualTo []},"healthy discovery enrolled idle physiology"] call _check;
+            call ACME_fnc_preoxygenationTick;
+            call ACME_fnc_aspirationTick;
+            call ACME_fnc_shockPhenotypeTick;
+            call ACME_fnc_rhythmThresholdTick;
+        };
 
         [_exactRequests==0,"healthy idle path issued exact network publication"] call _check;
         [_approxRequests==0,"healthy idle path issued approximate network publication"] call _check;
