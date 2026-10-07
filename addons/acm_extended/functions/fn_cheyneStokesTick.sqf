@@ -11,7 +11,14 @@
 // because we set the actual ACM_breathing_RespirationRate rather than only a display number, the check breathing
 // of the medic reads the live rate and ACM's getetco2 turns the rising and falling rate into capnography that
 // swings deep, then shallow, then flat.
-if !(missionNamespace getVariable ["ACME_sys_cheyneStokes", true]) exitWith {};
+if !(missionNamespace getVariable ["ACME_sys_cheyneStokes", true]) exitWith {
+    // Preserve enrollment for re-enable, but release the active respiratory drive.
+    {
+        if (!isNull _x && {local _x} && {(_x getVariable ["ACME_cs_rrDrive", -1]) >= 0}) then {
+            [_x, "ACME_cs_rrDrive", -1] call ACME_fnc_setVarNet;
+        };
+    } forEach (missionNamespace getVariable ["ACME_cs_activePatients", []]);
+};
 
 private _list = missionNamespace getVariable ["ACME_cs_activePatients", []];
 if (_list isEqualTo []) exitWith {};
@@ -34,7 +41,7 @@ private _alive = [];
     if (isNull _p || {!local _p}) then { continue; };
     if (!alive _p || {!(_p getVariable ["ACME_cs_active", false])}) then {
         // being pruned from the demo: release the rr drive, so the override stops pinning the rate of this unit.
-        if (!isNull _p && {(_p getVariable ["ACME_cs_rrDrive", -1]) >= 0}) then { _p setVariable ["ACME_cs_rrDrive", -1, true]; };
+        if (!isNull _p && {local _p} && {(_p getVariable ["ACME_cs_rrDrive", -1]) >= 0}) then { [_p, "ACME_cs_rrDrive", -1] call ACME_fnc_setVarNet; };
         continue;
     };
     // audible cheyne-stokes respirations ride along with the rr pattern, in crescendo and decrescendo cycles with a
