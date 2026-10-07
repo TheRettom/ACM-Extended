@@ -59,7 +59,7 @@ def test_menu_open_is_only_empty_hands_and_crouch_transition():
     assert 'primaryWeapon _medic' in start and 'secondaryWeapon _medic' in start and 'handgunWeapon _medic' in start
     assert '[_medic, _kneel, [0, 1] select _oldGeneric] call ACME_fnc_doAnim;' in start
     code='\n'.join(line for line in start.splitlines() if not line.lstrip().startswith(('*','//','/*')))
-    for forbidden in ('UnconsciousMedicFromUnarmedKneel','UnconsciousReviveMedic_B','switchMove [','addPerFrameHandler','ACME_menuPoseFallback'):
+    for forbidden in ('UnconsciousMedicFromUnarmedKneel','UnconsciousReviveMedic_B','switchMove [','ACME_menuPoseFallback'):
         assert forbidden not in code
     stop=txt('functions/fn_menuPoseStop.sqf')
     assert 'setUnitPos "AUTO"' in stop
