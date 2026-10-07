@@ -19,11 +19,13 @@ def test_direct_pressure_uses_shared_pose_controller_and_two_second_resume():
 def test_direct_pressure_menu_order_stays_explicit():
     menu=txt("addons/gui/overrides/fnc_updateActions.sqf")
     assert "'acme_stopdirectpressure'" in menu
-    assert '_menuActions = _stopPressure + _pressure + _menuActions + _dogTags;' in menu
+    assert '_menuActions = _manualCarrier + _bvmEmma + _stopPressure + _pressure + _menuActions + _dogTags;' in menu
 def test_roll_and_chest_seal_body_map_contracts():
     roll=txt("addons/acm_extended/functions/fn_chestSealRoll.sqf")
-    assert '[_patient, _trans, 1] call ACME_fnc_doAnim;' in roll
+    assert 'call ACME_fnc_patientAnimRequest' in roll
+    assert 'if (_leaseToken == "") exitWith' in roll
     assert '[_p, _trans, 2] call ACME_fnc_doAnim;' in roll
+    assert 'ACME_patientAnimLock' in roll
     assert 'ACME_CS_rollToken' in roll and '0.15] call CBA_fnc_waitAndExecute' in roll
     body=txt("addons/gui/functions/fnc_updateBodyImage.sqf")
     assert 'ACME_CS_holeData' in body and '(_x select 4) isEqualTo true' in body
