@@ -1,6 +1,14 @@
 /* Scheduler maintains throttles/pending tails; actual delivered mg originate only in fluidCommit. */
+// Bag registration and owner recovery explicitly maintain the active registry.
+// Keep only a slow 2 s discovery safety net for legacy/missed flags instead of
+// rescanning every healthy owned unit four times per second.
 private _patients = +ACME_infusion_activePatients;
-{if (_x getVariable ["ACME_infusion_HasBagMedications", false]) then {_patients pushBackUnique _x;};} forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
+private _discoverAt = missionNamespace getVariable ["ACME_infusionDiscoveryNextAt", -1];
+if (_discoverAt < 0 || {CBA_missionTime >= _discoverAt}) then {
+    missionNamespace setVariable ["ACME_infusionDiscoveryNextAt", CBA_missionTime + 2];
+    {if (_x getVariable ["ACME_infusion_HasBagMedications", false]) then {_patients pushBackUnique _x;};}
+        forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
+};
 ACME_infusion_activePatients = _patients select {!isNull _x && {alive _x} && {local _x}};
 {
     private _p = _x;
