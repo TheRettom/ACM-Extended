@@ -48,7 +48,7 @@ def assert_nonexclusive_contract(start, regions):
     # Entry is now two-phase: start requests an owner-serialized site claim and only the accepted ACK selects
     # torso/self/limb activation. This prevents two clients from overwriting the same patient/body-part marker.
     has(start, '[_patient,"directPressureClaim",["claim"')
-    has(start, 'ACME_DP_ClaimPending')
+    has(start, '"ACME_DP_ClaimPending"')
     ack = read('directPressureClaimAck')
     for name in ('directPressureTorso', 'directPressureSelf', 'directPressureLimb'):
         has(ack, 'call ACME_fnc_' + name)
