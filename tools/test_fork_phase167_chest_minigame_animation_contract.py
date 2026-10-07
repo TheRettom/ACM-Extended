@@ -101,13 +101,14 @@ def test_chestseal_and_stethoscope_use_semifowler_putdown_exit():
     assert '[_medic, ["lower", "contactexit"] select _ambulatoryContact] call ACME_fnc_headElevMedicSeq' in steth
     assert '[_flipMedic,_poseMode,_poseEpoch,true] call ACME_fnc_treatmentPoseStop' in chest
     assert '[_medic,"stethoscope",_poseEpoch,_temporaryCarrier] call ACME_fnc_treatmentPoseStop' in steth
-    assert steth_controller.count('"stethoscope", _poseEpoch, true') >= 2
+    assert '[_medic, "stethoscope", _poseEpoch, true] call ACME_fnc_treatmentPoseStop;' in steth_controller
+    assert '[_medic, "stethoscope", _poseEpoch, false] call ACME_fnc_treatmentPoseStop;' in steth_controller
     assert '"chestAccessVestProvider", [_medic, _patient, "start"' not in restore
 
     # Verify this really is the requested Semi-Fowler Putdown/inventory sequence.
     assert '"AmovPknlMstpSnonWnonDnon_AinvPknlMstpSnonWnonDnon_Putdown"' in head
     assert '"AinvPknlMstpSnonWnonDnon_Putdown_AmovPknlMstpSnonWnonDnon"' in head
-    assert 'private _rest = "AmovPknlMstpSnonWnonDnon";' in head
+    assert 'private _rest = [_medic, "AmovPknlMstpSnonWnonDnon", _prone] call ACME_fnc_providerAnimation;' in head
 
 
 def test_chest_minigame_exits_always_leave_patient_supine():
