@@ -7,6 +7,9 @@ SOURCE = Path(__file__).resolve().parents[1] / "functions" / "fn_providerStateRe
 
 def _setup():
     body=SOURCE.read_text(encoding="utf-8-sig")
+    # Execute only the continuous-controller reconciliation, not unrelated
+    # client-side DP/preflight UI code requiring native engine objects.
+    body=body.split("// Input preflight and Direct Pressure pending requests below belong",1)[0] + "\n_repairs\n"
     body=body.replace("local _provider", "true")
     # SQF-VM does not implement finite. These fixtures use numeric heartbeat values.
     body=body.replace("finite _lastSeen", "(_lastSeen isEqualType 0)")
