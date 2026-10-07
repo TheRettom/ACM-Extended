@@ -85,19 +85,30 @@ switch (toLowerANSI _operation) do {
         private _current = call _snapshotCounters;
         private _previous = _state get "previousCounters";
         private _deltas = [];
+        private _fieldDeltas = [];
         for "_i" from 0 to 2 do {
             private _new = _current select _i;
             private _old = _previous select _i;
             private _delta = 0;
             private _reset = false;
+            private _fields = createHashMap;
             {
                 private _value = _new get _x;
                 private _prior = _old getOrDefault [_x, 0];
-                if (_value < _prior) then {_reset = true; _delta = _delta + _value;}
-                else {_delta = _delta + (_value - _prior);};
+                private _fieldReset = _value < _prior;
+                private _fieldDelta = if (_fieldReset) then {_value} else {_value - _prior};
+                if (_fieldReset) then {_reset = true;};
+                _delta = _delta + _fieldDelta;
+                if (_fieldDelta > 0 || {_fieldReset}) then {_fields set [_x, [_fieldDelta, _fieldReset]];};
             } forEach (keys _new);
-            {if !(_x in _new) then {_reset = true;};} forEach (keys _old);
+            {
+                if !(_x in _new) then {
+                    _reset = true;
+                    _fields set [_x, [0, true]];
+                };
+            } forEach (keys _old);
             _deltas pushBack [_delta, _reset];
+            _fieldDeltas pushBack _fields;
         };
         _state set ["previousCounters", _current];
 
@@ -145,7 +156,8 @@ switch (toLowerANSI _operation) do {
         ];
         private _sample = createHashMapFromArray [
             ["at", _now], ["elapsed", _now - (_state get "lastAt")], ["fps", _fps], ["frameDelta", _frameDelta],
-            ["helperRequestDeltas", _deltas], ["counterEnabled", missionNamespace getVariable ["ACME_net_count", false]],
+            ["helperRequestDeltas", _deltas], ["helperRequestFields", _fieldDeltas],
+            ["counterEnabled", missionNamespace getVariable ["ACME_net_count", false]],
             ["registrySizes", _registries], ["directPressure", _dp], ["hangBag", _hang], ["compatibility", _compatibility]
         ];
         _state set ["lastAt", _now];
@@ -163,6 +175,7 @@ switch (toLowerANSI _operation) do {
             ["startedAt", _state getOrDefault ["startedAt", -1]], ["stoppedAt", _state getOrDefault ["stoppedAt", -1]],
             ["stopReason", _state getOrDefault ["stopReason", "not_started"]], ["machine", +(_state getOrDefault ["machine", []])],
             ["counterMeaning", "helper requests only; NOT wire packets, bytes, delivery or total network traffic"],
+            ["fieldDeltaMeaning", "per counter map: variable -> [request delta, counter reset]"],
             ["counterOrder", ["publicationRequests", "suppressedRequests", "nonFiniteRejected"]],
             ["samples", +(_state getOrDefault ["samples", []])]
         ]
