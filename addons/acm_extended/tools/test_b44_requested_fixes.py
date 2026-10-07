@@ -17,7 +17,7 @@ def test_roll_provider_emptyhand_wrapper():
     assert 'ACME_fnc_medicAnimationPrep' in start
     assert '[_medic, _main, 1] call ACME_fnc_doAnim;' in start
     assert '["ACME_rollProviderDuration", 2.2]' in roll
-    assert '[_medic, "roll", _duration, _patient] call ACME_fnc_treatmentPoseStart' in roll
+    assert '[_medic, "roll", _duration, _patient, _forceImmediate] call ACME_fnc_treatmentPoseStart' in roll
 
 def test_chest_seal_flip_patient_roll():
     # Route through the patient owner and preserve a priority-one lease, with the
