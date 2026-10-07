@@ -69,8 +69,8 @@ private _now = CBA_missionTime;
 
     // Publish source-separated hemodynamic drives. The authoritative fork-native HR/resistance endpoints
     // compose these once with native physiology; this PFH never fights those writers directly.
-    [_u,"ACME_shock_resistDelta",_svrAdj,0.10,0] call ACME_fnc_setVarNetApprox;
-    [_u,"ACME_shock_hrAdj",_hrAdj,0.10,0] call ACME_fnc_setVarNetApprox;
+    [_u,"ACME_shock_resistDelta",_svrAdj,([0.10,0] select (_svrAdj == 0)),0] call ACME_fnc_setVarNetApprox;
+    [_u,"ACME_shock_hrAdj",_hrAdj,([0.10,0] select (_hrAdj == 0)),0] call ACME_fnc_setVarNetApprox;
 
     // Forced cardiogenic/neurogenic shock needs a pressure-failure component even with preserved blood volume.
     // Reuse ACME's established shock MAP-drop state, and relinquish it cleanly when this layer no longer owns it.
@@ -108,6 +108,6 @@ private _now = CBA_missionTime;
     };
 
     [_u,"ACME_shock_phenotype",_type] call ACME_fnc_setVarNet;
-    [_u,"ACME_shock_severity",_sev,0.002,0] call ACME_fnc_setVarNetApprox;
+    [_u,"ACME_shock_severity",_sev,([0.002,0] select (_sev == 0)),0] call ACME_fnc_setVarNetApprox;
     [_u,"ACME_shock_warm",(_type == "distributive" || {_type == "neurogenic"})] call ACME_fnc_setVarNet;
 } forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
