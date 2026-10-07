@@ -66,7 +66,7 @@ private _mayExit = !_otherManeuver && {_ownsHold} && {!([_medic, _patient] call 
 } forEach [
     ["ACME_DP_Active", false, true],
     ["ACME_DP_Patient", objNull, true],
-    ["ACME_DP_Part", ""],
+    ["ACME_DP_Part", "", true],
     ["ACME_DP_Mode", ""],
     ["ACME_DP_Start", 0],
     ["ACME_DP_NextClot", 0],
