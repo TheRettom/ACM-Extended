@@ -129,7 +129,12 @@ addons/acm_extended/tools/test_b199_physical_dressing_invariant_20260928.py
 
 # B243 IV usability and historical collection repairs.
 addons/acm_extended/tools/test_b243_iv_usability.py
-tools/test_fork_phase143_runtime_pressure_roll_monitor.py\ntools/test_fork_phase149_sidearm_steth_entry.py\ntools/test_fork_phase150_flip_cancel.py\ntools/test_fork_phase151_junctional_chest_workspace.py\ntools/test_fork_phase160_chest_animation_rollback.py\ntools/test_self_audit_20260922.py
+tools/test_fork_phase143_runtime_pressure_roll_monitor.py
+tools/test_fork_phase149_sidearm_steth_entry.py
+tools/test_fork_phase150_flip_cancel.py
+tools/test_fork_phase151_junctional_chest_workspace.py
+tools/test_fork_phase160_chest_animation_rollback.py
+tools/test_self_audit_20260922.py
 addons/acm_extended/tools/test_123_player_facing_hotfix.py
 addons/acm_extended/tools/test_na8_5_batch2.py
 addons/acm_extended/tools/test_b71_tag_head_intubation.py
