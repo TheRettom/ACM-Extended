@@ -51,7 +51,8 @@ def test_tray_rotation_hover_splay_and_spear_sound():
     assert "_count > 5" not in h
     assert 'ACME_IV_TrayFan_%1' in h
     assert '_layer ctrlShow false;' in h
-    assert 'ACME_iv_trayIconBias", 0.66' in i
+    assert 'ACME_iv_trayIconScale", 2.45' in i
+    assert 'private _iconY = _ry + (_slotH / 2) - (_iconH / 2);' in i
     assert 'private _iconX = _colX + (_slotW / 2) - (_iconW / 2);' in i
     assert "ctrlSetAngle" not in h
     assert "iv_tray_%1g_%2_ca.paa" not in h
