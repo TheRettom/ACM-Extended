@@ -15,7 +15,7 @@ def contract(text):
     assert 'ACME_CS_FlipTarget", ""' in pre
     assert 'ACME_fnc_chestSealProviderHoldStart' in pre
     assert 'ACME_DP_PauseTreatmentClass' in pre
-    assert 'ACME_DP_Paused",false' in pre
+    assert 'setVariable ["ACME_DP_Paused", false]' in pre
     # Button/prep function has no physical roll dispatch at all.
     executable='\n'.join(line.split('//',1)[0] for line in text.splitlines())
     assert 'call ACME_fnc_chestSealRoll' not in executable
