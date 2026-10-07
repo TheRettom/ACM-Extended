@@ -1,4 +1,4 @@
-"""B245 healthy-idle networking/backpressure contracts.
+"""B245/B246 healthy-idle networking/backpressure contracts.
 
 These checks target the report that desync can begin without an injury. They require
 healthy owned units to produce no periodic ACME physiology publications and keep
@@ -61,7 +61,12 @@ def test_idle_physiology_uses_one_shared_slow_discovery():
     assert 'ACME_aspiration_activePatients = _aspiration;' in discovery
     assert 'ACME_shock_activePatients = _shock;' in discovery
     assert 'ACME_rhythmThreshold_activePatients = _rhythmThreshold;' in discovery
-    assert '[{ call ACME_fnc_idlePhysDiscovery; }, 2, []] call CBA_fnc_addPerFrameHandler;' in runtime
+    assert 'ACME_circ_activePatients = _circPatients;' in discovery
+    assert 'ACME_coag_activePatients = _coag;' in discovery
+    assert 'ACME_infusion_activePatients = _infusion;' in discovery
+    # Preserve the former circulation fallback's one-second worst case while
+    # replacing the independent 1 s / 2 s / 2 s owner scans with this one pass.
+    assert '[{ call ACME_fnc_idlePhysDiscovery; }, 1, []] call CBA_fnc_addPerFrameHandler;' in runtime
 
     for name, registry in {
         "preoxygenationTick": "ACME_preox_activePatients",
@@ -87,16 +92,14 @@ def test_idle_physiology_uses_one_shared_slow_discovery():
             assert loop_start < mutation < loop_end
 
 
-def test_circulation_full_owner_discovery_is_not_four_hz():
-    s = src("circHandle")
-    assert 'ACME_circDiscoveryNextAt' in s
-    assert 'CBA_missionTime + 1' in s
-    owned = 'forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);'
-    assert owned in s
-    discovery = s.index('private _discoveryNext')
-    loop = s.index(owned, discovery)
-    close = s.index('};\n\n_patients = _patients arrayIntersect _patients;', discovery)
-    assert discovery < loop < close
+def test_circulation_full_owner_discovery_is_centralized():
+    circ = src("circHandle")
+    discovery = src("idlePhysDiscovery")
+    assert 'ACME_circDiscoveryNextAt' not in circ
+    assert 'ACME_clinical_ownedUnits' not in circ
+    assert 'private _needsCirc =' in discovery
+    assert 'ACME_circ_activePatients = _circPatients;' in discovery
+    assert 'ACME_circ_State' in discovery
 
 
 def test_custom_rhythm_hot_tick_uses_explicit_active_registry():
@@ -113,15 +116,25 @@ def test_custom_rhythm_hot_tick_uses_explicit_active_registry():
     assert lifecycle.count('"ACME_rhythm_activePatients"') >= 2
 
 
-def test_saline_and_infusion_hot_workers_do_not_scan_every_healthy_owner():
+def test_circ_coag_and_infusion_hot_workers_do_not_scan_every_healthy_owner():
     saline = src("salineAcidosisTrack")
     fluid = src("fluidCommit")
+    circ = src("circHandle")
+    coag = src("coagulationTick")
     infusion = src("handleInfusions")
+    discovery = src("idlePhysDiscovery")
     assert 'ACME_clinical_ownedUnits' not in saline
     assert 'ACME_circ_activePatients' in saline
     assert 'ACME_circ_activePatients pushBackUnique _patient' in fluid
-    assert 'ACME_infusionDiscoveryNextAt' in infusion
-    assert 'CBA_missionTime + 2' in infusion
+    for hot in (circ, coag, infusion):
+        assert 'ACME_clinical_ownedUnits' not in hot
+    assert 'ACME_circDiscoveryNextAt' not in circ
+    assert 'ACME_coag_lastSweep' not in coag
+    assert 'ACME_infusionDiscoveryNextAt' not in infusion
+    assert discovery.count('ACME_clinical_ownedUnits') == 1
+    assert 'private _kept = [];' in infusion
+    assert 'if !(_updated isEqualTo []) then {_kept pushBack _p;};' in infusion
+    assert 'ACME_infusion_activePatients = _kept;' in infusion
 
 
 def test_b201_idle_broadcaster_shapes_cannot_return():
@@ -142,7 +155,11 @@ def test_b201_idle_broadcaster_shapes_cannot_return():
 def test_locality_transfer_retires_idle_physiology_registries():
     s = src("ownerInit")
     owner_register = src("ownerRegister")
-    for registry in ("ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients", "ACME_rhythmThreshold_activePatients"):
+    for registry in (
+        "ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients",
+        "ACME_rhythmThreshold_activePatients", "ACME_circ_activePatients", "ACME_coag_activePatients",
+        "ACME_infusion_activePatients",
+    ):
         assert s.count(f'"{registry}"') >= 2
     assert '[[_patient]] call ACME_fnc_idlePhysDiscovery;' in owner_register
 
@@ -197,7 +214,10 @@ def test_actual_healthy_idle_models_issue_zero_publication_requests():
             [] call ACME_fnc_idlePhysDiscovery;
             [ACME_preox_activePatients isEqualTo [] && {ACME_aspiration_activePatients isEqualTo []}
                 && {ACME_shock_activePatients isEqualTo []}
-                && {ACME_rhythmThreshold_activePatients isEqualTo []},
+                && {ACME_rhythmThreshold_activePatients isEqualTo []}
+                && {ACME_circ_activePatients isEqualTo []}
+                && {ACME_coag_activePatients isEqualTo []}
+                && {ACME_infusion_activePatients isEqualTo []},
                 "healthy discovery enrolled idle physiology"] call _check;
         };
 
