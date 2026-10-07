@@ -16,17 +16,22 @@ def retry_contract(text=None):
         'private _startPoseToken = _patient getVariable ["ACME_headElev_poseToken", ""];',
         'private _rollToken = _patient getVariable ["ACME_CS_rollToken", ""];',
         'params ["_p","_rollToken","_startPoseToken","_m","_body","_auto","_startEpoch"];',
-        'if ((_p getVariable ["ACME_headElev_poseToken", ""]) != _startPoseToken) exitWith {};',
+        '|| {(_p getVariable ["ACME_headElev_poseToken", ""]) != _startPoseToken}',
+        '|| {(_p getVariable ["ACME_headElev_startEpoch", 0]) != _startEpoch}',
         'if ((_p getVariable ["ACME_CS_rollToken", ""]) != "") exitWith {};',
         '[_m,_p,_body,_auto,true] call ACME_fnc_headElevateStart;',
         'call CBA_fnc_waitUntilAndExecute;',
     ):
         assert contains(s, required), required
 
-    marker = 'params ["_p","_rollToken","_startPoseToken","_m","_body","_auto"];'
-    success = s.split(marker, 1)[1].split('}, [_patient,_rollToken,_startPoseToken,_medic,_bodyPart,_auto,_startEpoch]', 1)[0]
+    marker = 'params ["_p","_rollToken","_startPoseToken","_m","_body","_auto","_startEpoch"];'
+    first = s.index(marker)
+    second = s.index(marker, first + len(marker))
+    end = s.index('}, [_patient,_rollToken,_startPoseToken,_medic,_bodyPart,_auto,_startEpoch,_retryStart], 4.5', second)
+    success = s[second:end]
     assert '_p setVariable ["ACME_CS_facing","front",true];' not in success
     assert success.index('!= _startPoseToken') < success.index('call ACME_fnc_headElevateStart')
+    assert success.index('!= _startEpoch') < success.index('call ACME_fnc_headElevateStart')
 
 
 def pending(physical=True):
