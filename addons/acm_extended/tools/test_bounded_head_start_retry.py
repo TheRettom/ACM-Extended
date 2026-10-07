@@ -15,7 +15,7 @@ def retry_contract(text=None):
     for required in (
         'private _startPoseToken = _patient getVariable ["ACME_headElev_poseToken", ""];',
         'private _rollToken = _patient getVariable ["ACME_CS_rollToken", ""];',
-        'params ["_p","_rollToken","_startPoseToken","_m","_body","_auto"];',
+        'params ["_p","_rollToken","_startPoseToken","_m","_body","_auto","_startEpoch"];',
         'if ((_p getVariable ["ACME_headElev_poseToken", ""]) != _startPoseToken) exitWith {};',
         'if ((_p getVariable ["ACME_CS_rollToken", ""]) != "") exitWith {};',
         '[_m,_p,_body,_auto,true] call ACME_fnc_headElevateStart;',
@@ -24,7 +24,7 @@ def retry_contract(text=None):
         assert contains(s, required), required
 
     marker = 'params ["_p","_rollToken","_startPoseToken","_m","_body","_auto"];'
-    success = s.split(marker, 1)[1].split('}, [_patient,_rollToken,_startPoseToken,_medic,_bodyPart,_auto]', 1)[0]
+    success = s.split(marker, 1)[1].split('}, [_patient,_rollToken,_startPoseToken,_medic,_bodyPart,_auto,_startEpoch]', 1)[0]
     assert '_p setVariable ["ACME_CS_facing","front",true];' not in success
     assert success.index('!= _startPoseToken') < success.index('call ACME_fnc_headElevateStart')
 
