@@ -153,7 +153,7 @@ def test_active_port_and_direct_flush_transform(second,ext):
     _row set [15,{field_state(second,ext)}];
     private _port=[_row,[_row] call ACME_fnc_ivFieldPort] call ACME_fnc_ivFieldPoint;
     private _virtual=[_row,{str(not ext).lower()}] call ACME_fnc_ivFieldAccessoryRow;
-    private _shown=[_virtual,[1033.02/2048,1386.52/2048]] call ACME_fnc_ivFinishPoint;
+    private _shown=[_virtual,[1033.02/2048,1386.52/2048],[1006.5/2048,1052/2048]] call ACME_fnc_ivFinishPoint;
     [abs ((_port select 0)-(_shown select 0))<0.00001 && {{abs ((_port select 1)-(_shown select 1))<0.00001}},"flush meets active port"] call _check;
     ''')
 
