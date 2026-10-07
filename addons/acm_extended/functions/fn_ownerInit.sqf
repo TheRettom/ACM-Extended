@@ -135,7 +135,7 @@ ACME_NA2_ownerInstalled = true;
     {
         private _list = missionNamespace getVariable [_x, []];
         missionNamespace setVariable [_x, _list - [_unit]];
-    } forEach ["ACME_nrb_activePatients", "ACME_hpmk_activePatients", "ACME_tbi_activePatients", "ACME_cs_activePatients", "ACME_autoBP_patients", "ACME_clinical_activePatients", "ACME_infusion_activePatients", "ACME_circ_activePatients", "ACME_coag_activePatients", "ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients"];
+    } forEach ["ACME_nrb_activePatients", "ACME_hpmk_activePatients", "ACME_tbi_activePatients", "ACME_cs_activePatients", "ACME_autoBP_patients", "ACME_clinical_activePatients", "ACME_infusion_activePatients", "ACME_circ_activePatients", "ACME_coag_activePatients", "ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients", "ACME_rhythmThreshold_activePatients"];
     private _drain = _unit getVariable ["ACME_thora_drainPFH", -1];
     if (_drain >= 0) then { [_drain] call CBA_fnc_removePerFrameHandler; };
     _unit setVariable ["ACME_thora_drainPFH", -1, false];
