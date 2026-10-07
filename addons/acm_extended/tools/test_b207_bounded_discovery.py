@@ -21,6 +21,8 @@ def carrier_source():
         text = text.replace('alive ' + name, f'({name} getVariable ["testAlive",true])')
     for old, new in {
         'allUnits': '(call _scanWorld)',
+        'local _x': '(_x getVariable ["testLocal",true])',
+        'alive _x': '(_x getVariable ["testAlive",true])',
         'objectParent _p': '(_p getVariable ["testVehicle",objNull])',
         'attachedTo _p': '(_p getVariable ["testAttached",objNull])',
         '_p distance2D _origin': '(_p getVariable ["testMoved",0])',
