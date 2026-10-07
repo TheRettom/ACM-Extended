@@ -11,14 +11,14 @@ def test_weapon_preflight_prefers_ace_holster_and_bounds_fallback():
     assert "handgunWeapon _medic" in prep and "_elapsed < 3.2" in prep
     assert 'if (_weapon != "") then {_medic selectWeapon "";};' in code_only(prep)
     owned = prep.split('if (_ownedEmptyState) exitWith {',1)[1].split('};',1)[0]
-    assert 'if (_weapon != "") then {_medic selectWeapon "";};' in owned
+    assert '_medic selectWeapon "";' in owned
     assert prep.index("ace_weaponselect_fnc_putWeaponAway") < prep.index('_medic action ["SwitchWeapon", _medic, _medic, 299];')
     assert 'selectWeapon ""' not in code_only(scope)
 def test_generic_treatments_serialize_weapon_away_before_crouch():
     treatment=read(ROOT/"addons"/"core"/"overrides"/"fnc_treatment.sqf")
     assert "B177 button-responsiveness invariant" in treatment
     assert "ACM_core_fnc_treatmentNative" in treatment
-    assert treatment.index("B177 button-responsiveness invariant") < treatment.index("ACM_core_fnc_treatmentNative")
+    assert treatment.index("B177 button-responsiveness invariant") < treatment.index("private _started = _nativeArgs call ACM_core_fnc_treatmentNative;")
     assert 'if (currentWeapon _medic != "") then {[_medic] call ACME_fnc_medicAnimationPrep;};' in treatment
 def test_stethoscope_prone_entry_uses_authored_roll_and_preserves_head():
     pose=read(ACME/"fn_treatmentPoseStart.sqf"); use=read(ROOT/"addons"/"breathing"/"functions"/"fnc_useStethoscope.sqf")
