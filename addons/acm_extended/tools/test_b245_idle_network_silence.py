@@ -5,6 +5,9 @@ healthy owned units to produce no periodic ACME physiology publications and keep
 full-owner discovery off the hot 4 Hz paths.
 """
 from pathlib import Path
+import re
+
+from test_menu_death_lifecycle import adapt, execute
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -83,3 +86,44 @@ def test_b201_idle_broadcaster_shapes_cannot_return():
         rows = [line for line in s.splitlines() if "setVarNetApprox" in line and not line.lstrip().startswith("//")]
         assert rows
         assert all(",0] call ACME_fnc_setVarNetApprox" in line for line in rows), (name, rows)
+
+
+
+def _healthy_vm(name):
+    s = src(name)
+    # Only adapt object/locality commands that occur before each function's healthy
+    # early exit. Any unsupported command beyond that guard would fail the VM,
+    # making accidental fall-through visible rather than silently mocked.
+    s = re.sub(r'\\bisNull _u\\b', '(_u isEqualTo objNull)', s)
+    s = re.sub(r'\\blocal _u\\b', 'true', s)
+    s = re.sub(r'\\balive _u\\b', 'true', s)
+    s = s.replace('alive (_u getVariable ["ACM_breathing_BVM_Medic", objNull])', 'false')
+    return adapt(s)
+
+
+def test_actual_healthy_idle_models_issue_zero_publication_requests():
+    definitions = "".join(
+        f"ACME_fnc_{name}={{" + _healthy_vm(name) + "}};"
+        for name in ("preoxygenationTick", "aspirationTick", "shockPhenotypeTick")
+    )
+    execute(definitions + r'''
+        private _exactRequests=0;
+        private _approxRequests=0;
+        ACME_fnc_setVarNet={_exactRequests=_exactRequests+1;};
+        ACME_fnc_setVarNetApprox={_approxRequests=_approxRequests+1;};
+        ACME_clinical_ownedUnits=[_patient];
+
+        // Explicit ordinary healthy defaults. No injury/treatment state exists.
+        _patient setVariable ["ACM_breathing_RespirationRate",16];
+        _patient setVariable ["ace_medical_spo2",97];
+        _patient setVariable ["ACM_circulation_Blood_Volume",6];
+
+        call ACME_fnc_preoxygenationTick;
+        call ACME_fnc_aspirationTick;
+        call ACME_fnc_shockPhenotypeTick;
+
+        [_exactRequests==0,"healthy idle path issued exact network publication"] call _check;
+        [_approxRequests==0,"healthy idle path issued approximate network publication"] call _check;
+        [isNil {_patient getVariable "ACME_preox_lastTick"},"healthy preoxygenation path did not exit before scheduler state"] call _check;
+        [isNil {_patient getVariable "ACME_aspiration_tickAt"},"healthy aspiration path did not exit before scheduler state"] call _check;
+    ''')
