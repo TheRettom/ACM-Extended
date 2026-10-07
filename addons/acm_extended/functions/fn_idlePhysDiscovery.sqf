@@ -131,7 +131,7 @@ private _acmHighHR = missionNamespace getVariable ["ACME_rhythmACMFatalHighHR", 
         || {(_u getVariable ["ACME_lido_serumLevel", 0]) > 0.05}
         || {(_u getVariable ["ACME_lido_seizureState", ""]) != ""}
         || {count (_u getVariable ["ACM_circulation_IV_Bags", createHashMap]) > 0};
-    if (_needsCirc) then {_circPatients pushBack _u;};
+    if (_needsCirc) then {_circPatients pushBackUnique _u;};
 
     // Coagulation missed-transition discovery. Expensive base reconstruction is
     // skipped for healthy units unless an input can actually move the lethal-triad base.
@@ -153,14 +153,14 @@ private _acmHighHR = missionNamespace getVariable ["ACME_rhythmACMFatalHighHR", 
         || {(_u getVariable ["ACME_coag_dilutionSeverity", 0]) != 0}
         || {(_u getVariable ["ACME_coag_extraMult", 1]) != 1};
     if (_baseNeeds || {_platelets < 3} || {_saline > 0} || {_plasmaVol > 0} || {_givenMl > 0} || {_hasTXA} || {_hadCoagEffect}) then {
-        _coag pushBack _u;
+        _coag pushBackUnique _u;
     };
 
     // Medicated-infusion discovery is a safety net only. Normal bag registration
     // enrolls immediately; the active worker retires after its final empty-state commit.
     if (count (_u getVariable ["ACME_infusion_BagMedications", []]) > 0
         || {_u getVariable ["ACME_infusion_HasBagMedications", false]}) then {
-        _infusion pushBack _u;
+        _infusion pushBackUnique _u;
     };
 
 
