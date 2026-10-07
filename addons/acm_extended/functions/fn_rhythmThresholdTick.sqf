@@ -30,6 +30,8 @@ private _fnc_clearLegacyNativeHold = {
     _u setVariable ["ACME_rhythmNativeClearStart", -1, false];
 };
 
+private _patients = (missionNamespace getVariable ["ACME_rhythmThreshold_activePatients", []])
+    select {!isNull _x && {alive _x} && {local _x}};
 {
     private _u = _x;
     if (isNull _u || {!alive _u} || {!local _u}) then {continue};
@@ -112,4 +114,4 @@ private _fnc_clearLegacyNativeHold = {
 
     [objNull, _u, 104, "SVT", (_hr min _acmHighHR)] call ACME_fnc_rhythmToggle;
     _u setVariable ["ACME_rhythmThresholdForced", "SVT", false];
-} forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
+} forEach _patients;
