@@ -1,5 +1,12 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B248
+
+- Disabling Cheyne–Stokes now releases its active respiratory-rate drive on the owning machine instead of leaving an obsolete override pinned.
+- Cheyne–Stokes breath audio stops when the feature is disabled, while patient enrollment is preserved for later re-enable.
+- Added toggle lifecycle tests; version remains 1.2.4.1, B248 candidate.
+
+
 ## 1.2.4.1 — B247
 
 - Cheyne–Stokes: unchanged rounded respiration rates no longer invoke the network publication helper at 10 Hz; actual RR changes still publish immediately.
