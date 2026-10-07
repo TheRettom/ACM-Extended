@@ -17,7 +17,11 @@ def weapon_contract(prep=None,seq=None):
         '[_medic] call ace_weaponselect_fnc_putWeaponAway;',
         '_medic action ["SwitchWeapon", _medic, _medic, 299];',
     ): assert contains(prep,fragment),fragment
-    assert not any(t.value=='selectWeapon' for t in lex(prep))
+    prep_tokens=lex(prep)
+    selections=[prep_tokens[i+1] for i,t in enumerate(prep_tokens[:-1]) if t.value=='selectWeapon']
+    assert len(selections)==1 and selections[0].kind=='string' and selections[0].value==''
+    owned=prep.split('if (_ownedEmptyState) exitWith {',1)[1].split('};',1)[0]
+    assert '_medic selectWeapon "";' in owned
     tokens=lex(seq)
     assert sum(t.value=='ACME_fnc_medicAnimationPrep' for t in tokens)==1
     selections=[tokens[i+1] for i,t in enumerate(tokens[:-1]) if t.value=='selectWeapon']
