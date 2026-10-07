@@ -22,6 +22,6 @@ def test_patient_readiness_and_stethoscope_lifecycle_remain_separate():
     assert '"ACME_HeadElevPatientGrab"' in acquire
     assert "ACME_chestAccessProviderReady" in acquire and "ACME_chestAccessProviderReady" in provider and "4.75" in acquire
     assert "_entryEpoch" not in use and "ACME_fnc_beginStethoscopeAction" in use
-    assert 'ACM_core_ContinuousAction_Session", [_patient, _epoch]' in begin
+    assert 'getVariable ["ACM_core_ContinuousAction_Session", []]) isEqualTo [_patient, _epoch]' in begin
     assert begin.index("_args call _onStart;") < begin.index('call ACME_fnc_treatmentPoseStart;')
     assert "class ACME_ChestSealWorkspace:" in config
