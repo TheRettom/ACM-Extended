@@ -178,8 +178,11 @@ def test_provider_gesture_receives_patient_for_ambulatory_selection():
     assert '[_m, _mode, _window, _patient] call ACME_fnc_treatmentGesture;' in s
 
 
-def test_one_engine_holster_request_is_retained_across_repeated_controllers():
+def test_one_engine_holster_request_is_retained_across_repeated_controllers(*args):
     """Historical identity retained against the current one-shot holster helper."""
+    if args:
+        test_one_engine_holster_request_is_retained(*args)
+        return
     for weapon, delay in (("pistol", .95), ("rifle", .70), ("launcher", .70)):
         for ace in (True, False):
             test_one_engine_holster_request_is_retained(weapon, delay, ace)
