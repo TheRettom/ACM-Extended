@@ -394,7 +394,21 @@ private _animLock = _patient getVariable ["ACME_patientAnimLock", []];
 if ((_animLock isEqualType []) && {count _animLock >= 5}) then {
     private _expires = _animLock param [4, -1];
     if !(_expires isEqualType 0 && {finite _expires} && {_expires > _netNow}) then {
-        _patient setVariable ["ACME_patientAnimLock", [], true];
+        // B250: never erase an expired animation lease without releasing its owner-scoped
+        // speed and collision state. The helper is token-checked and cannot retire a
+        // newer animation that replaced this snapshot.
+        private _token = _animLock param [0, "", [""]];
+        if (_token != "") then {
+            [_patient, _token, false] call ACME_fnc_patientAnimRelease;
+        } else {
+            _patient setVariable ["ACME_patientAnimLock", [], true];
+        };
+        // A malformed/legacy record can have an unrelated orphan speed token.
+        // Retire it only if no newer animation lease is present.
+        private _speedToken = _patient getVariable ["ACME_patientAnimSpeedToken", ""];
+        if (_speedToken != "" && {(_patient getVariable ["ACME_patientAnimLock", []]) isEqualTo []}) then {
+            [_patient, _speedToken, false] call ACME_fnc_patientAnimRelease;
+        };
         "Patient animation lease" call _mark;
     };
 };
