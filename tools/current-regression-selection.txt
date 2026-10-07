@@ -126,3 +126,6 @@ addons/acm_extended/tools/test_b64_syringe_tag_carousel_refinement.py
 addons/acm_extended/tools/test_b169_menu_renderer_owner.py
 
 addons/acm_extended/tools/test_b199_physical_dressing_invariant_20260928.py
+
+# B243 IV usability and historical collection repairs.
+addons/acm_extended/tools/test_b243_iv_usability.py
