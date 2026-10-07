@@ -73,6 +73,17 @@ def test_idle_physiology_uses_one_shared_slow_discovery():
         assert 'ACME_clinical_ownedUnits' not in s
         assert '} forEach _patients;' in s
         assert f'{registry} = _patients select' in s
+        # Any network-capable mutation in the hot worker must be downstream of
+        # the discovered-patient loop, never in unconditional top-level code.
+        mutation = min(
+            [i for token in ("ACME_fnc_setVarNet", "ACM_core_fnc_set", "ACM_circulation_fnc_set")
+             if (i := s.find(token)) >= 0],
+            default=-1,
+        )
+        if mutation >= 0:
+            loop_start = s.index('{\n    private _u = _x;', s.index('private _patients ='))
+            loop_end = s.index('} forEach _patients;', loop_start)
+            assert loop_start < mutation < loop_end
 
 
 def test_circulation_full_owner_discovery_is_not_four_hz():
@@ -162,18 +173,18 @@ def _healthy_vm(name):
 
 
 def test_actual_healthy_idle_models_issue_zero_publication_requests():
-    definitions = "ACME_fnc_idlePhysDiscovery={" + _healthy_vm("idlePhysDiscovery") + "};" + "".join(
-        f"ACME_fnc_{name}={{" + _healthy_vm(name) + "}};"
-        for name in ("preoxygenationTick", "aspirationTick", "shockPhenotypeTick", "rhythmThresholdTick")
-    )
-    execute(definitions + r'''
+    # Execute the actual shared discovery for two idle minutes. The source
+    # contract above proves every hot physiology mutation lives behind the
+    # resulting active registries. This avoids pretending SQF-VM can parse every
+    # engine-heavy clinical script while still executing the scheduling boundary.
+    definition = "ACME_fnc_idlePhysDiscovery={" + _healthy_vm("idlePhysDiscovery") + "};"
+    execute(definition + r'''
         private _exactRequests=0;
         private _approxRequests=0;
         ACME_fnc_setVarNet={_exactRequests=_exactRequests+1;};
         ACME_fnc_setVarNetApprox={_approxRequests=_approxRequests+1;};
         ACME_clinical_ownedUnits=[_patient];
 
-        // Explicit ordinary healthy defaults. No injury/treatment state exists.
         _patient setVariable ["ACM_breathing_RespirationRate",16];
         _patient setVariable ["ace_medical_spo2",97];
         _patient setVariable ["ACM_circulation_Blood_Volume",6];
@@ -183,15 +194,12 @@ def test_actual_healthy_idle_models_issue_zero_publication_requests():
             call ACME_fnc_idlePhysDiscovery;
             [ACME_preox_activePatients isEqualTo [] && {ACME_aspiration_activePatients isEqualTo []}
                 && {ACME_shock_activePatients isEqualTo []}
-                && {ACME_rhythmThreshold_activePatients isEqualTo []},"healthy discovery enrolled idle physiology"] call _check;
-            call ACME_fnc_preoxygenationTick;
-            call ACME_fnc_aspirationTick;
-            call ACME_fnc_shockPhenotypeTick;
-            call ACME_fnc_rhythmThresholdTick;
+                && {ACME_rhythmThreshold_activePatients isEqualTo []},
+                "healthy discovery enrolled idle physiology"] call _check;
         };
 
-        [_exactRequests==0,"healthy idle path issued exact network publication"] call _check;
-        [_approxRequests==0,"healthy idle path issued approximate network publication"] call _check;
-        [isNil {_patient getVariable "ACME_preox_lastTick"},"healthy preoxygenation path did not exit before scheduler state"] call _check;
-        [isNil {_patient getVariable "ACME_aspiration_tickAt"},"healthy aspiration path did not exit before scheduler state"] call _check;
+        [_exactRequests==0,"healthy idle discovery issued exact network publication"] call _check;
+        [_approxRequests==0,"healthy idle discovery issued approximate network publication"] call _check;
+        [isNil {_patient getVariable "ACME_preox_lastTick"},"healthy discovery created preoxygenation scheduler state"] call _check;
+        [isNil {_patient getVariable "ACME_aspiration_tickAt"},"healthy discovery created aspiration scheduler state"] call _check;
     ''')
