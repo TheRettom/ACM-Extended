@@ -77,7 +77,7 @@ if (count _active>=3 && {count _p>=9}) then {
                 if ((_ctrl getVariable ["ACME_IV_FinishTexture","-"])!=_texture) then {
                     _ctrl ctrlSetText _texture;_ctrl setVariable ["ACME_IV_FinishTexture",_texture];
                 };
-                [_ctrl,_row] call ACME_fnc_ivFinishPose;
+                if (_ctrl isEqualTo _accessory) then {[_ctrl,_row,1052/2048] call ACME_fnc_ivFinishPose;} else {[_ctrl,_row] call ACME_fnc_ivFinishPose;};
                 _ctrl ctrlShow (_texture!="");
             };
         } forEach [[_accessory,_tex],[_dressing,_film]];
