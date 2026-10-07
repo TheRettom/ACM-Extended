@@ -22,7 +22,7 @@ def test_123_release_identity_and_hemtt_version():
     _assert_current_build()
     assert 'ACME_debugRevision = "";' in startup
     script = raw(ADDONS / "main" / "script_version.hpp")
-    for line in ("#define MAJOR 1", "#define MINOR 2", "#define PATCH 4", "#define BUILD 0"):
+    for line in ("#define MAJOR 1", "#define MINOR 2", "#define PATCH 4", "#define BUILD 1"):
         assert line in script
 
 
@@ -62,9 +62,10 @@ def test_chest_preparation_range_loss_is_terminal_and_launch_revalidates():
     treatment = raw(ADDONS / "core" / "overrides" / "fnc_treatment.sqf")
     assert 'private _invalid = (_m getVariable ["ACME_chestAccessPreflightCancel", false])' in treatment
     assert '_m setVariable ["ACME_chestAccessPreflightCancel", true, false];' in treatment
-    assert 'private _stillTreatable = _args call ace_medical_treatment_fnc_canTreat;' in treatment
-    assert 'private _stillInteractive = [_m, _p, ["isNotInside", "isNotSwimming", "isNotInZeus"]] call ace_common_fnc_canInteractWith;' in treatment
-    assert '(_m distance _p) > ace_medical_gui_maxDistance' in treatment
+    assert 'private _stillTreatable = _args call ace_medical_treatment_fnc_canTreatCached;' in treatment
+    assert 'private _stillInteractive = [_m, _p, [["isNotInside","isNotSwimming","isNotInZeus"],["isNotSwimming","isNotInZeus"]]' in treatment
+    assert 'call ACME_fnc_patientInteractionDistance' in treatment
+    assert 'objectParent _m isNotEqualTo objectParent _p' in treatment
 
 
 def test_provider_pose_is_retired_locally_before_native_intervention_launch():
