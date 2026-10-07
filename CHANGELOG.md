@@ -1,5 +1,12 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B251
+
+- Delayed treatment-pose exits now capture and verify the provider's locality generation. The 0.12 s crouch correction, subsequent timed stance release, and both 0.35 s / 4.25 s handoff callbacks cannot change a provider after an away/back locality transition, even when the old treatment-pose epoch is unchanged.
+- Active, matching-owner callbacks retain their existing movement timing and cleanup behavior.
+- Added executed SQF-VM regression coverage for stale and valid callbacks. Public version stays 1.2.4.1; runtime marker B251 / NA8-B251-1.2.4.1-candidate.
+
+
 ## 1.2.4.1 — B250
 
 - Expired patient-animation leases now use the token-checked owner-authoritative release helper instead of directly deleting only the lock. This restores animation speed and collision state when the patient owner reconciles a missed expiry.

@@ -32,6 +32,9 @@ private _enteredProne = (_state param [20, false]) || {stance _medic == "PRONE"}
 private _exitUpright = _upright && {((toLowerANSI _main) find "ainvperc") == 0};
 if (_mode != "" && {_mode != _currentMode}) exitWith {};
 if (_epoch >= 0 && {_epoch != _currentEpoch}) exitWith {};
+// B251: a treatment-pose epoch alone cannot distinguish an away/back locality
+// round trip. Delayed exit and handoff callbacks must also match this owner generation.
+private _localityEpoch = _medic getVariable ["ACME_providerLocalityEpoch", 0];
 
 _medic setVariable ["ACME_treatmentPoseState", []];
 if (local _medic && {(_medic getVariable ["ACME_treatmentPoseEpisode", []]) isEqualTo [_currentEpoch, true]}) then {
@@ -97,8 +100,9 @@ if (!_handoff
         // the engine actually put us back on our feet do we request the normal stand-to-crouch transition. This is
         // a one-shot correction, not an animation watchdog/restart loop.
         [{
-            params ["_unit", "_endedEpoch"];
+            params ["_unit", "_endedEpoch", "_localityEpoch"];
             if (isNull _unit || {!local _unit} || {!alive _unit} || {_unit getVariable ["ACE_isUnconscious", false]}) exitWith {};
+            if ((_unit getVariable ["ACME_providerLocalityEpoch", 0]) != _localityEpoch) exitWith {};
             if ((_unit getVariable ["ACME_treatmentPoseState", []]) isNotEqualTo []) exitWith {};
             if ((_unit getVariable ["ACME_treatmentPoseEpoch", 0]) != _endedEpoch) exitWith {};
             if (!isNull objectParent _unit) exitWith {};
@@ -111,16 +115,17 @@ if (!_handoff
             // MIDDLE is only an animation-entry guard. Release it after the one-shot crouch handoff so the provider
             // remains visually crouched but is never stance-locked once the treatment theatre is finished.
             [{
-                params ["_u", "_ep"];
+                params ["_u", "_ep", "_localityEpoch"];
                 if (isNull _u || {!local _u} || {!alive _u} || {!isNull objectParent _u}) exitWith {};
+                if ((_u getVariable ["ACME_providerLocalityEpoch", 0]) != _localityEpoch) exitWith {};
                 if ((_u getVariable ["ACME_treatmentPoseState", []]) isNotEqualTo []) exitWith {};
                 if ((_u getVariable ["ACME_treatmentPoseEpoch", 0]) != _ep) exitWith {};
                 // A different controller may have acquired the provider after this treatment ended without touching
                 // treatmentPoseEpoch. Never let the old delayed stance release break that newer pose.
                 if ([_u] call ACME_fnc_providerStanceOwned) exitWith {};
                 _u setUnitPos "AUTO";
-            }, [_unit, _endedEpoch], 0.85 / (call ACME_fnc_choreographyRate)] call CBA_fnc_waitAndExecute;
-        }, [_medic, _currentEpoch], 0.12] call CBA_fnc_waitAndExecute;
+            }, [_unit, _endedEpoch, _localityEpoch], 0.85 / (call ACME_fnc_choreographyRate)] call CBA_fnc_waitAndExecute;
+        }, [_medic, _currentEpoch, _localityEpoch], 0.12] call CBA_fnc_waitAndExecute;
     };
 };
 
@@ -130,18 +135,19 @@ if (!_handoff
 // handoff from breaking a newer pose.
 if (_handoff && {local _medic} && {alive _medic}) then {
     private _releaseIfFree = {
-        params ["_u","_endedEpoch"];
+        params ["_u","_endedEpoch","_localityEpoch"];
         if (isNull _u || {!local _u} || {!alive _u} || {!isNull objectParent _u}) exitWith {};
+        if ((_u getVariable ["ACME_providerLocalityEpoch", 0]) != _localityEpoch) exitWith {};
         if ((_u getVariable ["ACME_treatmentPoseEpoch",0]) != _endedEpoch) exitWith {};
         if ([_u] call ACME_fnc_providerStanceOwned) exitWith {};
         _u setUnitPos "AUTO";
     };
     [{
-        params ["_u","_endedEpoch","_fn"];
-        [_u,_endedEpoch] call _fn;
-    }, [_medic,_currentEpoch,_releaseIfFree], 0.35] call CBA_fnc_waitAndExecute;
+        params ["_u","_endedEpoch","_localityEpoch","_fn"];
+        [_u,_endedEpoch,_localityEpoch] call _fn;
+    }, [_medic,_currentEpoch,_localityEpoch,_releaseIfFree], 0.35] call CBA_fnc_waitAndExecute;
     [{
-        params ["_u","_endedEpoch","_fn"];
-        [_u,_endedEpoch] call _fn;
-    }, [_medic,_currentEpoch,_releaseIfFree], 4.25] call CBA_fnc_waitAndExecute;
+        params ["_u","_endedEpoch","_localityEpoch","_fn"];
+        [_u,_endedEpoch,_localityEpoch] call _fn;
+    }, [_medic,_currentEpoch,_localityEpoch,_releaseIfFree], 4.25] call CBA_fnc_waitAndExecute;
 };
