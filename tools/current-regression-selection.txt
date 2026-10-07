@@ -134,6 +134,8 @@ tools/test_fork_phase149_sidearm_steth_entry.py
 tools/test_fork_phase150_flip_cancel.py
 tools/test_fork_phase151_junctional_chest_workspace.py
 tools/test_fork_phase160_chest_animation_rollback.py
+tools/test_fork_phase163_acm_continuous_dialog_lifecycle.py
+tools/test_fork_phase166_chest_wait_payload_regressions.py
 tools/test_self_audit_20260922.py
 addons/acm_extended/tools/test_123_player_facing_hotfix.py
 addons/acm_extended/tools/test_na8_5_batch2.py
