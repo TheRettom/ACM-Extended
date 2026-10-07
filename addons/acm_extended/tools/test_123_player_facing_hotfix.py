@@ -51,6 +51,7 @@ def test_carousel_hover_never_repaints_or_promotes_opacity():
     hover = acme("functions/fn_skCarouselHover.sqf")
     render = acme("functions/fn_skCarouselRender.sqf")
     tick = acme("functions/fn_skUiTick.sqf")
+    action = acme("functions/fn_skBodyActionRender.sqf")
     assert "ACME_fnc_skCarouselRender" not in hover
     assert "_hoverOffset" not in render
     assert "then {_alpha = 1;}" not in render
@@ -58,7 +59,7 @@ def test_carousel_hover_never_repaints_or_promotes_opacity():
     assert '|| {!isNull _actionFocus && {(ctrlIDC _actionFocus) == 84831}};' in tick
     assert 'ACME_SK_NextBodyAction' in tick
     assert 'call ACME_fnc_skBodyActionRender;' in render
-    assert 'if (!_durFocused || {_durationFor == ""}) then {' in render
+    assert 'if (!_durFocused || {_durationFor == ""}) then {' in action
     assert 'ACME_SK_PushDurationDrafts' in action
 
 
@@ -204,3 +205,8 @@ def test_direct_cpr_waits_for_owner_acknowledged_semifowler_lower_and_never_resu
     assert '_patient setVariable ["ACME_chestAccess_vestLoadout", +_headSupportSaved, true];' in stop
     assert '_patient setVariable ["ACME_chestAccess_vestProp", _headSupportProp, true];' in stop
     assert '_patient setVariable ["ACME_headElev_vestRemoved", false, true];' in stop
+
+
+def test_direct_cpr_waits_for_single_semifowler_lower_and_never_resumes_it():
+    """Historical identity retained for the owner-acknowledged Semi-Fowler lower."""
+    test_direct_cpr_waits_for_owner_acknowledged_semifowler_lower_and_never_resumes_it()
