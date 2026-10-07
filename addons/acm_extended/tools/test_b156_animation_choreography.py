@@ -209,6 +209,9 @@ def test_carrier_return_rejected_lease_does_not_change_foreign_presentation():
         _patient setVariable ["ACME_patientAnimLock",[]]; _leaseAllowed=true;
         private _retry=_waits deleteAt 0;
         [_retry] call _deliver;
+        [count _animRequests==1 && {count _waits==1},"lease retry did not defer exact restore generation"] call _check;
+        private _resume=_waits deleteAt 0;
+        [_resume] call _deliver;
         [count _animRequests==2 && {count _waits==3},"carrier restore did not resume exact owned transaction"] call _check;
     ''')
 
@@ -282,18 +285,25 @@ def test_old_native_completion_cannot_clear_new_action_or_frozen_pose():
         0 call _rateTick;
         [_testAnimationSpeed==1.5 && {(_medic getVariable ["ACME_nativeTreatmentRate",[]]) isEqualTo _new},"old completion reset new native action"] call _check;
         call _complete;
-        _medic setVariable ["ACME_treatmentPoseEpoch",9]; _testAnimationSpeed=0;
+        _medic setVariable ["ACME_treatmentPoseEpoch",9];
+        _medic setVariable ["ACME_treatmentPoseState",[9,"pulse","ACME_StethoscopeWork",2]];
+        _testAnimationSpeed=0;
         1 call _rateTick;
-        [_testAnimationSpeed==0,"native completion thawed newer frozen pose"] call _check;
+        [_testAnimationSpeed==0 && {(_medic getVariable ["ACME_treatmentPoseState",[]]) isNotEqualTo []},"native completion thawed newer frozen pose"] call _check;
     ''')
 
 
 def test_preflight_abort_and_native_rejection_release_only_their_own_rate():
+    # B177 removed the generic async preflight. Native treatment begins on the
+    # click frame; its exact completion/rejection owns the finite rate lease.
     execute(native_bridge_setup()+r'''
         [_medic,_patient,"LeftArm","FieldDressing"] call ace_medical_treatment_fnc_treatment;
-        [_testAnimationSpeed==1.5,"ordinary holster/preparation was not accelerated"] call _check;
-        0 call _timeout;
-        [_testAnimationSpeed==1 && {!(_medic getVariable ["ACME_treatmentPreflightActive",true])},"preflight timeout left rate or reservation"] call _check;
+        [_testAnimationSpeed==1.5 && {count _nativeCalls==1},"ordinary treatment did not start immediately at choreography rate"] call _check;
+        [count _timers==0 && {!(_medic getVariable ["ACME_treatmentPreflightActive",false])},"retired generic preflight was reintroduced"] call _check;
+        call _complete;
+        [count _rateWaits==1,"completion did not schedule exact rate release"] call _check;
+        0 call _rateTick;
+        [_testAnimationSpeed==1 && {(_medic getVariable ["ACME_nativeTreatmentRate",[]]) isEqualTo []},"completion left rate or reservation"] call _check;
         _animNowFixture="ACM_GenericContinuous"; _weaponNow=""; _stanceNow="CROUCH"; _nativeAccepted=false;
         [_medic,_patient,"LeftArm","FieldDressing"] call ace_medical_treatment_fnc_treatment;
         [_testAnimationSpeed==1 && {(_medic getVariable ["ACME_nativeTreatmentRate",[]]) isEqualTo []},"rejected treatment retained accelerated rate"] call _check;
