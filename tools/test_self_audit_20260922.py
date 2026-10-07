@@ -102,6 +102,8 @@ REVIEWED_CURRENT_COVERAGE = {
     'addons/gui/overrides/fnc_updateActions.sqf': ['addons/acm_extended/tools/test_b37_menu_state.py'],
     'tools/test_fork_phase161_medical_ui_performance.py': ['addons/acm_extended/tools/test_b37_menu_state.py'],
     'tools/test_fork_phase162_wake_state_reconciliation.py': ['addons/acm_extended/tools/test_b224_polish_wake.py'],
+    'tools/test_fork_phase163_acm_continuous_dialog_lifecycle.py': ['tools/test_fork_phase163_acm_continuous_dialog_lifecycle.py'],
+    'tools/test_fork_phase166_chest_wait_payload_regressions.py': ['tools/test_fork_phase166_chest_wait_payload_regressions.py'],
     'tools/test_fork_phase165_airway_seizure_regressions.py': ['addons/acm_extended/tools/test_b206_seizure_gesture_locality_execution.py'],
     'tools/test_fork_phase167_chest_minigame_animation_contract.py': ['addons/acm_extended/tools/test_b213_chest_exit.py'],
     'tools/test_fork_phase168_supine_patient_invariant.py': ['tools/test_fork_phase168_supine_patient_invariant.py'],
