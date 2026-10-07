@@ -53,7 +53,7 @@ private _pfh = [{
     private _mode = _u getVariable ["ACME_bs_mode", ""];
     if (_mode == "") exitWith { call _kill };
     if (_mode == "biot" && {CBA_missionTime > (_u getVariable ["ACME_bs_spo2ArmAt", 0])} && {(_u getVariable ["ace_medical_spo2", 97]) >= (missionNamespace getVariable ["ACME_bs_spo2End", 80])}) exitWith { call _kill };
-    if (_mode == "cheyne" && {!(_u getVariable ["ACME_cs_active", false])}) exitWith { call _kill };
+    if (_mode == "cheyne" && {!(_u getVariable ["ACME_cs_active", false]) || {!(missionNamespace getVariable ["ACME_sys_cheyneStokes", true])}}) exitWith { call _kill };
 
     private _now = CBA_missionTime;
     // active ventilation: hold the pattern in place. it resumes by itself once the squeezes stop, whether the BVM is
