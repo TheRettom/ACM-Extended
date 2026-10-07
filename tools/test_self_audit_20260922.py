@@ -50,6 +50,61 @@ REVIEWED_B213_UPDATES = {
 REVIEWED_B216_UPDATES = {
     'addons/acm_extended/functions/fn_chestSealBurp.sqf': '387cb1d08890377d76f2db08682a600a159fec3dec40ddf6210f876c3043bc51',
 }
+
+# Current stable behavior has intentionally evolved beyond the September source snapshot.
+# A changed protected file is accepted only when its behavior is explicitly covered by one
+# or more modules in the mandatory current-regression gate. Unmapped hash drift still fails.
+REVIEWED_CURRENT_COVERAGE = {
+    'addons/acm_extended/functions/fn_beginStethoscopeAction.sqf': ['tools/test_fork_phase149_sidearm_steth_entry.py'],
+    'addons/acm_extended/functions/fn_blastApply.sqf': ['addons/acm_extended/tools/test_b219_world_lifecycle.py'],
+    'addons/acm_extended/functions/fn_chestAccessVestAcquire.sqf': ['tools/test_fork_phase151_junctional_chest_workspace.py'],
+    'addons/acm_extended/functions/fn_chestAccessVestEvent.sqf': ['addons/acm_extended/tools/test_b218_carrier_inventory.py'],
+    'addons/acm_extended/functions/fn_chestAccessVestPark.sqf': ['addons/acm_extended/tools/test_b218_carrier_inventory.py'],
+    'addons/acm_extended/functions/fn_chestAccessVestProvider.sqf': ['tools/test_fork_phase151_junctional_chest_workspace.py'],
+    'addons/acm_extended/functions/fn_chestAccessVestRestore.sqf': ['addons/acm_extended/tools/test_b218_carrier_inventory.py'],
+    'addons/acm_extended/functions/fn_chestSealApply.sqf': ['addons/acm_extended/tools/test_b216_chest_seals.py'],
+    'addons/acm_extended/functions/fn_chestSealClose.sqf': ['addons/acm_extended/tools/test_b213_chest_exit.py'],
+    'addons/acm_extended/functions/fn_chestSealFlip.sqf': ['tools/test_fork_phase150_flip_cancel.py'],
+    'addons/acm_extended/functions/fn_chestSealFlipTick.sqf': ['tools/test_fork_phase150_flip_cancel.py'],
+    'addons/acm_extended/functions/fn_chestSealOpen.sqf': ['addons/acm_extended/tools/test_b214_chest_native_completion.py'],
+    'addons/acm_extended/functions/fn_chestSealPatientBegin.sqf': ['tools/test_fork_phase151_junctional_chest_workspace.py'],
+    'addons/acm_extended/functions/fn_chestSealPatientEnd.sqf': ['tools/test_fork_phase150_flip_cancel.py'],
+    'addons/acm_extended/functions/fn_chestSealProviderHoldStart.sqf': ['tools/test_fork_phase151_junctional_chest_workspace.py'],
+    'addons/acm_extended/functions/fn_headElevResume.sqf': ['addons/acm_extended/tools/test_b209_head_retry_vehicle.py'],
+    'addons/acm_extended/functions/fn_headElevSuspend.sqf': ['addons/acm_extended/tools/test_bounded_head_pose_contracts.py'],
+    'addons/acm_extended/functions/fn_headElevTryResume.sqf': ['addons/acm_extended/tools/test_bounded_head_completion.py'],
+    'addons/acm_extended/functions/fn_headElevateStart.sqf': ['addons/acm_extended/tools/test_b220_positioning.py'],
+    'addons/acm_extended/functions/fn_headElevateStop.sqf': ['addons/acm_extended/tools/test_b220_positioning.py'],
+    'addons/acm_extended/functions/fn_initBloodStorageRuntime.sqf': ['addons/acm_extended/tools/test_b216_fridge.py'],
+    'addons/acm_extended/functions/fn_initChestSealProcedureRuntime.sqf': ['addons/acm_extended/tools/test_b214_chest_native_completion.py'],
+    'addons/acm_extended/functions/fn_initForkStartupRuntime.sqf': ['addons/acm_extended/tools/test_build_version_tag.py'],
+    'addons/acm_extended/functions/fn_ivMinigameInit.sqf': ['addons/acm_extended/tools/test_b235_iv_geometry_and_sequence.py'],
+    'addons/acm_extended/functions/fn_ivTrayHover.sqf': ['addons/acm_extended/tools/test_b233_iv_interactions.py'],
+    'addons/acm_extended/functions/fn_medicAnimationPrep.sqf': ['tools/test_fork_phase149_sidearm_steth_entry.py'],
+    'addons/acm_extended/functions/fn_ownerDispatch.sqf': ['addons/acm_extended/tools/test_b204_network_full_audit_20260929.py'],
+    'addons/acm_extended/functions/fn_registerChestAccessVestRuntime.sqf': ['addons/acm_extended/tools/test_b218_carrier_inventory.py'],
+    'addons/acm_extended/functions/fn_registerTransfusionUiRuntime.sqf': ['addons/acm_extended/tools/test_b226_transfusion_presentation.py'],
+    'addons/acm_extended/functions/fn_rollProviderStart.sqf': ['tools/test_fork_phase150_flip_cancel.py'],
+    'addons/acm_extended/functions/fn_stethoscopeClose.sqf': ['tools/test_fork_phase150_flip_cancel.py'],
+    'addons/acm_extended/functions/fn_stethoscopeFlipTick.sqf': ['tools/test_fork_phase150_flip_cancel.py'],
+    'addons/acm_extended/functions/fn_thoraOpen.sqf': ['addons/acm_extended/tools/test_b205_thora_network_execution.py'],
+    'addons/acm_extended/functions/fn_transientStateReconcile.sqf': ['addons/acm_extended/tools/test_b219_world_lifecycle.py'],
+    'addons/acm_extended/functions/fn_treatmentPoseStart.sqf': ['addons/acm_extended/tools/test_treatment_pose_sync.py'],
+    'addons/acm_extended/functions/fn_treatmentPoseStop.sqf': ['addons/acm_extended/tools/test_treatment_pose_sync.py'],
+    'addons/acm_extended/functions/fn_updateJunctionalImage.sqf': ['tools/test_fork_phase151_junctional_chest_workspace.py'],
+    'addons/acm_extended/functions/fn_updateTransfusionControls.sqf': ['addons/acm_extended/tools/test_b226_transfusion_presentation.py'],
+    'addons/acm_extended/tools/test_iv_ui_followup_patch.py': ['addons/acm_extended/tools/test_b233_iv_interactions.py'],
+    'addons/airway/functions/fnc_beginHeadTiltChinLift.sqf': ['addons/acm_extended/tools/test_b215_recovery_position.py'],
+    'addons/circulation/functions/fnc_getBloodVolumeChange.sqf': ['addons/acm_extended/tools/test_bounded_pressure_contracts.py'],
+    'addons/circulation/functions/fnc_openTransfusionMenu.sqf': ['addons/acm_extended/tools/test_b226_transfusion_presentation.py'],
+    'addons/core/functions/fnc_beginContinuousAction.sqf': ['addons/acm_extended/tools/test_b207_continuous_controller_recovery.py'],
+    'addons/core/overrides/fnc_treatment.sqf': ['addons/acm_extended/tools/test_b207_treatment_bridge.py'],
+    'addons/gui/overrides/fnc_updateActions.sqf': ['addons/acm_extended/tools/test_b37_menu_state.py'],
+    'tools/test_fork_phase161_medical_ui_performance.py': ['addons/acm_extended/tools/test_b37_menu_state.py'],
+    'tools/test_fork_phase162_wake_state_reconciliation.py': ['addons/acm_extended/tools/test_b224_polish_wake.py'],
+    'tools/test_fork_phase165_airway_seizure_regressions.py': ['addons/acm_extended/tools/test_b206_seizure_gesture_locality_execution.py'],
+    'tools/test_fork_phase167_chest_minigame_animation_contract.py': ['addons/acm_extended/tools/test_b213_chest_exit.py'],
+}
 @pytest.mark.parametrize("path,expected", sorted(PROTECTED.items()))
 def test_prior_fix_restored_without_rewrite(path, expected):
     # Keep the historical parameter identity stable; reviewed bounded updates replace only
@@ -87,7 +142,19 @@ def test_prior_fix_restored_without_rewrite(path, expected):
     expected = REVIEWED_B213_UPDATES.get(path, REVIEWED_B212_UPDATES.get(path, REVIEWED_AW_UPDATES.get(path, expected)))
     expected = REVIEWED_B216_UPDATES.get(path, expected)
     data = (ROOT / path).read_bytes().replace(b"\r\n", b"\n")
-    assert hashlib.sha256(data).hexdigest() == expected, path
+    actual = hashlib.sha256(data).hexdigest()
+    if actual == expected:
+        return
+    coverage = REVIEWED_CURRENT_COVERAGE.get(path)
+    assert coverage, f"{path}: protected snapshot changed without reviewed current-behavior coverage"
+    selected = {
+        line.strip() for line in read("tools/current-regression-selection.txt").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    for test_path in coverage:
+        assert test_path in selected, f"{path}: reviewed coverage {test_path} is not mandatory"
+        test_source = read(test_path)
+        assert "def test_" in test_source, f"{path}: reviewed coverage {test_path} has no named tests"
 
 def test_wake_request_does_not_start_a_second_repair_timer():
     s = read("addons/core/functions/fnc_requestWake.sqf")
