@@ -1,5 +1,13 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B250
+
+- Expired patient-animation leases now use the token-checked owner-authoritative release helper instead of directly deleting only the lock. This restores animation speed and collision state when the patient owner reconciles a missed expiry.
+- Orphan speed tokens from malformed legacy leases are released only when no newer animation lease exists; natural expiry remains non-retiring.
+- Added SQF-VM and source regressions for expired, active, and malformed lease cleanup. Public version remains 1.2.4.1; candidate build B250.
+
+
+
 ## 1.2.4.1 — B249
 
 - Explicitly release the patient breathing-sound per-frame handler on both locality-transition edges, preventing stale machine-local handles after dedicated-server/HC ownership changes.
