@@ -41,40 +41,44 @@ private _patients = ACME_circ_activePatients + ACME_tbi_activePatients + (missio
     if (!isNull _x && {alive _x} && {local _x}) then {_patients pushBackUnique _x};
 } forEach (ACME_infusion_activePatients select {!isNull _x});
 
-// keep acidosis and PaCO2 ticking even when the casualty falls out of an ACME active array. cardiac arrest,
-// unconscious airway failure, severe hypoventilation, existing acidosis, TBI, active iv fluids and saline
-// reservoir changes all need a continuous physiology tick.
-{
-    private _u = _x;
-    if (isNull _u || {!alive _u} || {!local _u}) then { continue };
+// keep acidosis and PaCO2 ticking even when the casualty falls out of an ACME active array. Discovery across
+// every owned unit is a slow safety net only; active patients still run at the 0.25 s clinical cadence. B245
+// prevents hundreds of healthy AI from being re-evaluated four times per second on a dedicated server.
+private _discoveryNext = missionNamespace getVariable ["ACME_circDiscoveryNextAt", -1];
+if (_discoveryNext < 0 || {CBA_missionTime >= _discoveryNext}) then {
+    missionNamespace setVariable ["ACME_circDiscoveryNextAt", CBA_missionTime + 1];
+    {
+        private _u = _x;
+        if (isNull _u || {!alive _u} || {!local _u}) then { continue };
 
-    private _circState = _u getVariable ["ACME_circ_State", createHashMap];
-    private _arrest = _u getVariable ["ace_medical_inCardiacArrest", false];
-    private _uncon = _u getVariable ["ACE_isUnconscious", false];
-    private _rr = _u getVariable ["ACM_breathing_RespirationRate", 18];
-    private _rrTarget = _u getVariable ["ACM_core_TargetVitals_RespirationRate", 16];
-    if (_rrTarget <= 6) then { _rrTarget = 16 };
+        private _circState = _u getVariable ["ACME_circ_State", createHashMap];
+        private _arrest = _u getVariable ["ace_medical_inCardiacArrest", false];
+        private _uncon = _u getVariable ["ACE_isUnconscious", false];
+        private _rr = _u getVariable ["ACM_breathing_RespirationRate", 18];
+        private _rrTarget = _u getVariable ["ACM_core_TargetVitals_RespirationRate", 16];
+        if (_rrTarget <= 6) then { _rrTarget = 16 };
 
-    private _needsAcidTick =
-        _arrest ||
-        {_u getVariable ["ACME_vent_connected", false]} ||
-        {_u getVariable ["ACME_ETT_Inserted", false]} ||
-        {_u getVariable ["ACME_nrb_on", false]} ||
-        {(_u getVariable ["ACME_blastLung_State", 0]) > 0} ||
-        {count (_u getVariable ["ace_medical_medications", []]) > 0} ||
-        {count (_u getVariable ["ACME_yFlushJobs", createHashMap]) > 0} ||
-        {_uncon} ||
-        {[_circState] call _circStateNeedsTick} ||
-        {_u getVariable ["ACME_tbi_HasTBI", false]} ||
-        {_rr < (_rrTarget * 0.85)} ||
-        {(_u getVariable ["ACME_circ_salineGivenMl", 0]) > 0} ||
-        {(_u getVariable ["ACM_circulation_Saline_Volume", 0]) > 0} ||
-        {(_u getVariable ["ACME_lido_serumLevel", 0]) > 0.05} ||
-        {(_u getVariable ["ACME_lido_seizureState", ""]) != ""} ||
-        {count (_u getVariable ["ACM_circulation_IV_Bags", createHashMap]) > 0};
+        private _needsAcidTick =
+            _arrest ||
+            {_u getVariable ["ACME_vent_connected", false]} ||
+            {_u getVariable ["ACME_ETT_Inserted", false]} ||
+            {_u getVariable ["ACME_nrb_on", false]} ||
+            {(_u getVariable ["ACME_blastLung_State", 0]) > 0} ||
+            {count (_u getVariable ["ace_medical_medications", []]) > 0} ||
+            {count (_u getVariable ["ACME_yFlushJobs", createHashMap]) > 0} ||
+            {_uncon} ||
+            {[_circState] call _circStateNeedsTick} ||
+            {_u getVariable ["ACME_tbi_HasTBI", false]} ||
+            {_rr < (_rrTarget * 0.85)} ||
+            {(_u getVariable ["ACME_circ_salineGivenMl", 0]) > 0} ||
+            {(_u getVariable ["ACM_circulation_Saline_Volume", 0]) > 0} ||
+            {(_u getVariable ["ACME_lido_serumLevel", 0]) > 0.05} ||
+            {(_u getVariable ["ACME_lido_seizureState", ""]) != ""} ||
+            {count (_u getVariable ["ACM_circulation_IV_Bags", createHashMap]) > 0};
 
-    if (_needsAcidTick) then { _patients pushBackUnique _u };
-} forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
+        if (_needsAcidTick) then { _patients pushBackUnique _u };
+    } forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
+};
 
 _patients = _patients arrayIntersect _patients;
 
@@ -1388,6 +1392,7 @@ private _getMedEffect = {
         || {_offset != 0}
         || {_hyperSpike > 0}
         || {[_state] call _circStateNeedsTick}
+        || {(_patient getVariable ["ACME_circ_salineGivenMl", 0]) > 0}
         || {_effMAPpre < _acidThresh};
     if (_keepCirc) then {
         ACME_circ_activePatients pushBackUnique _patient;
