@@ -49,7 +49,13 @@ if (isNil "ACME_manualPlateCarrierWatchPFH") then {
         private _now = CBA_missionTime;
         if (_now >= (missionNamespace getVariable ["ACME_manualPlateCarrierRecoveryAt", -1])) then {
             ACME_manualPlateCarrierRecoveryAt = _now + 30;
-            {["ACME_manualPlateCarrierTrack", [_x]] call CBA_fnc_localEvent;} forEach allUnits;
+            // Local/init/state events maintain enrollment. The audit only needs to recover
+            // a missed active lease; do not dispatch a tracking event for every healthy AI.
+            {
+                ["ACME_manualPlateCarrierTrack", [_x]] call CBA_fnc_localEvent;
+            } forEach (allUnits select {
+                local _x && {alive _x} && {(_x getVariable ["ACME_manualPlateCarrierState", ""]) != ""}
+            });
         };
         private _kept = [];
         {
