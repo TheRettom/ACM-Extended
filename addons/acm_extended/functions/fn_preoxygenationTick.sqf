@@ -6,6 +6,32 @@
  * while reserve remains, so preoxygenation before RSI has a real payoff and sick lungs/anemia/altitude burn through it.
  */
 private _now = CBA_missionTime;
+private _candidate = {
+    params ["_u"];
+    if (isNull _u || {!local _u} || {!alive _u}) exitWith {false};
+    private _reserve = (_u getVariable ["ACME_preox_reserve",0.30]) max 0 min 1;
+    private _rr = _u getVariable ["ACME_resp_neuralRR", (_u getVariable ["ACM_breathing_RespirationRate",16])];
+    private _support = alive (_u getVariable ["ACM_breathing_BVM_Medic",objNull])
+        || {_u getVariable ["ACME_vent_onPatient",false]}
+        || {_u getVariable ["ACME_nrb_on",false]};
+    private _physiology = (_rr <= 2)
+        || {_u getVariable ["ACE_isUnconscious",false]}
+        || {_u getVariable ["ace_medical_inCardiacArrest",false]}
+        || {(_u getVariable ["ace_medical_spo2",97]) < 94}
+        || {(_u getVariable ["ACME_blastLung_State",0]) > 0}
+        || {(_u getVariable ["ACME_aspiration_load",0]) > 0.001}
+        || {(_u getVariable ["ACME_alt_pRatio",1]) < 0.999};
+    abs (_reserve - 0.30) > 0.001 || {_support} || {_physiology}
+};
+private _patients = (missionNamespace getVariable ["ACME_preox_activePatients", []]) select {[_x] call _candidate};
+private _discoverAt = missionNamespace getVariable ["ACME_preoxDiscoveryNextAt", -1];
+if (_discoverAt < 0 || {_now >= _discoverAt}) then {
+    missionNamespace setVariable ["ACME_preoxDiscoveryNextAt", _now + 2];
+    {
+        if ([_x] call _candidate) then {_patients pushBackUnique _x};
+    } forEach _patients;
+ACME_preox_activePatients = _patients select {[_x] call _candidate};
+};
 {
     private _u = _x;
     if (isNull _u || {!local _u} || {!alive _u}) then {continue};
