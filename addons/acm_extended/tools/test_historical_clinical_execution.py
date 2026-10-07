@@ -83,14 +83,18 @@ def test_tube_requires_permission_and_actual_inventory_debit_before_projection(a
     text=source('thoraMouseDown')
     body=unique_slice(text,'    private _tubeMedic = uiNamespace getVariable ["ACME_Thora_Medic", objNull];',
                       '    // register the chest tube with ACM')
-    body=body.replace('_tubeMedic removeItem "ACM_ChestTubeKit";', '_removes=_removes+1; if (_consumed) then {_stock=_stock-1;};')
     execute(thora_setup()+f'private _allowed={str(allowed).lower()}; private _consumed={str(consumed).lower()};' + '''
-        private _side="right"; private _stock=1; private _removes=0;
+        private _side="right"; private _takes=0; private _refunds=0;
         ACME_fnc_thoraClosureMode = {["tube","",_allowed]};
-        ace_common_fnc_getCountOfItem = {_stock};
+        ACME_fnc_treatmentSupplyTake = {
+            _takes=_takes+1;
+            if (_consumed) then {[_tubeMedic,"ACM_ChestTubeKit",objNull,"tube-receipt"]} else {[]}
+        };
+        ACME_fnc_treatmentSupplyRefund = {_refunds=_refunds+1; true};
     '''+'private _commit={'+adapt(body)+'}; call _commit;'+
             f'[count _writes=={3 if allowed and consumed else 0},"invalid tube projection"] call _check;'+
-            f'[_removes=={int(allowed)},"denied tube attempted debit"] call _check;')
+            f'[_takes=={int(allowed)},"denied tube attempted debit"] call _check;'+
+            f'[_refunds=={int(allowed and consumed)},"accepted receipt was not finalized exactly once"] call _check;')
 
 
 def difficulty_setup():
