@@ -98,7 +98,7 @@ def test_custom_rhythm_hot_tick_uses_explicit_active_registry():
     assert 'missionNamespace getVariable ["ACME_rhythm_activePatients", []]' in commit
     assert '_active pushBackUnique _unit' in commit
     assert 'ACME_rhythm_activePatients' in owner
-    assert '"ACME_rhythm_activePatients"' in lifecycle
+    assert lifecycle.count('"ACME_rhythm_activePatients"') >= 2
 
 
 def test_saline_and_infusion_hot_workers_do_not_scan_every_healthy_owner():
