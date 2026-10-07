@@ -52,21 +52,25 @@ def test_shock_neutral_state_has_no_heartbeat():
         assert ",0] call ACME_fnc_setVarNetApprox" in row
 
 
-def test_idle_physiology_uses_active_registries_with_slow_discovery():
-    contracts = {
-        "preoxygenationTick": ("ACME_preox_activePatients", "ACME_preoxDiscoveryNextAt"),
-        "aspirationTick": ("ACME_aspiration_activePatients", "ACME_aspirationDiscoveryNextAt"),
-        "shockPhenotypeTick": ("ACME_shock_activePatients", "ACME_shockDiscoveryNextAt"),
-    }
-    for name, (registry, clock) in contracts.items():
+def test_idle_physiology_uses_one_shared_slow_discovery():
+    discovery = src("idlePhysDiscovery")
+    runtime = src("expansionRegisterRuntime")
+    assert discovery.count('ACME_clinical_ownedUnits') == 1
+    assert 'ACME_preox_activePatients = _preox;' in discovery
+    assert 'ACME_aspiration_activePatients = _aspiration;' in discovery
+    assert 'ACME_shock_activePatients = _shock;' in discovery
+    assert '[{ call ACME_fnc_idlePhysDiscovery; }, 2, []] call CBA_fnc_addPerFrameHandler;' in runtime
+
+    for name, registry in {
+        "preoxygenationTick": "ACME_preox_activePatients",
+        "aspirationTick": "ACME_aspiration_activePatients",
+        "shockPhenotypeTick": "ACME_shock_activePatients",
+    }.items():
         s = src(name)
         assert registry in s
-        assert clock in s
-        assert 'CBA_missionTime + 2' in s or '_now + 2' in s
-        assert f'{registry} = _patients select' in s
-        # Full-owner enumeration appears only in the bounded discovery branch,
-        # never as the hot physiology loop's final forEach.
+        assert 'ACME_clinical_ownedUnits' not in s
         assert '} forEach _patients;' in s
+        assert f'{registry} = _patients select' in s
 
 
 def test_circulation_full_owner_discovery_is_not_four_hz():
@@ -137,7 +141,7 @@ def _healthy_vm(name):
 
 
 def test_actual_healthy_idle_models_issue_zero_publication_requests():
-    definitions = "".join(
+    definitions = "ACME_fnc_idlePhysDiscovery={" + _healthy_vm("idlePhysDiscovery") + "};" + "".join(
         f"ACME_fnc_{name}={{" + _healthy_vm(name) + "}};"
         for name in ("preoxygenationTick", "aspirationTick", "shockPhenotypeTick")
     )
@@ -153,6 +157,9 @@ def test_actual_healthy_idle_models_issue_zero_publication_requests():
         _patient setVariable ["ace_medical_spo2",97];
         _patient setVariable ["ACM_circulation_Blood_Volume",6];
 
+        call ACME_fnc_idlePhysDiscovery;
+        [ACME_preox_activePatients isEqualTo [] && {ACME_aspiration_activePatients isEqualTo []}
+            && {ACME_shock_activePatients isEqualTo []},"healthy discovery enrolled idle physiology"] call _check;
         call ACME_fnc_preoxygenationTick;
         call ACME_fnc_aspirationTick;
         call ACME_fnc_shockPhenotypeTick;
