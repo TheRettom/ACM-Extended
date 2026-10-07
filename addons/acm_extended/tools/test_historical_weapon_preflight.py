@@ -188,10 +188,31 @@ def test_one_engine_holster_request_is_retained_across_repeated_controllers(*arg
             test_one_engine_holster_request_is_retained(weapon, delay, ace)
 
 
-def test_real_pose_handoff_shares_pending_holster_instead_of_restarting_it():
+def test_real_pose_handoff_shares_pending_holster_instead_of_restarting_it(*args):
     """Current bridge never installs a generic presentation wait/restart loop."""
+    if args:
+        weapon=args[0]
+        delay=0.95 if weapon=="pistol" else 0.70
+        test_one_engine_holster_request_is_retained(weapon, delay, True)
     test_treatment_bridge_contains_no_generic_presentation_wait()
     test_native_treatment_is_called_directly_after_presentation_setup()
+
+
+def test_logical_clear_during_visible_holster_waits_without_reissuing(ace=True):
+    """Compatibility identity for the current one-request holster reservation."""
+    test_one_engine_holster_request_is_retained("rifle", 0.70, ace)
+
+
+def test_engine_fallback_has_same_provider_and_switchweapon_contract():
+    """Engine fallback uses the same single-request reservation and never redraws."""
+    test_one_engine_holster_request_is_retained("rifle", 0.70, False)
+    test_no_direct_weapon_reselection_was_reintroduced()
+
+
+def test_pose_direct_pressure_exception_stays_scoped_and_does_not_restore_a_weapon():
+    """The settled Direct Pressure empty-hands exception never reselects a weapon."""
+    test_visible_empty_hands_do_not_reholster("ACME_DirectPressureHold")
+    test_no_direct_weapon_reselection_was_reintroduced()
 
 
 def test_current_weapon_paths_do_not_invoke_optional_sling_or_direct_reselection():
