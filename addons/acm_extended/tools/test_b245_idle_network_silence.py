@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 
 from test_menu_death_lifecycle import adapt, execute
+from test_historical_vial_execution import map_defaults
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -169,7 +170,7 @@ def _healthy_vm(name):
     # Keep the production body otherwise intact. The generic historical adapter
     # rewrites unrelated syntax deep in these functions; for this healthy-idle
     # execution case we only need the explicit engine boundaries above.
-    return s.replace("toLowerANSI", "toLower")
+    return map_defaults(s.replace("toLowerANSI", "toLower"))
 
 
 def test_actual_healthy_idle_models_issue_zero_publication_requests():
@@ -179,6 +180,8 @@ def test_actual_healthy_idle_models_issue_zero_publication_requests():
     # engine-heavy clinical script while still executing the scheduling boundary.
     definition = "ACME_fnc_idlePhysDiscovery={" + _healthy_vm("idlePhysDiscovery") + "};"
     execute(definition + r'''
+        private _mapDefault={params ["_map","_args"]; _args params ["_key","_default"];
+            if (_key in _map) then {_map get _key} else {_default}};
         private _exactRequests=0;
         private _approxRequests=0;
         ACME_fnc_setVarNet={_exactRequests=_exactRequests+1;};
@@ -191,7 +194,7 @@ def test_actual_healthy_idle_models_issue_zero_publication_requests():
 
         for "_i" from 0 to 119 do {
             CBA_missionTime = 10 + _i;
-            call ACME_fnc_idlePhysDiscovery;
+            [] call ACME_fnc_idlePhysDiscovery;
             [ACME_preox_activePatients isEqualTo [] && {ACME_aspiration_activePatients isEqualTo []}
                 && {ACME_shock_activePatients isEqualTo []}
                 && {ACME_rhythmThreshold_activePatients isEqualTo []},
