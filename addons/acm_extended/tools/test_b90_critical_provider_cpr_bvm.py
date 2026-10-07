@@ -28,7 +28,8 @@ def test_elevated_death_uses_normal_patient_release_animation():
     death = txt('functions/fn_headElevDeathRelease.sqf')
     stop = txt('functions/fn_headElevateStop.sqf')
     assert '"ACME_HeadElevPatientRelease"' in stop
-    assert 'call ACME_fnc_patientAnimAcquire' in stop
+    assert 'call ACME_fnc_patientAnimRequest' in stop
+    assert '"head-elev-lower"' in stop
     assert '[_patient, "ACME_HeadElevPatientRelease", 2] call ACME_fnc_doAnim;' in death
     assert '[_patient, false] call ACME_fnc_headElevCollision;' in death
     assert '[_p, true] call ACME_fnc_headElevCollision;' in death
@@ -60,7 +61,7 @@ def test_cpr_and_bvm_are_native_acm_owned():
 
     # BVM and CPR are routed directly into ACM's native treatment function before generic provider preflight.
     guard = treatment.index('private _nativeContinuousClass')
-    preflight = treatment.index('// Custom animation/preflight begins here.')
+    preflight = treatment.index('if (_nativeContinuousClass == "checkcapillaryrefill")', guard)
     bridge = treatment[guard:preflight]
     for cls in ['"cpr"', '"usebvm"', '"usebvm_oxygen"', '"usebvm_vehicleoxygen"', '"usebvm_portableoxygen"']:
         assert cls in bridge
