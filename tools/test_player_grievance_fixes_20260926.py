@@ -59,14 +59,14 @@ def test_minigame_input_recovers_from_lost_keyup_and_fallback_mode_is_truthful()
 def test_owner_recovery_sweep_is_throttled_without_slowing_provider_repair():
     owner_init = read("fn_ownerInit.sqf")
     assert 'ACME_ownerRecoveryNextAt' in owner_init
-    assert 'CBA_missionTime + 4' in owner_init
+    assert 'CBA_missionTime + 30' in owner_init
     assert '[] call ACME_fnc_providerStateReconcile;' in owner_init
     assert '}, 1, []] call CBA_fnc_addPerFrameHandler;' in owner_init
 
 def test_release_identity_regressions_match_current_124_branch():
     version = (ROOT / "tools/test_fork_phase105_public_version_gate.py").read_text(encoding="utf-8")
     perf = (ROOT / "tools/test_fork_phase161_medical_ui_performance.py").read_text(encoding="utf-8")
-    assert "EXPECTED = '1.2.4'" in version
+    assert "EXPECTED = '1.2.4.1'" in version
     assert "ACME_buildBatch" in perf and "ACME_debugRevision" in perf
     assert '"B134"' not in perf and '"rc18"' not in perf
 
