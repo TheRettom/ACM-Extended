@@ -33,6 +33,9 @@ if (!alive _patient) exitWith {
     [_patient] call ACME_fnc_deadPhysiologyFreeze;
     if (_headState) then {[_patient] call ACME_fnc_headElevDeathRelease;};
 };
+// Populate idle-capable physiology registries from this exact owner event.
+// The periodic full scan is only a missed-event fallback.
+[[_patient]] call ACME_fnc_idlePhysDiscovery;
 // Rebuild coagulation immediately on treatment enrollment and ownership recovery.
 [[_patient]] call ACME_fnc_coagulationTick;
 
