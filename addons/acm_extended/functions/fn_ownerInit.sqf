@@ -223,7 +223,7 @@ ACME_NA2_ownerInstalled = true;
     };
     {
         missionNamespace setVariable [_x, (missionNamespace getVariable [_x, []]) select {!isNull _x && {local _x} && {alive _x}}];
-    } forEach ["ACME_nrb_activePatients", "ACME_hpmk_activePatients", "ACME_tbi_activePatients", "ACME_cs_activePatients", "ACME_autoBP_patients", "ACME_clinical_activePatients", "ACME_infusion_activePatients", "ACME_circ_activePatients", "ACME_coag_activePatients", "ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients", "ACME_rhythmThreshold_activePatients"];
+    } forEach ["ACME_nrb_activePatients", "ACME_hpmk_activePatients", "ACME_tbi_activePatients", "ACME_cs_activePatients", "ACME_autoBP_patients", "ACME_clinical_activePatients", "ACME_infusion_activePatients", "ACME_circ_activePatients", "ACME_coag_activePatients", "ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients", "ACME_rhythmThreshold_activePatients", "ACME_rhythm_activePatients"];
 }, 1, []] call CBA_fnc_addPerFrameHandler;
 if (isServer) then {
     ACME_nrb_soundRegistry = createHashMap;
