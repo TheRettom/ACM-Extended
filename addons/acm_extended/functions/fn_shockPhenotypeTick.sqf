@@ -24,14 +24,6 @@ private _candidate = {
         || {(_u getVariable ["ACM_circulation_Blood_Volume",6]) < 5.1}
 };
 private _patients = (missionNamespace getVariable ["ACME_shock_activePatients", []]) select {[_x] call _candidate};
-private _discoverAt = missionNamespace getVariable ["ACME_shockDiscoveryNextAt", -1];
-if (_discoverAt < 0 || {_now >= _discoverAt}) then {
-    missionNamespace setVariable ["ACME_shockDiscoveryNextAt", _now + 2];
-    {
-        if ([_x] call _candidate) then {_patients pushBackUnique _x};
-    } forEach _patients;
-ACME_shock_activePatients = _patients select {[_x] call _candidate};
-};
 {
     private _u = _x;
     if (isNull _u || {!local _u} || {!alive _u}) then {continue};
@@ -138,4 +130,5 @@ ACME_shock_activePatients = _patients select {[_x] call _candidate};
     [_u,"ACME_shock_phenotype",_type] call ACME_fnc_setVarNet;
     [_u,"ACME_shock_severity",_sev,([0.002,0] select (_sev == 0)),0] call ACME_fnc_setVarNetApprox;
     [_u,"ACME_shock_warm",(_type == "distributive" || {_type == "neurogenic"})] call ACME_fnc_setVarNet;
-} forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
+} forEach _patients;
+ACME_shock_activePatients = _patients select {[_x] call _candidate};
