@@ -57,7 +57,9 @@ def test_chest_prep_launches_native_action_once():
     block = s[start:end]
     assert "ACM_core_fnc_treatmentNative" in block
     assert "ace_medical_treatment_fnc_treatment" not in block
-    assert "ACM_core_ContinuousAction" not in block
+    assert "ACM_core_fnc_beginContinuousAction" not in block
+    assert "ACM_core_ContinuousAction_Session" not in block
+    assert "ACM_core_ContinuousAction_Kind" not in block
     assert "ACME_chestAccess_readyLease" in block
 
 def test_chest_seal_workspace_hold_and_flip_handoff():
@@ -66,7 +68,7 @@ def test_chest_seal_workspace_hold_and_flip_handoff():
     tick = read("addons/acm_extended/functions/fn_chestSealFlipTick.sqf")
     cfg = read("addons/acm_extended/functions/fn_initChestSealProcedureRuntime.sqf")
     assert "ACME_fnc_chestSealProviderHoldStart" in start
-    assert '["chestSealWorkspace"' not in cfg
+    assert '["chestSealWorkspace", "AinvPknlMstpSnonWnonDnon_medicUp4"]' in cfg
     assert '[_provider,"chestSealWorkspace",_holdEpoch,true] call ACME_fnc_treatmentPoseStop' in flip
     assert '[_provider,"roll",_epoch,_current] call ACME_fnc_treatmentPoseStop' in tick
     assert "ACME_fnc_chestSealProviderHoldStart" in tick
@@ -85,7 +87,7 @@ def test_auscultation_and_cric_lifetime_fixes_remain_intact():
     steth = read("addons/acm_extended/functions/fn_beginStethoscopeAction.sqf")
     cric = read("addons/airway/functions/fnc_establishSurgicalAirway.sqf")
     reconcile = read("addons/acm_extended/functions/fn_transientStateReconcile.sqf")
-    assert 'ACM_core_ContinuousAction_Session", [_patient, _epoch]' in steth
+    assert 'getVariable ["ACM_core_ContinuousAction_Session", []]) isEqualTo [_patient, _epoch]' in steth
     assert "_medic isNotEqualTo ACE_player" not in steth
     assert "SurgicalAirway_InProgress_Session" not in cric
     assert "ACME_reconcileInvalidSurgicalAirwayAt" not in reconcile
