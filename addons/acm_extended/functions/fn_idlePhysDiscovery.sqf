@@ -7,6 +7,10 @@ private _now = CBA_missionTime;
 private _preox = [];
 private _aspiration = [];
 private _shock = [];
+private _rhythmThreshold = [];
+private _autoSVT = missionNamespace getVariable ["ACME_rhythmAutoSVTFromRateEnabled", false];
+private _svtHR = missionNamespace getVariable ["ACME_rhythmCustomSVTHR", missionNamespace getVariable ["ACME_rhythmCriticalSVTHR", 190]];
+private _acmHighHR = missionNamespace getVariable ["ACME_rhythmACMFatalHighHR", 220];
 {
     private _u = _x;
     if (isNull _u || {!local _u} || {!alive _u}) then {continue};
@@ -72,8 +76,31 @@ private _shock = [];
         || {(_u getVariable ["ACM_circulation_Blood_Volume",6]) < 5.1}) then {
         _shock pushBack _u;
     };
+
+
+    // Rhythm-threshold observer: only custom/legacy cleanup, explicit lidocaine
+    // conversion, or an actually eligible auto-SVT episode needs the 2 Hz worker.
+    // Native ACM critical rhythms remain entirely native when no ACME overlay exists.
+    private _rhythmActive = _u getVariable ["ACME_rhythm_active",0];
+    private _nativeRhythm = _u getVariable ["ACM_circulation_Cardiac_RhythmState",0];
+    private _arrest = _u getVariable ["ace_medical_inCardiacArrest",false];
+    private _thresholdPending = (_u getVariable ["ACME_rhythmThresholdKind",""]) != ""
+        || {!isNil {_u getVariable "ACME_rhythmThresholdStart"}}
+        || {(_u getVariable ["ACME_rhythmThresholdForced",""]) != ""};
+    private _legacyHold = (_u getVariable ["ACME_rhythmNativeHoldKind",""]) != ""
+        || {(_u getVariable ["ACME_rhythmNativeHoldRhythm",-1]) != -1}
+        || {(_u getVariable ["ACME_rhythmNativeHighHRFloorUntil",0]) > 0};
+    private _lidoCandidate = _nativeRhythm == 4 && {!_arrest}
+        && {count (_u getVariable ["ace_medical_medications",[]]) > 0};
+    private _hr = _u getVariable ["ace_medical_heartRate",0];
+    private _autoCandidate = _autoSVT && {!_arrest} && {_rhythmActive == 0}
+        && {_nativeRhythm in [0,5]} && {_hr >= _svtHR} && {_hr <= _acmHighHR};
+    if (_rhythmActive >= 100 || {_thresholdPending} || {_legacyHold} || {_lidoCandidate} || {_autoCandidate}) then {
+        _rhythmThreshold pushBack _u;
+    };
 } forEach (missionNamespace getVariable ["ACME_clinical_ownedUnits", []]);
 
 ACME_preox_activePatients = _preox;
 ACME_aspiration_activePatients = _aspiration;
 ACME_shock_activePatients = _shock;
+ACME_rhythmThreshold_activePatients = _rhythmThreshold;
