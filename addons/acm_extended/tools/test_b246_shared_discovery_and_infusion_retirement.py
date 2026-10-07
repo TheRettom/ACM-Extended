@@ -9,6 +9,13 @@ def src(name):
     return (ROOT / "functions" / f"fn_{name}.sqf").read_text(encoding="utf-8-sig")
 
 
+def test_idle_chest_seal_server_has_no_all_players_scan():
+    s = src("chestSealNetInit")
+    guard = 'if (count ACME_CS_sessions == 0 && {count ACME_CS_editResults == 0}) exitWith {};'
+    assert guard in s
+    assert s.index(guard) < s.index('private _players = allPlayers;')
+
+
 def test_one_owner_scan_feeds_all_idle_and_maintenance_registries():
     discovery = src("idlePhysDiscovery")
     runtime = src("expansionRegisterRuntime")
