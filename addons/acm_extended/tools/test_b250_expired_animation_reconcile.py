@@ -17,8 +17,9 @@ def _reconcile_setup():
     fragment = fragment.replace("finite _expires", "(_expires isEqualType 0)")
     return (
         patient_setup()
+        + 'private _collisionRestored=0; ACME_fnc_headElevCollision={_collisionRestored=_collisionRestored+1;};'
         + 'private _repairLease={params ["_patient"]; private _netNow=_serverTime; '
-        + 'private _mark={}; private _collisionRestored=0; ACME_fnc_headElevCollision={_collisionRestored=_collisionRestored+1;};'
+        + 'private _mark={};'
         + adapt(fragment)
         + '};'
     )
