@@ -178,6 +178,24 @@ def test_provider_gesture_receives_patient_for_ambulatory_selection():
     assert '[_m, _mode, _window, _patient] call ACME_fnc_treatmentGesture;' in s
 
 
+def test_one_engine_holster_request_is_retained_across_repeated_controllers():
+    """Historical identity retained against the current one-shot holster helper."""
+    for weapon, delay in (("pistol", .95), ("rifle", .70), ("launcher", .70)):
+        for ace in (True, False):
+            test_one_engine_holster_request_is_retained(weapon, delay, ace)
+
+
+def test_real_pose_handoff_shares_pending_holster_instead_of_restarting_it():
+    """Current bridge never installs a generic presentation wait/restart loop."""
+    test_treatment_bridge_contains_no_generic_presentation_wait()
+    test_native_treatment_is_called_directly_after_presentation_setup()
+
+
+def test_current_weapon_paths_do_not_invoke_optional_sling_or_direct_reselection():
+    """Compatibility identity for downstream historical suites."""
+    test_no_direct_weapon_reselection_was_reintroduced()
+
+
 def test_no_direct_weapon_reselection_was_reintroduced():
     identifiers={t.value for t in lex(TREATMENT.read_text()) if t.kind=="ident"}
     assert "selectWeapon" not in identifiers
