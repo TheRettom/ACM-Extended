@@ -29,13 +29,14 @@ def test_iv_tray_centers_visible_art_and_fans_up_only():
     assert 'private _iconW = _iconH * _af;' in init
     assert 'private _iconY = _ry + (_slotH / 2) - (_iconH / 2);' in init
     assert 'iv_tray_%1g_0_ca.paa' in init
-    assert 'iv_tray_%1g_%2_ca.paa' in hover
-    assert "private _rise = _sh * 0.02 * (_i + 1);" in hover
-    assert "_c ctrlSetPosition [_bx,_by - _rise,_bw,_bh];" in hover
-    assert "_c ctrlSetTextColor [1,1,1,_alphas select _i];" in hover
-    assert "ctrlCreate ['RscStructuredText',-1]" in hover
-    assert "private _px = _sx + _insetX;" in hover
-    assert "private _py = _sy + _insetY;" in hover
+    # Current tray deliberately renders one centered catheter per gauge. Hover
+    # never resurrects the retired fan copies/badge or changes their geometry.
+    assert 'iv_tray_%1g_%2_ca.paa' not in hover
+    assert 'ACME_IV_TrayFan_%1' in hover
+    assert '_layer ctrlShow false;' in hover
+    assert '_logo ctrlSetPosition _base;' in hover
+    assert 'private _rise =' not in hover
+    assert "ctrlCreate ['RscStructuredText',-1]" not in hover
 
 
 def test_tibial_io_and_iv_flow_respect_tourniquet_and_aajt_occlusion():
@@ -50,15 +51,13 @@ def test_carousel_hover_never_repaints_or_promotes_opacity():
     hover = acme("functions/fn_skCarouselHover.sqf")
     render = acme("functions/fn_skCarouselRender.sqf")
     tick = acme("functions/fn_skUiTick.sqf")
-    action = acme("functions/fn_skBodyActionRender.sqf")
-
     assert "ACME_fnc_skCarouselRender" not in hover
     assert "_hoverOffset" not in render
     assert "then {_alpha = 1;}" not in render
     assert 'private _durationEditing = (uiNamespace getVariable ["ACME_SK_PushDurationEditing",false])' in tick
     assert '|| {!isNull _actionFocus && {(ctrlIDC _actionFocus) == 84831}};' in tick
     assert 'ACME_SK_NextBodyAction' in tick
-    assert 'call ACME_fnc_skBodyActionRender;' in action
+    assert 'call ACME_fnc_skBodyActionRender;' in render
     assert 'if (!_durFocused || {_durationFor == ""}) then {' in action
     assert 'ACME_SK_PushDurationDrafts' in action
 
