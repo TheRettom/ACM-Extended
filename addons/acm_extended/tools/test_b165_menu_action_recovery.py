@@ -36,7 +36,7 @@ def test_anatomy_fix_is_group_visibility_only():
     assert '["capno", "Capnography", "airway"' in GROUPS
     gates = dict(re.findall(r'\["([^"]+)", "[^"]+", "[^"]+",.*?\], \{([^}]+)\}', GROUPS, re.S))
     assert {name for name, gate in gates.items() if gate == "ace_medical_gui_selectedBodyPart == 0"} == {
-        "adjuncts", "capno", "route_po", "route_in", "route_buc"
+        "capno", "route_po", "route_in", "route_buc"
     }
     assert {name for name, gate in gates.items() if gate == "ace_medical_gui_selectedBodyPart == 1"} == set()
     # Chest care and respiratory assessment share Breathing on Head/Body.
