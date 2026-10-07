@@ -18,7 +18,7 @@ def test_carrier_provider_is_literal_medic4_and_freezes_at_22():
     init = read("addons/acm_extended/functions/fn_initChestSealProcedureRuntime.sqf")
     assert 'case "chestAccess": {"AinvPknlMstpSnonWnonDnon_medic4"};' in pose
     assert '["chestAccess", 2.2]' in init
-    assert '["chestSealWorkspace"' not in init
+    assert '["chestSealWorkspace", "AinvPknlMstpSnonWnonDnon_medicUp4"]' in init
 
 def test_patient_lift_waits_for_real_provider_medic4():
     provider = read("addons/acm_extended/functions/fn_chestAccessVestProvider.sqf")
