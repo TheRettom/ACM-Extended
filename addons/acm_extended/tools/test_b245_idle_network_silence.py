@@ -87,6 +87,20 @@ def test_circulation_full_owner_discovery_is_not_four_hz():
     assert discovery < loop < close
 
 
+def test_custom_rhythm_hot_tick_uses_explicit_active_registry():
+    tick = src("rhythmTick")
+    commit = src("rhythmActiveCommit")
+    owner = src("ownerRegister")
+    lifecycle = src("ownerInit")
+    assert 'ACME_clinical_ownedUnits' not in tick
+    assert 'ACME_rhythm_activePatients' in tick
+    assert 'ACME_rhythm_activePatients = (missionNamespace getVariable ["ACME_rhythm_activePatients", []]) select' in tick
+    assert 'missionNamespace getVariable ["ACME_rhythm_activePatients", []]' in commit
+    assert '_active pushBackUnique _unit' in commit
+    assert 'ACME_rhythm_activePatients' in owner
+    assert '"ACME_rhythm_activePatients"' in lifecycle
+
+
 def test_saline_and_infusion_hot_workers_do_not_scan_every_healthy_owner():
     saline = src("salineAcidosisTrack")
     fluid = src("fluidCommit")
