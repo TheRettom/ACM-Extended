@@ -45,7 +45,7 @@ def test_check_airway_medic4_old_custom_pose():
     assert 'ACM_airway_fnc_checkAirway' in b
     for elapsed in (1.374,1.375,1.49):
         test_airway_freezes_exact_source_sample_then_interpolates_once(elapsed)
-    test_airway_time_uses_runtime_full_medic4_duration_and_ceil(-4,4)
+    test_airway_time_uses_runtime_full_medic4_duration_and_ceil(-4,5.75)
 
 
 def test_inspect_chest_six_seconds():
