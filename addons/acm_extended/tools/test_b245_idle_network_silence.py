@@ -89,6 +89,18 @@ def test_b201_idle_broadcaster_shapes_cannot_return():
 
 
 
+
+def test_manual_carrier_recovery_does_not_dispatch_every_healthy_unit():
+    s = src("registerManualPlateCarrierRuntime")
+    start = s.index('if (_now >= (missionNamespace getVariable ["ACME_manualPlateCarrierRecoveryAt", -1])) then {')
+    end = s.index('private _kept = [];', start)
+    audit = s[start:end]
+    assert 'forEach (allUnits select {' in audit
+    assert 'local _x && {alive _x}' in audit
+    assert 'getVariable ["ACME_manualPlateCarrierState", ""]) != ""' in audit
+    assert 'forEach allUnits;' not in audit
+
+
 def _healthy_vm(name):
     s = src(name)
     # Only adapt object/locality commands that occur before each function's healthy
