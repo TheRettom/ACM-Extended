@@ -1,5 +1,12 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B249
+
+- Explicitly release the patient breathing-sound per-frame handler on both locality-transition edges, preventing stale machine-local handles after dedicated-server/HC ownership changes.
+- Preserve the clinical breath-pattern state; only the local worker handle is retired and may be recreated by the new owner.
+- Added audio-locality regression coverage; release candidate B249, public version 1.2.4.1.
+
+
 ## 1.2.4.1 — B248
 
 - Disabling Cheyne–Stokes now releases its active respiratory-rate drive on the owning machine instead of leaving an obsolete override pinned.
