@@ -55,6 +55,7 @@ if (isServer && {isNil "ACME_DP_ServerCleanupInstalled"}) then {
         };
         _unit setVariable ["ACME_DP_Active", false, true];
         _unit setVariable ["ACME_DP_Patient", objNull, true];
+        _unit setVariable ["ACME_DP_Part", "", true];
         _unit setVariable ["ACME_DP_ClaimToken", "", true];
         _unit setVariable ["ACME_DP_ClaimEpoch", -1, true];
     };
