@@ -100,6 +100,12 @@ ACME_NA2_ownerInstalled = true;
     private _headPFH = _unit getVariable ["ACME_headElev_pfh", -1];
     if (_headPFH >= 0) then {[_headPFH] call CBA_fnc_removePerFrameHandler;};
     _unit setVariable ["ACME_headElev_pfh", -1];
+    // B249: respiration audio PFH IDs are local machine handles. Retire them on
+    // BOTH locality edges so a quick away/back handoff cannot strand a stale
+    // "already running" marker or leave two sound emitters behind.
+    private _breathPFH = _unit getVariable ["ACME_bs_pfh", -1];
+    if (_breathPFH >= 0) then {[_breathPFH] call CBA_fnc_removePerFrameHandler;};
+    _unit setVariable ["ACME_bs_pfh", -1, false];
     private _headEH = _unit getVariable ["ACME_headElev_killEH", -1];
     if (_headEH >= 0) then {_unit removeEventHandler ["Killed", _headEH];};
     _unit setVariable ["ACME_headElev_killEH", -1];
