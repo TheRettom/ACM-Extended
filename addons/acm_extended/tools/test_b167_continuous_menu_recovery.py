@@ -63,7 +63,8 @@ def test_medical_menu_open_immediately_yields_only_exact_head_hands_on_session()
     assert 'ACME_headElev_holding' in source
     assert '_headTiltSession isEqualTo [_medic, _epoch]' in source
     assert 'if (_ownsHeadTilt || {_ownsManualSemiFowler}) then {' in source
-    assert 'missionNamespace setVariable ["ACM_core_ContinuousAction_Active", false];' in source
+    assert 'call ACM_core_fnc_setContinuousActionState;' in source
+    assert '["active", false]' in source
     assert 'if (!_cancelledHandsOn) then {' in source
 
 
