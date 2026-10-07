@@ -10,9 +10,9 @@ def contract(text):
     assert 'if (!_started) exitWith {' in text
     pre=text.split('if (!_started) exitWith {',1)[1].split('private _args =',1)[0]
     assert 'ACME_fnc_chestSealRoll' not in pre
-    assert 'ACME_CS_FlipPendingToken",""' in pre
-    assert 'ACME_CS_FlipLockedUntil",0' in pre
-    assert 'ACME_CS_FlipTarget",""' in pre
+    assert 'ACME_CS_FlipPendingToken", ""' in pre
+    assert 'ACME_CS_FlipLockedUntil", 0' in pre
+    assert 'ACME_CS_FlipTarget", ""' in pre
     assert 'ACME_fnc_chestSealProviderHoldStart' in pre
     assert 'ACME_DP_PauseTreatmentClass' in pre
     assert 'ACME_DP_Paused",false' in pre
