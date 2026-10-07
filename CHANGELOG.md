@@ -1,5 +1,16 @@
 # ACM Extended patch notes
 
+
+## 1.2.4.1 — B246
+
+Updated 7 October 2026.
+
+- Consolidated circulation, coagulation, medicated-infusion, preoxygenation, aspiration, shock, and rhythm-threshold missed-transition discovery into one 1 Hz owner-registry pass. The hot 4-5 Hz clinical workers no longer rescan every server-owned unit.
+- Preserved the previous circulation fallback's one-second worst-case discovery latency while removing the duplicate 1 s / 2 s / 2 s broad scans.
+- Fixed medicated-infusion lifecycle retirement: after the final tracked bag disappears or completes, the owner publishes the final empty structured state and removes the patient from the 4 Hz infusion registry, preventing an indefinite post-treatment 1 Hz state heartbeat.
+- Added regression coverage that keeps healthy owned units out of every consolidated active registry, preserves direct treatment enrollments until their first worker tick, and rejects reintroduction of independent owner scans.
+- Public version remains 1.2.4.1; runtime marker is B246 / NA8-B246-1.2.4.1-candidate.
+
 ## 1.2.4.1 — B243
 
 - IV component click capture widened to 1.8% while preserving the 5.2% attraction field and 0.4% hard-seat.
