@@ -117,7 +117,8 @@ switch (toLowerANSI _operation) do {
             "ACME_coag_activePatients", "ACME_infusion_activePatients", "ACME_tbi_activePatients",
             "ACME_nrb_activePatients", "ACME_hpmk_activePatients", "ACME_cs_activePatients",
             "ACME_autoBP_patients", "ACME_vent_serverPatients", "ACME_hpmk_serverPatients",
-            "ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients"
+            "ACME_preox_activePatients", "ACME_aspiration_activePatients", "ACME_shock_activePatients",
+            "ACME_rhythmThreshold_activePatients"
         ] apply {
             private _list = missionNamespace getVariable [_x, []];
             [_x, if (_list isEqualType []) then {count _list} else {-1}]
