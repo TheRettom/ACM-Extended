@@ -31,7 +31,7 @@ private _paint={
     _ctrl ctrlShow (_texture!="");true
 };
 if ([_accessory,_tex] call _paint) then {
-    [_accessory,_accRow] call ACME_fnc_ivFinishPose;
+    [_accessory,_accRow,1052/2048] call ACME_fnc_ivFinishPose;
     _accessory ctrlSetFade (if (_direct && {_action=="line"}) then {1-((_elapsed max 0) min 1)} else {0});_accessory ctrlCommit 0;
 };
 private _lockTex=if (_lock) then {"\acm_extended\ui\iv\field\lock_ca.paa"} else {""};
