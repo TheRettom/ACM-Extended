@@ -26,5 +26,5 @@ def test_chest_access_and_workspace_choreography_is_current():
     assert 'class ACME_ChestSealWorkspace' in cfg and 'class chestSealProviderHoldStart {};' in cfg
     assert 'case "chestSealWorkspace": {"ACME_ChestSealWorkspace"};' in pose_start
     assert 'class ACME_ChestSealWorkspace: ACM_CPR_Stop' in cfg
-    assert '["chestSealWorkspace"' not in runtime and '["_handoff", false' in pose_stop
+    assert '["chestSealWorkspace", "AinvPknlMstpSnonWnonDnon_medicUp4"]' in runtime and '["_handoff", false' in pose_stop
     assert 'ACME_fnc_chestSealProviderHoldStart' in openf and 'ACME_fnc_chestSealProviderHoldStart' in tick and '"chestSealWorkspace"' in close
