@@ -155,32 +155,36 @@ def test_click_radius_is_distinct_from_attraction_radius(tool,aspect):
     }};
     private _point=[_row,_logical] call ACME_fnc_ivFieldPoint;
     private _far=[(_point select 0)+0.025*{aspect},_point select 1];
+    private _comfortable=[(_point select 0)+0.012*{aspect},_point select 1];
     [([_far select 0,_far select 1,"{tool}"] call ACME_fnc_ivFinishTarget) isNotEqualTo [],"wide magnetic search"] call _check;
-    [([_far select 0,_far select 1,"{tool}",false,true] call ACME_fnc_ivFinishTarget) isEqualTo [],"no acceptance outside snap radius"] call _check;
+    [([_far select 0,_far select 1,"{tool}",false,true] call ACME_fnc_ivFinishTarget) isEqualTo [],"click still rejects well outside component"] call _check;
+    [([_comfortable select 0,_comfortable select 1,"{tool}",false,true] call ACME_fnc_ivFinishTarget) isNotEqualTo [],"comfortable click capture"] call _check;
     [([(_point select 0)+0.003*{aspect},_point select 1,"{tool}",false,true] call ACME_fnc_ivFinishTarget) isNotEqualTo [],"near seating"] call _check;
     ''')
 
 
-def test_field_click_guard_cannot_fall_through_to_skin_when_not_close():
-    # Execute the production guard, keeping target search real; next-skin branch is a sentinel.
+@pytest.mark.parametrize('gauge',[14,16])
+def test_field_click_guard_accepts_large_bore_near_lock_without_skin_fallthrough(gauge):
     s=read('ivMinigameClick');a=s.index('private _fieldTarget=');b=s.index('// for a held needle',a)
     block=s[a:b]
-    run(START_SETUP+'''
-    private _held="needle";private _starts=0;private _skin=0;
-    ACME_fnc_ivFinishStart={_starts=_starts+1;true};
-    uiNamespace setVariable ["ACME_IV_Gauge",16];
-    _row set [15,[false,false,true,false,true,0]];_patient setVariable ["ACME_IV_Marks",[_row]];
+    prefix=f'''
+    private _held="needle";private _starts=[];private _skin=0;
+    ACME_fnc_ivFinishStart={{_starts pushBack _this;true}};
+    uiNamespace setVariable ["ACME_IV_Gauge",{gauge}];
+    _row set [15,[false,false,true,false,true,0,true]];_patient setVariable ["ACME_IV_Marks",[_row]];
     private _p=[_row,[1006.5,1088]] call ACME_fnc_ivFieldPoint;
     private _ux=(_p select 0)+.025*.5625;private _uy=_p select 1;
-    private _click={'''+map_defaults(adapt(block))+'''_skin=_skin+1;false};
+    private _click={{'''
+    suffix=f'''_skin=_skin+1;false}};
     [call _click,"lock vicinity handled"] call _check;
-    [_starts==0 && {_skin==0},"distant preview is neither insertion nor skin puncture"] call _check;
-    _ux=_p select 0;[call _click,"close lock handled"] call _check;
-    [_starts==1 && {_skin==0},"only near click starts field"] call _check;
+    [count _starts==0 && {{_skin==0}},"distant preview is neither insertion nor skin puncture"] call _check;
+    _ux=(_p select 0)+.012*.5625;[call _click,"comfortable lock click handled"] call _check;
+    [count _starts==1 && {{_skin==0}},"near lock begins field catheter"] call _check;
+    [((_starts select 0) select 2)=="field{gauge}","selected large bore gauge retained"] call _check;
     uiNamespace setVariable ["ACME_IV_Gauge",20];call _click;
-    [_starts==1 && {_skin==0},"small gauge never punctures skin under lock"] call _check;
-    ''')
-
+    [count _starts==1 && {{_skin==0}},"small gauge never punctures skin under lock"] call _check;
+    '''
+    run(START_SETUP+prefix+map_defaults(adapt(block))+suffix)
 
 def hub_block():
     s=read('ivMinigameRenderMarks');ts=lex(s);pairs=matching(ts)
