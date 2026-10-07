@@ -93,6 +93,41 @@ ACME_NA2_ownerInstalled = true;
     _unit setVariable ["ACME_wakeRepairTicket", (_unit getVariable ["ACME_wakeRepairTicket", 0]) + 1, false];
     // Provider input workers must also retire after away/back transfers between their scheduled ticks.
     _unit setVariable ["ACME_providerLocalityEpoch", (_unit getVariable ["ACME_providerLocalityEpoch", 0]) + 1, false];
+    // B255 Direct Pressure locality teardown. The outgoing PFH may never tick
+    // again after a rapid away/back transfer; retire its exact patient claim.
+    private _dpPatient = _unit getVariable ["ACME_DP_Patient", objNull];
+    private _dpPart = _unit getVariable ["ACME_DP_Part", ""];
+    private _dpToken = _unit getVariable ["ACME_DP_ClaimToken", ""];
+    private _dpEpoch = _unit getVariable ["ACME_DP_ClaimEpoch", -1];
+    if (!isNull _dpPatient && {_dpPart != ""} && {_dpToken != ""}) then {
+        [_dpPatient, "directPressureClaim", ["release", [_unit, _dpPart, _dpToken, _dpEpoch]]] call ACME_fnc_ownerDispatch;
+        // Only the incoming owner may clear the inherited public provider state.
+        if (_isLocal) then {
+            [_unit, _dpPatient, _dpPart, _dpToken, _dpEpoch] call ACME_fnc_directPressureRetire;
+        };
+    };
+    // Claims without an ACK are not yet represented by active patient fields.
+    private _dpPending = _unit getVariable ["ACME_DP_ClaimPending", []];
+    if (_dpPending isEqualType [] && {count _dpPending >= 4}) then {
+        _dpPending params ["_pendingPatient", "_pendingPart", "_pendingToken", "_pendingEpoch"];
+        if (!isNull _pendingPatient && {_pendingPart != ""} && {_pendingToken != ""}) then {
+            [_pendingPatient, "directPressureClaim", ["release", [_unit, _pendingPart, _pendingToken, _pendingEpoch]]] call ACME_fnc_ownerDispatch;
+        };
+    };
+    _unit setVariable ["ACME_DP_ClaimPending", [], false];
+    _unit setVariable ["ACME_DP_ClaimRequestedAt", -1, false];
+    if (!_isLocal) then {
+        // Handler IDs belong to the departing machine alone.
+        private _dpPFH = _unit getVariable ["ACME_DP_PFH", -1];
+        if (_dpPFH >= 0) then {[_dpPFH] call CBA_fnc_removePerFrameHandler;};
+        _unit setVariable ["ACME_DP_PFH", -1, false];
+        {[_x, "keydown"] call CBA_fnc_removeKeyHandler;} forEach (_unit getVariable ["ACME_DP_KeyIDs", []]);
+        _unit setVariable ["ACME_DP_KeyIDs", [], false];
+        private _dpDraw = _unit getVariable ["ACME_DP_Draw3D", -1];
+        if (_dpDraw >= 0) then {removeMissionEventHandler ["Draw3D", _dpDraw];};
+        _unit setVariable ["ACME_DP_Draw3D", -1, false];
+    };
+    // End B255 DP locality cleanup.
     // Pending prone-to-Semi-Fowler normalization has no active pose yet. Retire it on BOTH local transitions,
     // so returning to this machine cannot revive a callback from its previous ownership period.
     _unit setVariable ["ACME_headElev_startEpoch", (_unit getVariable ["ACME_headElev_startEpoch", 0]) + 1, false];
