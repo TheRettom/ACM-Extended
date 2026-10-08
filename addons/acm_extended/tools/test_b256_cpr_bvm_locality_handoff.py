@@ -33,6 +33,9 @@ def _bvm_handoff_fixture():
     first='        private _localityEpoch = _medic getVariable ["ACME_providerLocalityEpoch", 0];'
     last='        }, [_medic, _patient, _epoch, _localityEpoch], 0.1] call CBA_fnc_waitAndExecute;'
     block=src[src.index(first):src.index(last,src.index(first))+len(last)]
+    # Arma supplies distance2D for objects; SQF-VM fixture uses namespaces.
+    # Preserve the production range gate but supply the existing test distance.
+    block=block.replace("_medic distance2D _patient", "_distance")
     return (
         'private _epoch=4; private _handoff=0; '
         'ACM_core_ContinuousAction_Epoch=4; ACM_core_ContinuousAction_Active=false; '
