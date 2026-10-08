@@ -191,16 +191,9 @@ ACME_NA2_ownerInstalled = true;
         _unit setVariable ["ACME_DP_Mode", "", false];
     };
     // End B255 DP locality cleanup.
-    // B257: AnimDone handlers are machine-local. Their last event can arrive
-    // after a provider leaves but before B256's CPR controller sees its next
-    // PFH tick. Drop only this patient's own stale handler on both edges.
-    private _cprAnimEH = _unit getVariable ["ACM_circulation_CPR_AnimEH", -1];
-    if (_cprAnimEH >= 0) then {
-        _unit removeEventHandler ["AnimDone", _cprAnimEH];
-        _unit setVariable ["ACM_circulation_CPR_AnimEH", -1, false];
-        _unit setVariable ["ACM_circulation_CPR_AnimLocalityEpoch", -1, false];
-        _unit setVariable ["ACM_circulation_CPR_Loop", false, false];
-    };
+    // B258: machine-local CPR animation cleanup belongs to the native
+    // circulation module; this event handler only requests that boundary.
+    [_unit] call ACM_circulation_fnc_cprRetireAnimLocal;
     if (_isLocal) then {
         // B156 transferred fall cleanup: finite presentation jobs belong to the departed machine.
         // Retire their exact replicated ownership before registering replacement patient work.
