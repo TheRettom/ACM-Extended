@@ -1,5 +1,15 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B259 (live slow pushes / high-rate SIMV)
+
+- Normal-mode vascular syringe pushes with a selected duration longer than three seconds now use the existing provider-owned incremental/acknowledged plunger transaction, shared with Hardcore but with its own 1-second physiological batch cadence. Partial dosing enters circulation during the push, retains exact syringe inventory mass, supports Stop Push, and validates provider/line locality on every tick. Default/short 1–3-second actions and IM use their previous normal choreography.
+- High-rate SIMV now discounts useful alveolar gas exchange when expiratory time is too short for the modeled lung emptying time. Measured exhaled minute-volume remains separate from effective alveolar ventilation.
+- During CPR with a connected advanced ventilator, the acid-base model no longer substitutes a 75% hand-bagging floor for poor actual machine ventilation. Non-CPR modes at extreme rates lose additional effective gas transport due to compression/ventilator interference; IMV VC (CPR) is not penalized this way.
+- Retained oxygen-carrying blood and metabolic acidosis are unchanged by these corrections: ventilator settings alone must not directly restore circulation or neurologic consciousness.
+- Repaired B258 historical HPMK mocks with native CPR-provider reads, and corrected native circulation test paths in B257 regression coverage. New executed and structural B259 regressions added.
+- Public version stays 1.2.4.1. B259 is a dedicated-server candidate pending full CI and multiplayer physiology testing.
+
+
 ## 1.2.4.1 — B258 (community-reported clinical bugs)
 
 - Pleural suction now requires an actual in-situ chest tube at both menu admission and the patient-owner fluid mutation. Explicit Extended left/right tube state overrides stale native ACM aggregates, while genuine legacy native-only tubes remain supported.
