@@ -163,7 +163,7 @@ class ACEGVAR(medical_treatment,actions) {
         allowSelfTreatment = 0;
         items[] = {"ACM_ACCUVAC"};
         consumeItem = 0;
-        condition = QUOTE(GVAR(pneumothoraxEnabled) && (_patient getVariable [ARR_2(QQGVAR(Thoracostomy_State),0)]) in [ARR_2(2,3)]);
+        condition = QUOTE(GVAR(pneumothoraxEnabled) && [ARR_1(_patient)] call ACME_fnc_thoraHasTube);
         callbackSuccess = QUOTE([ARR_2(_medic,_patient)] call FUNC(Thoracostomy_drain));
         ACM_menuIcon = "ACM_ACCUVAC";
     };
