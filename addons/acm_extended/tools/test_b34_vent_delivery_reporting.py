@@ -39,7 +39,7 @@ class VentDeliveryReporting(unittest.TestCase):
         self.assertIn('finite _rr', text)
         self.assertIn('finite _vte', text)
 
-    def test_only_active_machine_owned_vent_bypasses_hand_bvm_floor(self):
+    def test_only_active_simple_self_owned_vent_bypasses_hand_bvm_floor(self):
         text = source("circHandle")
         match = re.search(r'private _ventOwnsArrest = (.*?);', text, re.S)
         self.assertIsNotNone(match)
