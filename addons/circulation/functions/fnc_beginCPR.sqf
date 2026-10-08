@@ -40,6 +40,9 @@ if !(_localSession isEqualTo []) then {_localSession call FUNC(cprCleanupLocal);
 // episode and repeatedly switchMove the provider back into ACM_CPR. One provider now owns one immutable epoch.
 // Keep the sequence on the provider too, so a new owner cannot reuse an old epoch.
 private _epoch = 1 + ((missionNamespace getVariable [QGVAR(CPR_Epoch), 0]) max (_medic getVariable [QGVAR(CPR_Sequence), 0]));
+// B256: CPR's local episode can survive a fast away/back locality transfer
+// between PFH ticks. The provider's locality epoch is separate from CPR_Epoch.
+private _localityEpoch = _medic getVariable ["ACME_providerLocalityEpoch", 0];
 _medic setVariable [QGVAR(CPR_Sequence), _epoch, true];
 GVAR(CPR_Epoch) = _epoch;
 _medic setVariable [QGVAR(CPR_Epoch), _epoch, true];
@@ -69,7 +72,7 @@ _medic setVariable [QGVAR(CPR_AnimEH), -1, false];
 
 private _fnc_doCPRAnimation = {
     params ["_medic", "_epoch"];
-    if (isNull _medic
+    if (isNull _medic || {!local _medic}
         || {(_medic getVariable [QGVAR(CPR_Epoch), -1]) != _epoch}
         || {!(_medic getVariable [QGVAR(CPR_Loop), false])}) exitWith {};
     [QACEGVAR(common,switchMove), [_medic, "ACM_CPR"]] call CBA_fnc_globalEvent;
@@ -180,7 +183,7 @@ if (_patient getVariable ["ACME_headElevated", false]) then {
 // session down on the next frame and can never leave a two-second delayed callback that later starts an old CPR.
 private _controller = [{
     params ["_args", "_idPFH"];
-    _args params ["_medic", "_patient", "_notInVehicle", "_readyAt", "_CPRStartTime", "_fnc_doCPRAnimation", "_epoch", "_needsLower", "_lowerDeadline", "_lowerRetryAt", "_lowerRetries", "_lowerOwner"];
+    _args params ["_medic", "_patient", "_notInVehicle", "_readyAt", "_CPRStartTime", "_fnc_doCPRAnimation", "_epoch", "_needsLower", "_lowerDeadline", "_lowerRetryAt", "_lowerRetries", "_lowerOwner", "_localityEpoch"];
 
     // A newer CPR episode owns the provider. The newer start synchronously removed these old input hooks, so the old
     // PFH retires itself only. It must not remove possibly reused handler ids or mutate any current client globals.
@@ -189,7 +192,8 @@ private _controller = [{
     };
 
     private _patientCondition = isNull _patient || {(!(IS_UNCONSCIOUS(_patient)) && alive _patient)};
-    private _medicCondition = isNull _medic || {!(alive _medic)} || {IS_UNCONSCIOUS(_medic)} || {!local _medic};
+    private _medicCondition = isNull _medic || {!(alive _medic)} || {IS_UNCONSCIOUS(_medic)} || {!local _medic}
+        || {(_medic getVariable ["ACME_providerLocalityEpoch", 0]) != _localityEpoch};
     private _vehicleCondition = (objectParent _medic isNotEqualTo objectParent _patient);
     private _enteredVehicle = _notInVehicle && {!isNull objectParent _medic};
     private _distanceCondition = (!isNull _patient) && {(_patient distance2D _medic) > ACEGVAR(medical_gui,maxDistance)};
@@ -383,6 +387,6 @@ private _controller = [{
         };
         _medic setVariable [QGVAR(isPerformingCPR), GVAR(CPRActive), true];
     };
-}, 0, [_medic, _patient, _notInVehicle, _readyAt, _CPRStartTime, _fnc_doCPRAnimation, _epoch, _needsLower, _lowerDeadline, _lowerRetryAt, _lowerRetries, _lowerOwner]] call CBA_fnc_addPerFrameHandler;
+}, 0, [_medic, _patient, _notInVehicle, _readyAt, _CPRStartTime, _fnc_doCPRAnimation, _epoch, _needsLower, _lowerDeadline, _lowerRetryAt, _lowerRetries, _lowerOwner, _localityEpoch]] call CBA_fnc_addPerFrameHandler;
 
 GVAR(CPR_ControllerPFH) = _controller;
