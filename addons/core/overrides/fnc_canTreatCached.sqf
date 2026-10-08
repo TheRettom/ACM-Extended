@@ -22,6 +22,13 @@ if (
     && {!_hpmkIsLying}
 ) exitWith {false};
 
+// A live CPR lease (even while compressions are paused) owns the exposed
+// chest. No new HPMK prep/wrap can cover that workspace, including if the
+// menu was opened before CPR began.
+if (!isNull _target && {_className in ["ACME_PrepHPMK", "ACME_WrapHPMK"]}
+    && {!isNull (_target getVariable ["ACM_circulation_CPR_Medic", objNull])
+        || {[_target] call ACM_core_fnc_cprActive}}) exitWith {false};
+
 private _state = _target getVariable ["ACME_hpmk_state", ""];
 private _part = toLower _bodyPart;
 private _hpmkActions = ["CheckResponse", "ACME_UnwrapHPMK", "ACME_ExposeChestHPMK", "ACME_CoverChestHPMK"];
