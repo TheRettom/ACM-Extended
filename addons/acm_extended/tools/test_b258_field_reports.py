@@ -70,7 +70,7 @@ def test_hpmk_cannot_be_prepped_or_wrapped_during_reserved_cpr():
     prep=source("hpmkPrep")
     for s in [cached,wrap,prep]:
         assert 'ACM_circulation_CPR_Medic' in s
-        assert 'call ACM_core_fnc_cprActive' in s
+        assert 'ace_medical_CPR_provider' in s
     assert 'ACME_PrepHPMK", "ACME_WrapHPMK' in cached
     assert 'ACME_supplySettle' in prep
 
