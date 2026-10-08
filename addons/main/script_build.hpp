@@ -1,4 +1,4 @@
 #ifndef ACME_BUILD_CONFIG_DEFINED
 #define ACME_BUILD_CONFIG_DEFINED
-#define ACME_BUILD_CONFIG(NAME) acmeBuildBatch = "B256"; acmeNetworkProtocol = 1; acmeComponent = NAME
+#define ACME_BUILD_CONFIG(NAME) acmeBuildBatch = "B257"; acmeNetworkProtocol = 1; acmeComponent = NAME
 #endif
