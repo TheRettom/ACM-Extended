@@ -23,6 +23,14 @@ if (!local _patient) exitWith {
     true
 };
 
+// A new CPR reservation can win during the first HPMK preparation timer.
+if (!isNull (_patient getVariable ["ACM_circulation_CPR_Medic", objNull])
+    || {[_patient] call ACM_core_fnc_cprActive}) exitWith {
+    ["ACME_supplySettle", [_supplyReceipt, true], parseNumber ((_supplyReceipt param [3, "0"]) splitString ":" select 0)] call CBA_fnc_ownerEvent;
+    ["Cannot prepare HPMK during CPR.", 2, _medic] call ACME_fnc_netNotice;
+    false
+};
+
 // Patient-owner phase. Revalidate eligibility and state after the treatment timer, because another provider may
 // have completed the same action during our progress bar.
 private _lyingState = _patient getVariable ["ACM_core_Lying_State", false];
