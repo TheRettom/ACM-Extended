@@ -163,6 +163,9 @@ def test_hpmk_owner_rejection_refunds_patient_and_acceptance_commits_once():
         source = source.replace(f"isNull {unit}", f'({unit} isEqualTo "")')
     # Actors are string inventory keys in this fixture; preserve its living/down patient at the engine boundary.
     source = source.replace("alive _patient", "_patientAlive")
+    # This historical inventory test models actors as strings rather than
+    # Arma objects. The real CPR field guard is covered by B258's object tests.
+    source = source.replace("_patient isEqualType objNull", "false")
     source = source.replace("local _patient", "_patientLocal").replace("objNull", '""')
     source = source.replace('_patient getVariable ["ACM_core_Lying_State", false]', "true")
     source = source.replace('_patient getVariable ["ACE_isUnconscious", false]', "true")

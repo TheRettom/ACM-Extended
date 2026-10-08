@@ -34,13 +34,18 @@ def test_standard_worker_batches_after_one_second_not_after_entire_duration():
     src=text("hardcorePushSendBatch")
     begin=src.index("private _batchSec = if")
     end=src.index("if (!_force &&",begin)
-    expr=adapt(src[begin:end])
+    # SQF-VM does not implement HashMap getOrDefault; exercise the verbatim
+    # branch after replacing only that engine-owned metadata lookup.
+    assert '_job getOrDefault ["standardTimed",false]' in src[begin:end]
+    expr=adapt(src[begin:end]).replace(
+        '_job getOrDefault ["standardTimed",false]', '_standardTimed'
+    )
     execute(r"""
-        private _job=createHashMapFromArray [["standardTimed",true]];
+        private _standardTimed=true;
         private _standardBatch={
     """ + expr + r""" _batchSec; };
         [call _standardBatch == 1, "normal medication aliquots are not admitted each second"] call _check;
-        _job set ["standardTimed",false];
+        _standardTimed=false;
         ACME_hcMed_pushBatchSec=5;
         [call _standardBatch == 5, "hardcore push's separate batch setting was overwritten"] call _check;
     """)

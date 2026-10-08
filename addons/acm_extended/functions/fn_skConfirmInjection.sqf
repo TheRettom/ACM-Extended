@@ -92,7 +92,11 @@ if (_total <= 0) exitWith {
 // measured aliquots during the action, preserves leftovers on Stop, and
 // revalidates the line and treatment owner on every tick. Short/default
 // 3-second pushes and IM retain the existing bounded normal animation.
-if (_iv && {_pushSec > 3}) exitWith {
+// Measured epinephrine cocktails have a separate exact-volume debit and
+// selector-capture protocol. Keep that legacy timed path until a measured
+// partial-dose migration is implemented; ordinary calcium and other slow
+// vascular pushes still use the incremental worker.
+if (_iv && {_pushSec > 3} && {(_entry param [6,""]) != "epiMixB12"}) exitWith {
     [true] call ACME_fnc_hardcorePushStart
 };
 

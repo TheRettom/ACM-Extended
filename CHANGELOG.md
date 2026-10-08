@@ -1,5 +1,15 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B260 (B259 regression stabilization)
+
+- Preserved exact measured push-dose epinephrine selector/debit semantics for extended-duration specialty syringes, rather than migrating them to the generic slow-push worker. Long normal calcium/other vascular pushes retain B259's incremental, acknowledged delivery; IM and short/default pushes remain unchanged.
+- When unsupported high-rate SIMV ventilation overlaps actual chest compressions, propagate its reduced gas-exchange fraction into the current respiratory-acidosis deficit calculation as well as PaCO2 clearance.
+- Updated the historical ventilation test from the retired Simple-only policy to require both Simple and advanced machine-owned ventilation to use their measured delivery, while hand BVM retains its fallback.
+- Fixed the B259 executed batch-cadence test harness for SQF-VM's unimplemented HashMap getOrDefault primitive without weakening the one-second normal / five-second Hardcore expectations.
+- Fixed a legacy HPMK inventory test's string-actor mock for B258's physical patient CPR gate. Native module ownership and dedicated-server acceptance remain required.
+- Public version stays 1.2.4.1; B260 is a candidate until CI and multiplayer acceptance pass.
+
+
 ## 1.2.4.1 — B259 (live slow pushes / high-rate SIMV)
 
 - Normal-mode vascular syringe pushes with a selected duration longer than three seconds now use the existing provider-owned incremental/acknowledged plunger transaction, shared with Hardcore but with its own 1-second physiological batch cadence. Partial dosing enters circulation during the push, retains exact syringe inventory mass, supports Stop Push, and validates provider/line locality on every tick. Default/short 1–3-second actions and IM use their previous normal choreography.

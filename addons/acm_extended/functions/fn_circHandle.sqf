@@ -1021,6 +1021,10 @@ private _getMedEffect = {
                     private _actualRR = _patient getVariable ["ACME_vent_effectiveRR", 0];
                     private _cprEfficiency = linearConversion [12, 40, _actualRR, 1, 0.45, true];
                     _ventFrac = _ventFrac * _cprEfficiency;
+                    // B260: apply this real gas-exchange penalty to both CO2
+                    // kinetics AND the respiratory acid deficit for this tick.
+                    _effVent = _targetRR * _ventFrac;
+                    _respDeficit = (1 - (_ventFrac min 1)) max 0 min 1;
                 };
             };
             _effVent = _targetRR * _ventFrac;
