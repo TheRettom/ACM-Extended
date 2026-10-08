@@ -32,6 +32,13 @@ if (_hasValue) then {
 // leaves an open surgical tract at state 1, but no longer advertises an in-situ
 // tube to ACM's suction and respiration model. A contralateral tube survives.
 if (_wasTube && {_hasValue} && {!(_this select 3)}) then {
+    // Pulling the tube leaves an exposed incision, not a definitive finger
+    // thoracostomy being actively held open. The old "finger" tract made
+    // ptxContext continue advertising a 5.0-capacity pleural outlet forever.
+    private _tractKey = format ["ACME_thora_open_%1", _side];
+    if ((_patient getVariable [_tractKey, ""]) == "finger") then {
+        _patient setVariable [_tractKey, "split", true];
+    };
     private _leftTube = _patient getVariable ["ACME_thora_tube_left", false];
     private _rightTube = _patient getVariable ["ACME_thora_tube_right", false];
     if (!_leftTube && {!_rightTube}) then {
