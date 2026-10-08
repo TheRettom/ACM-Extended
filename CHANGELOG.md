@@ -1,5 +1,14 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B256
+
+- CPR now binds its local per-frame episode to the provider-locality generation. A rapid away/back transfer cancels the old session without starting new compressions or a BVM swap.
+- BVM → CPR's 0.1-second delayed transition now checks the captured locality generation as well as the continuous-action epoch, preventing stale CPR launches following owner transfers.
+- B255 cleanup was moved to run after shared native patient-owner worker retirement, keeping locality event preflight and existing B209/B249/PTX contracts intact.
+- Corrected the B255 SQF-VM fixture extraction comment header and added six handoff/ownership tests.
+- Public version remains 1.2.4.1, candidate build B256.
+
+
 ## 1.2.4.1 — B255
 
 - On both provider-locality edges, retire the exact Direct Pressure claim and cancel any pending ACK token, including rapid away/back changes that prevent the original worker from running.
