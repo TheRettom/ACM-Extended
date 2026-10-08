@@ -1003,14 +1003,25 @@ private _getMedEffect = {
     // see apnea during arrest. a BVM provides partial effective ventilation and can clear CO2.
     if (_inCardiacArrest && {missionNamespace getVariable ["ACME_circ_arrestForcesAcidosis", true]}) then {
         if (_bvmActive) then {
-            // Simple mode's actual alveolar delivery remains authoritative in
-            // arrest. The generic hand-bagging floor would otherwise make a very
-            // low ventilator rate clear CO2 as if it supplied adequate breaths.
-            private _simpleVentArrest = (missionNamespace getVariable ["ACME_vent_simpleMode", false])
-                && {_patient getVariable ["ACME_vent_driving", false]}
+            // B259: the generic hand-bagging floor applies ONLY to manual
+            // BVM. Advanced SIMV (as well as Simple) already publishes its
+            // measured alveolar volume; assigning 0.75 anyway invents breaths
+            // when the connected ventilator is ineffective.
+            private _ventOwnsArrest = (_patient getVariable ["ACME_vent_driving", false])
                 && {(_patient getVariable ["ACM_breathing_BVM_provider", objNull]) isEqualTo _patient};
-            if (!_simpleVentArrest) then {
+            if (!_ventOwnsArrest) then {
                 _ventFrac = (_ventFrac max (missionNamespace getVariable ["ACME_circ_bvmVentFrac", 0.75])) min 1.5;
+            } else {
+                // A 40 BPM SIMV mode is not CPR-optimized. Overlapping positive
+                // pressure and compressions impair effective gas transport;
+                // high machine rate must not cure severe CO2 retention at once.
+                private _compressing = !isNull (_patient getVariable ["ace_medical_CPR_provider", objNull]);
+                private _cprMode = (_patient getVariable ["ACME_vent_mode", "SIMV VC PS"]) == "IMV VC (CPR)";
+                if (_compressing && {!_cprMode}) then {
+                    private _actualRR = _patient getVariable ["ACME_vent_effectiveRR", 0];
+                    private _cprEfficiency = linearConversion [12, 40, _actualRR, 1, 0.45, true];
+                    _ventFrac = _ventFrac * _cprEfficiency;
+                };
             };
             _effVent = _targetRR * _ventFrac;
             _respDeficit = (1 - (_ventFrac min 1)) max 0 min 1;
