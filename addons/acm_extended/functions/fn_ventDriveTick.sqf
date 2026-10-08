@@ -357,6 +357,12 @@ if (_driving) then {
     };
     _autoPEEP = (_autoPEEP max 0) min 20;
     [_patient, "ACME_vent_autoPEEP", _autoPEEP, 0.10, 1] call ACME_fnc_setVarNetApprox;
+    // B259: at very high mandatory rates expiration ends before the lung has
+    // emptied. Breath count alone cannot be treated as useful gas exchange.
+    // The squared emptying fraction models dead-space/rebreathing and falls
+    // immediately; auto-PEEP remains its separately integrated pressure debt.
+    private _emptyingFrac = (_tE / (_tNeeded max 0.05)) max 0 min 1;
+    private _emptyingEfficiency = _emptyingFrac * _emptyingFrac;
 
     // Pressure limit is a real delivery limit for both the mandatory and the pressure-supported breath.
     private _pLimit = _effective select 11;
@@ -417,7 +423,8 @@ if (_driving) then {
 
     // Exact exhaled and alveolar minute ventilation: mandatory and spontaneous breath volumes are not assumed equal.
     private _mvDelivered = ((_mandatoryBpm * _vteMand) + (_spontBpm * _vteSpont)) / 1000;
-    private _mvAlv = (_mandatoryBpm * ((_vteMand - 150) max 0)) + (_spontBpm * ((_vteSpont - 150) max 0));
+    private _mvAlv = ((_mandatoryBpm * ((_vteMand - 150) max 0)) + (_spontBpm * ((_vteSpont - 150) max 0)))
+        * _emptyingEfficiency;
     if (_simple) then {
         {
             private _exhaled = _x select 1;
