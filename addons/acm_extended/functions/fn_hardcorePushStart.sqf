@@ -1,10 +1,14 @@
 /* B121: convert the selected vascular syringe into a persistent Hardcore Medication push transaction. The
    physical magazine is reserved once; the stable Narc Box row remains as the authoritative live plunger state. */
 disableSerialization;
+// B259: normal-mode timed vascular pushes (>3 seconds) reuse the exact same
+// incremental escrow/controller as Hardcore. The legacy short push and IM
+// injection retain their existing immediate-completion choreography.
+params [["_standardTimed",false,[false]]];
 if (isNull ACE_player || {!local ACE_player}) exitWith {false};
 private _d = findDisplay 84000;
 if (isNull _d || {(uiNamespace getVariable ["ACME_SK_View","syringe"]) != "body"}) exitWith {false};
-if !(missionNamespace getVariable ["ACME_hcEff_medications",false]) exitWith {false};
+if (!_standardTimed && {!(missionNamespace getVariable ["ACME_hcEff_medications",false])}) exitWith {false};
 private _existing = missionNamespace getVariable ["ACME_HCMedPushJob",createHashMap];
 if (_existing isEqualType createHashMap && {count _existing > 0}) exitWith {false};
 // Ownership changes cannot transfer this client-local plunger transaction safely. Keep its evidence until
@@ -141,7 +145,7 @@ private _job = createHashMapFromArray [
     ["identity",_identity],["stableId",_stable],["size",_size],["med",_med],["kind",_kind],["virtual",_virtual],
     ["label",_row param [3,"",[""]]],["pushLabel",_pushLabel],["barrelMarker",_row param [12,"",[""]]],
     ["overlayAspect",_overlayAspect],["overlayTravelNorm",_overlayTravelNorm],["magClass",_magClass],["magContainer",_magContainer],
-    ["duration",_dur],["targetMl",_target],["rateMlSec",_target/(_dur max 0.01)],["pushedMl",0],["carryMl",0],
+    ["duration",_dur],["standardTimed",_standardTimed],["targetMl",_target],["rateMlSec",_target/(_dur max 0.01)],["pushedMl",0],["carryMl",0],
     ["unsentDelta",[0,0,[]]],["batchElapsed",0],["pendingAcks",0],["session",_session],["lastTick",diag_tickTime],
     ["lastSend",diag_tickTime],["nextUi",0],["flowing",true],["stopRequested",false],["finishRequested",false]
 ];
