@@ -149,8 +149,9 @@ ACME_NA2_ownerInstalled = true;
     _unit setVariable ["ACME_hpmk_lastTickLocal", nil, false];
     _unit setVariable ["ACME_nrb_lastDrawSend", -1, false];
     _unit setVariable ["ACME_nrb_sfxWanted", nil, false];
-    // B255 Direct Pressure locality teardown. The outgoing PFH may never tick
-    // again after a rapid away/back transfer; retire its exact patient claim.
+    // B255 Direct Pressure locality teardown.
+    // The outgoing PFH may never tick again after a rapid away/back transfer;
+    // retire its exact patient claim.
     private _dpPatient = _unit getVariable ["ACME_DP_Patient", objNull];
     private _dpPart = _unit getVariable ["ACME_DP_Part", ""];
     private _dpToken = _unit getVariable ["ACME_DP_ClaimToken", ""];
