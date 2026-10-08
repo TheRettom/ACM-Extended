@@ -504,7 +504,10 @@ private _rowEntry = [];  // per bag row: its bound entry, or [] if it is a plain
     private _bestEntry = _rowEntry select _selIndex;
     if !(_bestEntry isEqualTo []) then {
         _infusionSelectionIndexes pushBackUnique _selIndex;
-        _infusionLabels pushBack [_selIndex, [_bestEntry, _targetPatient getVariable ["ACME_infusion_BagMedications", []]] call ACME_fnc_formatInfusionLabel, _sRemaining, _sType, _sBloodType, _sVolume, (_bestEntry param [11, ""]), _sTrueIndex];
+        private _infusionName = [_bestEntry, _targetPatient getVariable ["ACME_infusion_BagMedications", []]] call ACME_fnc_formatInfusionLabel;
+        // The physical bag, not the drug-entry snapshot, owns remaining mL.
+        private _liveLabel = [_infusionName, _sRemaining] call ACME_fnc_fluidLabelVolume;
+        _infusionLabels pushBack [_selIndex, _liveLabel, _sRemaining, _sType, _sBloodType, _sVolume, (_bestEntry param [11, ""]), _sTrueIndex];
     };
 } forEach _selection;
 
@@ -518,12 +521,16 @@ if (!isNull _ctrlLeftList) then {
     if (_leftBase isNotEqualTo []) then {
         _leftBase params ["_lx", "_ly", "_lw", "_lh"];
         if (_hasActiveInfusions) then {
-            private _normalH = _lh * 0.55;
+            // B261: give Adjust Infusion its own row, not the bottom of the
+            // regular-fluid list. Anchor it below the shortened main pane.
             private _titleH = _buttonH * 0.85;
             private _gap = _buttonH * 0.25;
-            private _infTitleY = _ly + _normalH + _gap;
+            private _adjustGap = safeZoneH * 0.003;
+            private _normalH = ((_lh * 0.55) - _buttonH - _adjustGap) max _rowStep;
+            private _adjustY = _ly + _normalH + _gap;
+            private _infTitleY = _adjustY + _buttonH + _adjustGap;
             private _infListY = _infTitleY + _titleH;
-            private _infListH = (_ly + _lh) - _infListY;
+            private _infListH = ((_ly + _lh) - _infListY) max 0;
             [_ctrlLeftList,"position",[_lx, _ly, _lw, _normalH]] call ACME_fnc_transfusionUiSet;
 
             if (!isNull _ctrlActiveInfTitle) then {
@@ -624,13 +631,17 @@ if (!isNull _ctrlLeftList) then {
 
 if (!isNull _ctrlActiveInfList) then {
     if (_hasActiveInfusions) then {
-        // the signature drives the lbclear and rebuild. it is built from structural fields only, the selidx, label,
-        // type, blood, nominal volume and medication, and deliberately excludes the live remaining volume, _sRemaining
-        // at index 2. that drains continuously, so including it rebuilt the listbox every tick at 20 hz, which is the
-        // visible flash after a bag starts flowing. the label uses the mix volume rather than the remaining volume, so
-        // dropping it costs nothing on screen.
-        private _signature = str (_infusionLabels apply {[_x select 0, _x select 1, _x select 3, _x select 4, _x select 5, _x select 6]});
-        if ((uiNamespace getVariable ["ACME_infusion_ActiveInfusionListSignature", ""]) != _signature) then {
+        // B261: the rendered label contains live mL. Never include that
+        // changing number in the structural list rebuild signature.
+        // Only status/drug name, row identity, and bag metadata rebuild it.
+        private _signature = str (_infusionLabels apply {
+            private _name = _x select 1;
+            private _cut = _name find " | ";
+            if (_cut >= 0) then {_name = _name select [0, _cut];};
+            [_x select 0, _name, _x select 3, _x select 4, _x select 5, _x select 6, _x select 7]
+        });
+        if ((uiNamespace getVariable ["ACME_infusion_ActiveInfusionListSignature", ""]) != _signature
+            || {(lbSize _ctrlActiveInfList) != (count _infusionLabels)}) then {
             private _oldSelected = missionNamespace getVariable ["ACME_infusion_SelectedActiveInfusionSelectionIndex", -1];
             private _oldTrueIndex = missionNamespace getVariable ["ACME_infusion_SelectedActiveInfusionTrueIndex", -1];
             _display setVariable ["ACME_txRebuilding", true];
@@ -639,7 +650,7 @@ if (!isNull _ctrlActiveInfList) then {
                 _x params ["_selIdx", "_label", "_remaining", "_pType", "_pBloodType", "_pVolume", "_pMedication", ["_pTrueIndex", -1]];
                 private _i = _ctrlActiveInfList lbAdd _label;
                 _ctrlActiveInfList lbSetValue [_i, _selIdx];
-                _ctrlActiveInfList lbSetTooltip [_i, format ["%1 | %2ml remaining", _label, round _remaining]];
+                _ctrlActiveInfList lbSetTooltip [_i, format ["%1 mL physically remaining in bag", round _remaining]];
                 // the same bag artwork ACM uses in its own list, with the vial icon at the right.
                 private _bagClass = [_pType, _pVolume, _pBloodType] call ACM_circulation_fnc_formatFluidBagName;
                 private _bagPic = getText (configFile >> "CfgWeapons" >> _bagClass >> "picture");
@@ -655,9 +666,24 @@ if (!isNull _ctrlActiveInfList) then {
             } forEach _infusionLabels;
             uiNamespace setVariable ["ACME_infusion_ActiveInfusionListSignature", _signature];
         };
+        // Volumes repaint at the existing menu tick rate. Never clear the
+        // list, lose selection, or trigger LBSelChanged for a fluid decrement.
+        {
+            _x params ["_selIdx", "_label", "_remaining"];
+            private _row = -1;
+            for "_r" from 0 to ((lbSize _ctrlActiveInfList) - 1) do {
+                if ((_ctrlActiveInfList lbValue _r) == _selIdx) exitWith {_row = _r;};
+            };
+            if (_row >= 0 && {(_ctrlActiveInfList lbText _row) isNotEqualTo _label}) then {
+                _ctrlActiveInfList lbSetText [_row, _label];
+                _ctrlActiveInfList lbSetTooltip [_row, format ["%1 mL physically remaining in bag", round _remaining]];
+            };
+        } forEach _infusionLabels;
     } else {
-        _display setVariable ["ACME_txRebuilding", true];
+        if ((lbSize _ctrlActiveInfList) > 0) then {
+            _display setVariable ["ACME_txRebuilding", true];
             lbClear _ctrlActiveInfList;
+        };
     };
 };
 
