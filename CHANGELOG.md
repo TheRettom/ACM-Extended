@@ -1,5 +1,15 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B261 (transfusion UI refresh / CI parity)
+
+- Restored the historical B34 ventilation-test identifier without discarding the revised advanced-ventilation assertions; fixes B260's sole known strict regression-parity blocker (an accidentally renamed test).
+- Transfuse Fluids: the Adjust Infusion button now receives its own reserved row below the ordinary fluid list, so the action control cannot overlap live bag rows.
+- Active medicated-bag labels now show the authoritative remaining mL of the physical hung bag, rather than an out-of-date infusion-entry amount.
+- Infusion-list rebuild identity excludes the changing volume suffix; remaining mL and tooltip update in place while retaining the selected row and avoiding list flicker.
+- Added executable geometry/signature regressions, live-volume source contracts, and a focused multiplayer verification checklist.
+- Public version remains 1.2.4.1. B261 is a candidate until strict CI, HEMTT and dedicated-server acceptance pass.
+
+
 ## 1.2.4.1 — B260 (B259 regression stabilization)
 
 - Preserved exact measured push-dose epinephrine selector/debit semantics for extended-duration specialty syringes, rather than migrating them to the generic slow-push worker. Long normal calcium/other vascular pushes retain B259's incremental, acknowledged delivery; IM and short/default pushes remain unchanged.
