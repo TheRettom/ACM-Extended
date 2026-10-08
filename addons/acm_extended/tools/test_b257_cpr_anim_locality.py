@@ -43,10 +43,13 @@ def test_away_event_removes_stale_animdone_before_cpr_worker_next_tick():
     start=owner.index('["CAManBase", "Local", {')
     end=owner.index('["CAManBase", "init", {',start)
     local=owner[start:end]
-    assert 'private _cprAnimEH = _unit getVariable ["ACM_circulation_CPR_AnimEH", -1];' in local
-    assert '_unit removeEventHandler ["AnimDone", _cprAnimEH];' in local
-    assert '_unit setVariable ["ACM_circulation_CPR_Loop", false, false];' in local
-    assert 'if (_cprAnimEH >= 0) then {' in local
+    assert '[_unit] call ACM_circulation_fnc_cprRetireAnimLocal;' in local
+    native=(ROOT.parents[1] / "circulation" / "functions" / "fnc_cprRetireAnimLocal.sqf").read_text(encoding="utf-8-sig")
+    prep=(ROOT.parents[1] / "circulation" / "XEH_PREP.hpp").read_text(encoding="utf-8-sig")
+    assert 'PREP(cprRetireAnimLocal);' in prep
+    assert '_unit removeEventHandler ["AnimDone", _handler];' in native
+    assert 'QGVAR(CPR_AnimLocalityEpoch)' in native
+    assert 'QGVAR(CPR_Loop)' in native
 
 
 def test_cpr_animdone_is_guarded_against_owner_generation_mismatch():
