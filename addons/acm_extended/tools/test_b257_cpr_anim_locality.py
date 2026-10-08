@@ -3,7 +3,7 @@ from pathlib import Path
 from test_cpr_lifecycle import execute as cpr_execute
 
 ROOT = Path(__file__).resolve().parents[1] / "functions"
-CORE = ROOT.parent / "circulation" / "functions"
+CORE = ROOT.parents[1] / "circulation" / "functions"
 
 
 def test_old_animdone_cannot_restart_cpr_after_away_back_transfer():
@@ -44,8 +44,8 @@ def test_away_event_removes_stale_animdone_before_cpr_worker_next_tick():
     end=owner.index('["CAManBase", "init", {',start)
     local=owner[start:end]
     assert '[_unit] call ACM_circulation_fnc_cprRetireAnimLocal;' in local
-    native=(ROOT.parent / "circulation" / "functions" / "fnc_cprRetireAnimLocal.sqf").read_text(encoding="utf-8-sig")
-    prep=(ROOT.parent / "circulation" / "XEH_PREP.hpp").read_text(encoding="utf-8-sig")
+    native=(ROOT.parents[1] / "circulation" / "functions" / "fnc_cprRetireAnimLocal.sqf").read_text(encoding="utf-8-sig")
+    prep=(ROOT.parents[1] / "circulation" / "XEH_PREP.hpp").read_text(encoding="utf-8-sig")
     assert 'PREP(cprRetireAnimLocal);' in prep
     assert '_unit removeEventHandler ["AnimDone", _handler];' in native
     assert 'QGVAR(CPR_AnimLocalityEpoch)' in native
