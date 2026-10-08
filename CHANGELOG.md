@@ -1,5 +1,14 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B257 (final planned code audit)
+
+- Fixed B256's SQF-VM handoff-distance fixture (the game uses a real object distance; the VM uses a controlled scalar). The actual BVM → CPR admission/range logic is unchanged.
+- The CPR AnimDone event now verifies its live provider locality and recorded generation before reasserting compressions; a stale callback retires only its matching handler rather than overwriting another owner's animation.
+- The provider Local event immediately retires its own machine-local CPR AnimDone handler on both ownership edges, closing the gap before the CPR controller's next frame.
+- Added regression tests for valid/invalid CPR AnimDone re-entry and the owner Local retirement contract.
+- Added a 13-case dedicated-server multiplayer acceptance matrix. B257 remains a 1.2.4.1 release candidate until full CI and live multiplayer sign-off.
+
+
 ## 1.2.4.1 — B256
 
 - CPR now binds its local per-frame episode to the provider-locality generation. A rapid away/back transfer cancels the old session without starting new compressions or a BVM swap.
