@@ -198,12 +198,17 @@ if (_dpSamePatient) then {
 
     if (_swapToCPR) then {
         EGVAR(core,ContinuousAction_ForceOpenMenu) = false;
+        // B256: the BVM->CPR handoff also belongs to a particular provider locality
+        // generation. A fast away/back transfer can preserve the treatment epoch
+        // and local=true while leaving the old delayed callback in the queue.
+        private _localityEpoch = _medic getVariable ["ACME_providerLocalityEpoch", 0];
         // B128: this handoff used to fire unconditionally 0.1 s after BVM teardown. If another continuous action
         // started in that gap, the old BVM callback could inject CPR into the new maneuver. Carry the generation
         // which actually owned this BVM and abandon the handoff if anything newer has taken the controller.
         [{
-            params ["_medic", "_patient", "_epoch"];
+            params ["_medic", "_patient", "_epoch", "_localityEpoch"];
             if ((missionNamespace getVariable ["ACM_core_ContinuousAction_Epoch", -2]) != _epoch
+                || {(_medic getVariable ["ACME_providerLocalityEpoch", 0]) != _localityEpoch}
                 || {missionNamespace getVariable ["ACM_core_ContinuousAction_Active", false]}
                 || {isNull _medic} || {isNull _patient} || {!local _medic} || {!alive _medic}
                 || {!(_medic isEqualTo ACE_player)} || {!([_medic] call ACEFUNC(common,isAwake))}
@@ -216,7 +221,7 @@ if (_dpSamePatient) then {
             } else {
                 [_medic, _patient] call EFUNC(circulation,beginCPR);
             };
-        }, [_medic, _patient, _epoch], 0.1] call CBA_fnc_waitAndExecute;
+        }, [_medic, _patient, _epoch, _localityEpoch], 0.1] call CBA_fnc_waitAndExecute;
     } else {
         [LLSTRING(BVM_Stopped), 1.5, _medic] call ACEFUNC(common,displayTextStructured);
         [QEGVAR(core,openMedicalMenu), _patient] call CBA_fnc_localEvent;
