@@ -290,11 +290,20 @@ private _controller = [{
             [LLSTRING(CPR_Started), 1.5, _medic] call ACEFUNC(common,displayTextStructured);
         };
 
+        // The AnimDone handler may fire before the locality-sensitive CPR PFH
+        // gets another tick. Retire the old handler, not a replacement episode.
+        _medic setVariable [QGVAR(CPR_AnimLocalityEpoch), _localityEpoch, false];
         private _animEH = _medic addEventHandler ["AnimDone", {
             params ["_medic", "_anim"];
             private _registered = _medic getVariable [QGVAR(CPR_AnimEH), -1];
             if (_registered != _thisEventHandler) exitWith {
                 _medic removeEventHandler [_thisEvent, _thisEventHandler];
+            };
+            if (!local _medic
+                || {(_medic getVariable ["ACME_providerLocalityEpoch", 0])
+                    != (_medic getVariable [QGVAR(CPR_AnimLocalityEpoch), -1])}) exitWith {
+                _medic removeEventHandler [_thisEvent, _thisEventHandler];
+                _medic setVariable [QGVAR(CPR_AnimEH), -1, false];
             };
             if !(_medic getVariable [QGVAR(CPR_Loop), false]) exitWith {};
             private _patient = _medic getVariable [QGVAR(CPR_Patient), objNull];
