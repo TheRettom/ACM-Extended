@@ -1,5 +1,12 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B262 (NRB kit oxygen / empty-cylinder compatibility)
+
+- Non-rebreather oxygen-source selection now accepts an ACM oxygen tank packed inside an Enhanced First Aid Kits (EFAK) kit, as long as EFAK's actual draw-charge API is loaded. The usual medic/patient donor order remains authoritative.
+- Loose cylinders with zero reserve no longer block an otherwise available EFAK cylinder (or cause the native reserve debit to select an empty magazine ahead of a charged magazine).
+- Added executable donor-selection regressions and reserve/source contract checks. This includes no-EFAK behavior, depleted tanks, a medic's kit vs a patient's cylinder, and correct donor-bound debit.
+- Ported the compatibility approach reported in community PR #32 without merging that PR into main. Public version remains 1.2.4.1, B262 candidate pending CI and dedicated-server/EFAK verification.
+
 ## 1.2.4.1 — B261 (transfusion UI refresh / CI parity)
 
 - Restored the historical B34 ventilation-test identifier without discarding the revised advanced-ventilation assertions; fixes B260's sole known strict regression-parity blocker (an accidentally renamed test).
