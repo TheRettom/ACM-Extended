@@ -2692,6 +2692,7 @@ class CfgFunctions {
             class thoraCanSweep {};
             class thoraSealAt {};
             class thoraSealScroll {};
+            class thoraHasTube {};
             class thoraSideStateCommit {};
             class thoraMouseUp {};
             class thoraPrepFlush {};
