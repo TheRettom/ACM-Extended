@@ -1,5 +1,19 @@
 # ACM Extended patch notes
 
+## 1.2.4.1 — B258 (community-reported clinical bugs)
+
+- Pleural suction now requires an actual in-situ chest tube at both menu admission and the patient-owner fluid mutation. Explicit Extended left/right tube state overrides stale native ACM aggregates, while genuine legacy native-only tubes remain supported.
+- Pulling the last chest tube synchronizes ACM's aggregate thoracostomy state, retires the removed side's definitive pleural outlet, and rechecks residual PTX and ongoing leak. Removing one of two tubes preserves the other.
+- Needle decompression retains a higher residual PTX floor than an open finger-thoracostomy or functioning tube, including when a traumatic wound is chest-sealed.
+- A removed carrier's temporary model and cargo are retired when the patient is deleted, but not simply on death.
+- HPMK preparation/wrapping is refused during any active or paused CPR reservation, with inventory refund on a rejected preparation callback.
+- An awake patient with an ETT or bloody/vomitus-obstructed airway can use Check Airway; an awake obstructed patient can access suction.
+- Pupil examination displays a temporary arrest-related nonreactive finding even without permanent TBI.
+- A new, configurable native-blood compartment threshold prevents ROSC based solely on plasma/crystalloid preload immediately after severe exsanguination; deeper extended-time red-cell accounting still requires multiplayer physiology validation.
+- Added nine regression checks for these field reports. The separately reported transfusion-menu bar overlap/animation requires a reproducible screenshot and UI-specific repair; bag list and volume sync are already present in source and should not be replaced speculatively.
+- Public version remains 1.2.4.1. B258 is a candidate pending CI and dedicated-server testing.
+
+
 ## 1.2.4.1 — B257 (final planned code audit)
 
 - Fixed B256's SQF-VM handoff-distance fixture (the game uses a real object distance; the VM uses a controlled scalar). The actual BVM → CPR admission/range logic is unchanged.
