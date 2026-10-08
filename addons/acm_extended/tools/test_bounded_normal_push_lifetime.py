@@ -161,13 +161,13 @@ def test_current_push_retains_duration_route_target_and_stable_id(route,site,dur
         # B259: long normal vascular pushes no longer use a 30-second
         # display-bound animation with zero medication until the final frame.
         # They reuse the acknowledged incremental worker.
-        execute(setup()+f\'''
+        execute(setup()+f'''
             _durationText="{duration}";
             uiNamespace setVariable ["ACME_SK_PendingInjection",["leftleg",{site},"vascular"]];
             [call ACME_fnc_skConfirmInjection,"long incremental push was rejected"] call _check;
             [_hcStarts==1 && {{count _waits==0}} && {{count _delivered==0}},
                 "long push still queued a completion-only bolus"] call _check;
-        \''')
+        ''')
         return
     execute(setup()+f'''
         _durationText="{duration}";
