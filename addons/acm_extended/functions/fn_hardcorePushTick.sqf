@@ -28,7 +28,10 @@ if (isNull _medic || {!local _medic} || {!(_medic isEqualTo ACE_player)}
     [_job getOrDefault ["session",""],missionNamespace getVariable ["ACME_HCMedPushPFH",-1],"provider-changed"] call ACME_fnc_hardcorePushRetire;
 };
 if !(_job getOrDefault ["flowing",false]) exitWith {call ACME_fnc_hardcorePushFinalize;};
-if !(missionNamespace getVariable ["ACME_hcEff_medications",false]) exitWith {["hardcore-disabled"] call ACME_fnc_hardcorePushStop;};
+if (!(_job getOrDefault ["standardTimed",false])
+    && {!(missionNamespace getVariable ["ACME_hcEff_medications",false])}) exitWith {
+    ["hardcore-disabled"] call ACME_fnc_hardcorePushStop;
+};
 if (isNull _patient || {!alive _medic} || {_medic getVariable ["ACE_isUnconscious",false]}) exitWith {["provider"] call ACME_fnc_hardcorePushStop;};
 // Exact ACM AED leash semantics: same objectParent plus configured distance, or the same vehicle.
 private _leash = missionNamespace getVariable ["ACM_circulation_AEDDistanceLimit",5];
