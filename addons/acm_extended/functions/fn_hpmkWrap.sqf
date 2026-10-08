@@ -11,8 +11,10 @@ if (!local _patient) exitWith { ["ACME_ownerCommand", [_patient, "hpmkWrap", _th
 if (isNull _patient) exitWith {};
 // Recheck at completion on the casualty owner: CPR may have started after
 // the medic clicked Wrap, while the ACE progress bar was still running.
-if (!isNull (_patient getVariable ["ACM_circulation_CPR_Medic", objNull])
-    || {[_patient] call ACM_core_fnc_cprActive}) exitWith {
+if (_patient isEqualType objNull && {
+    !isNull (_patient getVariable ["ACM_circulation_CPR_Medic", objNull])
+    || {!isNull (_patient getVariable ["ace_medical_CPR_provider", objNull])}
+}) exitWith {
     ["Cannot wrap HPMK while CPR is in progress.", 2, _medic] call ACME_fnc_netNotice;
 };
 
