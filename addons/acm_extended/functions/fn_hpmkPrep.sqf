@@ -24,8 +24,10 @@ if (!local _patient) exitWith {
 };
 
 // A new CPR reservation can win during the first HPMK preparation timer.
-if (!isNull (_patient getVariable ["ACM_circulation_CPR_Medic", objNull])
-    || {[_patient] call ACM_core_fnc_cprActive}) exitWith {
+if (_patient isEqualType objNull && {
+    !isNull (_patient getVariable ["ACM_circulation_CPR_Medic", objNull])
+    || {!isNull (_patient getVariable ["ace_medical_CPR_provider", objNull])}
+}) exitWith {
     ["ACME_supplySettle", [_supplyReceipt, true], parseNumber ((_supplyReceipt param [3, "0"]) splitString ":" select 0)] call CBA_fnc_ownerEvent;
     ["Cannot prepare HPMK during CPR.", 2, _medic] call ACME_fnc_netNotice;
     false
