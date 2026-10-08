@@ -12,6 +12,25 @@ if (isServer && {isNil "ACME_carrierInventoryCapacityEH"}) then {
         }, ACME_fnc_carrierInventoryCapacity, _this, 2, {}] call CBA_fnc_waitUntilAndExecute;
     }] call CBA_fnc_addEventHandler;
 };
+// B258: a parked carrier is a separate simple object, not automatically
+// deleted with its patient. Keep this on the engine's Deleted event, not the
+// Killed event: unconscious/dead casualties must retain their gear until they
+// are actually despawned. Each machine only cleans its locally known props.
+if (isNil "ACME_manualPlateCarrierDeletedEH") then {
+    ACME_manualPlateCarrierDeletedEH = ["CAManBase", "Deleted", {
+        params ["_patient"];
+        if (isNull _patient) exitWith {};
+        {
+            private _prop = _patient getVariable [_x, objNull];
+            if (!isNull _prop) then {
+                detach _prop;
+                deleteVehicle _prop;
+            };
+        } forEach ["ACME_chestAccess_vestProp", "ACME_CS_vestProp", "ACME_carrierCargo"];
+        ACME_manualPlateCarrierPatients = (missionNamespace getVariable ["ACME_manualPlateCarrierPatients", []]) - [_patient];
+    }] call CBA_fnc_addClassEventHandler;
+};
+
 /* Stable B183: UI acknowledgement plus owner-local manual-carrier return watchdog. */
 // Track only casualties with an active manual lease. State commits enroll synchronously; lifecycle events
 // handle ownership/new units and a slow audit recovers missed/late replicated events.
