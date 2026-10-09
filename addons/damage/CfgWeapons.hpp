@@ -11,7 +11,7 @@ class CfgWeapons {
         descriptionShort = CSTRING(PressureBandage_Desc);
         ACE_isMedicalItem = 1;
         class ItemInfo: CBA_MiscItem_ItemInfo {
-            mass = 0.6;
+            mass = 2.1;
         };
     };
     class ACM_EmergencyTraumaDressing: ACM_PressureBandage {
@@ -19,7 +19,7 @@ class CfgWeapons {
         displayName = CSTRING(EmergencyTraumaDressing);
         descriptionShort = CSTRING(EmergencyTraumaDressing_Desc);
         class ItemInfo: CBA_MiscItem_ItemInfo {
-            mass = 2;
+            mass = 2.5;
         };
     };
     class ACM_ElasticWrap: ACM_PressureBandage {
@@ -27,7 +27,7 @@ class CfgWeapons {
         displayName = CSTRING(ElasticWrap);
         descriptionShort = CSTRING(ElasticWrap_Desc);
         class ItemInfo: CBA_MiscItem_ItemInfo {
-            mass = 0.3;
+            mass = 0.9;
         };
     };
 };
