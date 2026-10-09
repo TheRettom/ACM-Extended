@@ -10,6 +10,6 @@ class CfgMagazines {
         ACE_isMedicalItem = 1;
         ACE_asItem = 1;
         count = 283;
-        mass = 20;
+        mass = 135;
     };
 };
