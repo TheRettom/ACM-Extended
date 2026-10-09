@@ -14,7 +14,7 @@ class CfgWeapons {
         displayName = CSTRING(SAMSplint);
         descriptionShort = CSTRING(SAMSplint_Desc);
         class ItemInfo: CBA_MiscItem_ItemInfo {
-            mass = 0.5;
+            mass = 2.8;
         };
     };
 };
